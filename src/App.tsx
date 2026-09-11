@@ -34,7 +34,10 @@ function App() {
     return () => { unsubEmployers(); unsubEntries(); };
   }, [user]);
 
-  const activeEntry = entries.find((e) => e.endTime === null);
+  // Multiple employers can be clocked in at once (gig workers commonly "dual-app"
+  // across platforms) — only clocking into the *same* employer twice is blocked.
+  const activeEntries = entries.filter((e) => e.endTime === null);
+  const activeEntryByEmployer = new Map(activeEntries.map((e) => [e.employerId, e]));
 
   const summaryByEmployer = useMemo(() => {
     const map = new Map<string, { hours: number; pay: number }>();
@@ -76,18 +79,21 @@ function App() {
       <section className="card">
         <h2>雇主 / 工作</h2>
         <ul className="employer-list">
-          {employers.map((emp) => (
+          {employers.map((emp) => {
+            const active = activeEntryByEmployer.get(emp.id);
+            return (
             <li key={emp.id} style={{ borderLeftColor: emp.color }}>
               <span>{emp.name}（¥{emp.hourlyRate}/小时）</span>
-              {activeEntry?.employerId === emp.id ? (
-                <button onClick={() => clockOut(user.uid, activeEntry.id)}>下班打卡</button>
+              {active ? (
+                <button onClick={() => clockOut(user.uid, active.id)}>下班打卡</button>
               ) : (
-                <button disabled={!!activeEntry} onClick={() => clockIn(user.uid, emp.id)}>
+                <button onClick={() => clockIn(user.uid, emp.id)}>
                   上班打卡
                 </button>
               )}
             </li>
-          ))}
+            );
+          })}
         </ul>
         <form
           className="add-employer"

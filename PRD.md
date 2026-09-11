@@ -21,14 +21,33 @@ React + TypeScript + Vite + Capacitor（iOS/Android/Web三端一套代码）+ Fi
 users/{uid}/employers/{employerId}
   - name: string
   - hourlyRate: number
-  - payType: "hourly" | "daily" | "base+overtime"
+  - payType: "hourly" | "daily" | "base+overtime" | "comprehensive"
+      // comprehensive（综合工时）MVP阶段按"hourly"同等计算，仅作展示标签，
+      // 不实现法定加班周期判定（见FEATURE_SPEC 3.2简化说明）
   - color: string
+  - overtimeMultiplier?: number
+  - holidayMultiplier?: number
+  - breakMinutes?: number
+  - settlementCycle?: "daily" | "weekly" | "monthly"
+  - commuteMinutes?: number     // 净收益对比用，一次性设置
+  - commuteCost?: number        // 净收益对比用，一次性设置
+  - note?: string
 
 users/{uid}/timeEntries/{entryId}
   - employerId: string
+  - workerId?: string          // 非空表示这是"团队代记"的记录，指向下面的 workers 文档
   - startTime: number (epoch ms)
   - endTime: number | null
+  - status: "confirmed" | "draft"   // OCR/语音识别生成的记录先落 draft，用户确认后转 confirmed
+  - source: "manual" | "ocr" | "voice"
+  - mood?: "happy" | "neutral" | "tired"   // 可选，用于月度总结的"最累的一天"
+  - adjustment?: { type: "bonus" | "deduction"; amount: number; note?: string }[]  // 单次的补贴/扣款
   - note?: string
+
+users/{uid}/workers/{workerId}      // 团队代记工时功能专用（对应FEATURE_SPEC 3.8）
+  - name: string
+  - note?: string
+  - defaultHourlyRate?: number
 ```
 
 ## 4. 功能清单（含优先级、验收标准、需求来源）
@@ -89,6 +108,10 @@ users/{uid}/timeEntries/{entryId}
 
 ## 7. 开放问题（待你决定）
 
-- 薪资模式（日结/底薪+加班）的具体计算规则和UI交互，需要进一步细化
-- 团队代记工时功能是否需要角色权限区分（组长 vs 被代记录人能否自己查看/编辑）
+- 🔴 **登录方式与中国市场用户的冲突**：目前唯一登录方式是Google（Firebase Auth），但Google在中国大陆普遍无法直接使用，而产品定位明确包含中国蓝领零工用户。备选方案（Firebase手机号短信验证码登录）会产生短信服务费用，与"整个项目0成本"的要求冲突。需要你决定：MVP阶段接受这个用户覆盖缺口，还是为登录功能破例引入小额付费服务。
 - 定价策略：MVP阶段是否完全免费，何时引入付费档位、以什么功能作为付费点
+
+已在本次审阅中直接决策、不再是开放问题的事项（详见FEATURE_SPEC相应章节）：
+- 团队代记工时采用"轻量档案"方案，不做完整多用户权限系统（见FEATURE_SPEC 3.8）
+- "综合工时"模式MVP阶段按时薪同等计算，不实现法定加班周期判定（见FEATURE_SPEC 3.2）
+- 允许不同雇主同时处于"打卡进行中"状态，只禁止同一雇主重复打卡（见FEATURE_SPEC 3.1/3.3，对应代码需修正 `App.tsx` 里 `disabled={!!activeEntry}` 的全局互斥逻辑）
