@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import type { User } from "firebase/auth";
-import { loginWithGoogle, logout, watchAuth } from "./lib/auth";
+import { completeEmailLoginLink, isEmailLoginLink, logout, watchAuth } from "./lib/auth";
 import {
   addEmployer,
   clockIn,
@@ -9,6 +9,7 @@ import {
   watchTimeEntries,
 } from "./lib/firestore";
 import type { Employer, TimeEntry } from "./lib/types";
+import { LoginScreen } from "./components/LoginScreen";
 import "./App.css";
 
 const EMPLOYER_COLORS = ["#6366f1", "#22c55e", "#f59e0b", "#ec4899", "#06b6d4"];
@@ -26,6 +27,14 @@ function App() {
   const [newEmployerRate, setNewEmployerRate] = useState("");
 
   useEffect(() => watchAuth((u) => { setUser(u); setAuthReady(true); }), []);
+
+  // Finish an email magic-link sign-in if the app was opened via that link.
+  useEffect(() => {
+    const href = window.location.href;
+    if (isEmailLoginLink(href)) {
+      completeEmailLoginLink(href).catch((err) => console.error("Email link sign-in failed", err));
+    }
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -60,13 +69,7 @@ function App() {
   if (!authReady) return <p className="loading">加载中...</p>;
 
   if (!user) {
-    return (
-      <div className="login-screen">
-        <h1>GigTime</h1>
-        <p>多雇主工时与收入记录</p>
-        <button onClick={loginWithGoogle}>使用 Google 登录</button>
-      </div>
-    );
+    return <LoginScreen />;
   }
 
   return (

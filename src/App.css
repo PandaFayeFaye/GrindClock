@@ -14,3 +14,11 @@ button.link { background: none; color: #6366f1; padding: 0; }
 table { width: 100%; border-collapse: collapse; margin-top: 8px; }
 th, td { text-align: left; padding: 6px 4px; border-bottom: 1px solid #e2e8f0; }
 .total { font-size: 1.4rem; font-weight: 600; }
+
+.login-tabs { display: flex; gap: 8px; justify-content: center; margin: 20px 0 16px; }
+.login-tabs button { background: #e2e8f0; color: #475569; }
+.login-tabs button.active { background: #6366f1; color: white; }
+.login-form { display: flex; flex-direction: column; gap: 10px; max-width: 320px; margin: 0 auto; }
+.login-form input { padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; }
+.login-hint { color: #475569; margin-top: 12px; }
+.login-error { color: #dc2626; margin-top: 12px; }

@@ -5,7 +5,7 @@
 ## 已搭好的部分
 
 - Web端可跑的多雇主打卡 + 合并统计 Demo（`src/App.tsx`）
-- Firebase Auth（Google登录）+ Firestore 数据层（`src/lib/`）
+- Firebase Auth（手机号短信验证码 + 邮箱魔法链接，双登录方式）+ Firestore 数据层（`src/lib/`）
 - Capacitor 已初始化，`ios/` 和 `android/` 原生工程已生成
 - 预装的原生插件：camera（拍照识别用）、geolocation（定位打卡用）、preferences（本地存储）
 
@@ -14,7 +14,7 @@
 ### 1. 创建 Firebase 项目（免费 Spark 方案）
 1. 打开 https://console.firebase.google.com 创建项目
 2. 添加一个 Web 应用，拿到 `firebaseConfig`，填入 `src/lib/firebase.ts`
-3. 在 Firebase 控制台启用 Authentication → Google 登录方式
+3. 在 Firebase 控制台启用 Authentication → 分别开启 **"电话"** 和 **"电子邮件链接（无密码登录）"** 两种登录方式（Authentication → Sign-in method）。电话登录在Web端测试还需要在"已获授权的网域"里确认 `localhost` 已在列表中，真机测试涉及reCAPTCHA/App Check配置，上线前需要额外看一下Firebase文档的Phone Auth部分
 4. 启用 Firestore Database（生产模式），后续需要写安全规则（见下）
 
 ### 2. Firestore 安全规则（务必配置，否则任何人可读写）
