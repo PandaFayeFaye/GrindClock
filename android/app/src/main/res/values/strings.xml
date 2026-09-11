@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">GigTime</string>
+    <string name="title_activity_main">GigTime</string>
+    <string name="package_name">com.gigtime.app</string>
+    <string name="custom_url_scheme">com.gigtime.app</string>
+</resources>
