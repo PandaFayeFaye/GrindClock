@@ -1,0 +1,122 @@
+.punch-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 26, 26, 0.45);
+  display: flex;
+  align-items: flex-end;
+  z-index: 20;
+}
+
+.punch-modal-sheet {
+  width: 100%;
+  background: var(--bg-base);
+  border-radius: 28px 28px 0 0;
+  border: 3px solid var(--border-bold);
+  border-bottom: none;
+  padding: 24px 22px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.25);
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.punch-modal-handle {
+  width: 40px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--border-quiet);
+  margin: 0 auto;
+}
+
+.punch-modal-summary {
+  background: var(--accent-yellow);
+  border: 3px solid var(--border-bold);
+  border-radius: var(--radius-bold);
+  padding: 18px;
+  text-align: center;
+  box-shadow: var(--shadow-bold);
+}
+
+.punch-modal-summary .emp {
+  font-size: 12px;
+  font-weight: 800;
+  margin: 0 0 6px;
+}
+
+.punch-modal-summary .dur {
+  font-family: var(--font-display);
+  font-size: 28px;
+  margin: 0;
+}
+
+.punch-modal-summary .pay {
+  font-size: 15px;
+  font-weight: 900;
+  margin: 6px 0 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.section-label {
+  font-size: 12px;
+  font-weight: 900;
+  margin: 0 0 10px;
+}
+
+.section-label .opt {
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.mood-tags {
+  display: flex;
+  gap: 8px;
+}
+
+.mood-tag {
+  flex: 1;
+  min-height: 44px;
+  border-radius: 12px;
+  border: 2px solid var(--border-bold);
+  background: var(--bg-surface);
+  font-weight: 800;
+  font-size: 12.5px;
+  color: var(--text-primary);
+}
+
+.mood-tag.selected {
+  background: var(--accent-blue);
+  color: #fff;
+  box-shadow: 3px 3px 0 var(--border-bold);
+  transform: translate(-1px, -1px);
+}
+
+.note-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid var(--border-quiet);
+  border-radius: 12px;
+  font-size: 13px;
+  background: var(--bg-surface);
+  min-height: 52px;
+  resize: none;
+}
+
+.confirm-btn {
+  width: 100%;
+  padding: 15px 0;
+  border-radius: 14px;
+  border: 2.5px solid var(--border-bold);
+  background: var(--accent-coral);
+  color: var(--border-bold);
+  font-weight: 900;
+  font-size: 15px;
+  box-shadow: var(--shadow-bold);
+  transition: transform 0.08s ease, box-shadow 0.08s ease;
+}
+
+.confirm-btn:active {
+  box-shadow: none;
+  transform: translate(5px, 5px);
+}

@@ -1,0 +1,77 @@
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=ZCOOL+KuaiLe&display=swap");
+
+:root {
+  /* 2.1 base palette */
+  --bg-base: #FBF7EC;
+  --bg-surface: #FFFFFF;
+  --border-quiet: #DDD6C2;
+  --border-bold: #1A1A1A;
+  --text-primary: #1A1A1A;
+  --text-muted: rgba(26, 26, 26, 0.6);
+
+  /* 2.2 brand accents */
+  --accent-yellow: #FFD93D;
+  --accent-blue: #4361EE;
+  --accent-coral: #FF6B6B;
+  --accent-shadow-yellow: #FFB800;
+  --accent-green: #39C97A;
+  --accent-purple: #B084F5;
+  --accent-skyblue: #5AC8FA;
+
+  /* 2.4 semantic */
+  --semantic-success: #39C97A;
+  --semantic-warning: #FFB800;
+  --semantic-error: #E14B4B;
+
+  /* 5. radius + shadow */
+  --radius-quiet: 14px;
+  --radius-bold: 16px;
+  --radius-poster: 24px;
+  --radius-pill: 999px;
+  --shadow-bold: 5px 5px 0 var(--border-bold);
+  --shadow-bold-sm: 3px 3px 0 var(--border-bold);
+
+  /* 4. spacing (4px grid) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* 3. fonts */
+  --font-display: "ZCOOL KuaiLe", cursive;
+  --font-body: "Noto Sans SC", system-ui, sans-serif;
+}
+
+/* Employer color palette, cycled when a new employer is created (2.3) */
+.employer-palette-0 { background: #FFD93D; }
+.employer-palette-1 { background: #4361EE; }
+.employer-palette-2 { background: #FF6B6B; }
+.employer-palette-3 { background: #39C97A; }
+.employer-palette-4 { background: #B084F5; }
+.employer-palette-5 { background: #5AC8FA; }
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background: var(--bg-base);
+  color: var(--text-primary);
+}
+
+button {
+  font-family: var(--font-body);
+  cursor: pointer;
+}
+
+input, textarea {
+  font-family: var(--font-body);
+}

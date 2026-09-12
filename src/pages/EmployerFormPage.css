@@ -1,0 +1,128 @@
+.employer-form {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.employer-form .topbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px;
+}
+
+.employer-form .close {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  margin-left: -10px;
+}
+
+.employer-form h1 {
+  font-family: var(--font-display);
+  font-size: 19px;
+  margin: 0;
+}
+
+.save-btn {
+  padding: 0 16px;
+  min-height: 44px;
+  border-radius: 10px;
+  border: 2.5px solid var(--border-bold);
+  background: var(--accent-green);
+  color: var(--border-bold);
+  font-weight: 900;
+  font-size: 13px;
+  box-shadow: var(--shadow-bold-sm);
+}
+
+.save-btn:disabled {
+  opacity: 0.5;
+}
+
+.employer-form .body {
+  flex: 1;
+  padding: 8px 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.field-label {
+  font-size: 12px;
+  font-weight: 900;
+  margin: 0 0 8px;
+}
+
+.name-input,
+.rate-input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2.5px solid var(--border-bold);
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  background: var(--bg-surface);
+}
+
+.name-input {
+  font-family: var(--font-display);
+}
+
+.swatches {
+  display: flex;
+  gap: 10px;
+}
+
+.swatch {
+  width: 44px;
+  height: 44px;
+  border-radius: 9px;
+  border: 2.5px solid var(--border-bold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mode-cards {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.mode-card {
+  flex-shrink: 0;
+  width: 78px;
+  padding: 12px 8px;
+  border: 2.5px solid var(--border-bold);
+  border-radius: 12px;
+  background: var(--bg-surface);
+  text-align: center;
+}
+
+.mode-card.selected {
+  background: var(--accent-yellow);
+  box-shadow: var(--shadow-bold-sm);
+}
+
+.mode-card .ic {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 6px;
+}
+
+.mode-card .ic svg {
+  width: 24px;
+  height: 24px;
+}
+
+.mode-card .lb {
+  font-size: 11px;
+  font-weight: 800;
+}

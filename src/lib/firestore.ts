@@ -9,11 +9,11 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { db } from "./firebase";
-import type { Employer, TimeEntry } from "./types";
+import type { Adjustment, Employer, Mood, TimeEntry, Worker } from "./types";
 
-// Data model: users/{uid}/employers/{employerId}, users/{uid}/timeEntries/{entryId}
-// Scoping everything under the signed-in user's uid keeps Firestore security rules simple:
-// only the owner can read/write their own subtree.
+// Data model: users/{uid}/employers/{employerId}, users/{uid}/timeEntries/{entryId},
+// users/{uid}/workers/{workerId}. Scoping everything under the signed-in user's uid keeps
+// Firestore security rules simple: only the owner can read/write their own subtree.
 
 export function employersCol(uid: string) {
   return collection(db, "users", uid, "employers");
@@ -21,6 +21,10 @@ export function employersCol(uid: string) {
 
 export function timeEntriesCol(uid: string) {
   return collection(db, "users", uid, "timeEntries");
+}
+
+export function workersCol(uid: string) {
+  return collection(db, "users", uid, "workers");
 }
 
 export function watchEmployers(uid: string, cb: (list: Employer[]) => void) {
@@ -33,6 +37,10 @@ export function addEmployer(uid: string, data: Omit<Employer, "id">) {
   return addDoc(employersCol(uid), data);
 }
 
+export function updateEmployer(uid: string, employerId: string, data: Partial<Employer>) {
+  return updateDoc(doc(employersCol(uid), employerId), data);
+}
+
 export function watchTimeEntries(uid: string, cb: (list: TimeEntry[]) => void) {
   const q = query(timeEntriesCol(uid), orderBy("startTime", "desc"));
   return onSnapshot(q, (snap) => {
@@ -40,18 +48,43 @@ export function watchTimeEntries(uid: string, cb: (list: TimeEntry[]) => void) {
   });
 }
 
+// Multiple employers can be clocked in at once (gig workers commonly "dual-app" across
+// platforms) -- callers are responsible for blocking only same-employer double clock-ins.
 export function clockIn(uid: string, employerId: string) {
   return addDoc(timeEntriesCol(uid), {
     employerId,
     startTime: Date.now(),
     endTime: null,
+    status: "confirmed",
+    source: "manual",
   });
 }
 
-export function clockOut(uid: string, entryId: string) {
-  return updateDoc(doc(timeEntriesCol(uid), entryId), { endTime: Date.now() });
+export function clockOut(
+  uid: string,
+  entryId: string,
+  extra?: { mood?: Mood; moodNote?: string; adjustment?: Adjustment[]; note?: string },
+) {
+  return updateDoc(doc(timeEntriesCol(uid), entryId), {
+    endTime: Date.now(),
+    ...extra,
+  });
+}
+
+export function addManualEntry(uid: string, data: Omit<TimeEntry, "id">) {
+  return addDoc(timeEntriesCol(uid), data);
 }
 
 export function deleteTimeEntry(uid: string, entryId: string) {
   return deleteDoc(doc(timeEntriesCol(uid), entryId));
+}
+
+export function watchWorkers(uid: string, cb: (list: Worker[]) => void) {
+  return onSnapshot(workersCol(uid), (snap) => {
+    cb(snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Worker));
+  });
+}
+
+export function addWorker(uid: string, data: Omit<Worker, "id">) {
+  return addDoc(workersCol(uid), data);
 }
