@@ -39,6 +39,8 @@ export interface TimeEntry {
   moodNote?: string;
   adjustment?: Adjustment[];
   orderCount?: number; // only for per-order payType
+  isOvertime?: boolean; // applies employer.overtimeMultiplier when computing pay
+  isHoliday?: boolean; // applies employer.holidayMultiplier when computing pay
   note?: string;
 }
 

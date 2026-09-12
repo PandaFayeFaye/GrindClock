@@ -18,13 +18,19 @@ function adjustmentTotal(adjustments?: Adjustment[]): number {
  * `base+overtime` aren't tied to a single shift, so they contribute 0 here --
  * those employers' income shows up in a lump sum elsewhere, not per entry.
  */
+function rateMultiplier(employer: Employer, entry: TimeEntry): number {
+  if (entry.isHoliday) return employer.holidayMultiplier ?? 1;
+  if (entry.isOvertime) return employer.overtimeMultiplier ?? 1;
+  return 1;
+}
+
 export function entryPay(employer: Employer, entry: TimeEntry, now = Date.now()): number {
   const hours = entryHours(entry, now);
   let base = 0;
   switch (employer.payType) {
     case "hourly":
     case "comprehensive":
-      base = hours * (employer.hourlyRate ?? 0);
+      base = hours * (employer.hourlyRate ?? 0) * rateMultiplier(employer, entry);
       break;
     case "daily":
       base = employer.dailyRate ?? 0;
@@ -33,7 +39,11 @@ export function entryPay(employer: Employer, entry: TimeEntry, now = Date.now())
       base = (entry.orderCount ?? 0) * (employer.pricePerOrder ?? 0);
       break;
     case "base+overtime":
-      base = hours * (employer.hourlyRate ?? 0) * (employer.overtimeMultiplier ?? 1);
+      // The base salary itself is a monthly lump sum, not tied to a single shift --
+      // only overtime/holiday-flagged entries contribute a per-entry amount here.
+      base = entry.isOvertime || entry.isHoliday
+        ? hours * (employer.hourlyRate ?? 0) * rateMultiplier(employer, entry)
+        : 0;
       break;
     case "monthly":
       base = 0;

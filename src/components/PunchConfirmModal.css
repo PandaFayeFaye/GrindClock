@@ -92,6 +92,38 @@
   transform: translate(-1px, -1px);
 }
 
+.adj-row {
+  display: flex;
+  gap: 8px;
+}
+
+.adj-toggle {
+  flex: 1;
+  min-height: 44px;
+  padding: 0 8px;
+  border: 2px solid var(--border-bold);
+  border-radius: 10px;
+  background: var(--bg-surface);
+  font-size: 12.5px;
+  font-weight: 800;
+}
+
+.adj-toggle.selected {
+  background: var(--border-bold);
+  color: var(--accent-yellow);
+}
+
+.adj-input {
+  margin-top: 10px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid var(--border-bold);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  background: var(--bg-surface);
+}
+
 .note-input {
   width: 100%;
   padding: 12px 14px;

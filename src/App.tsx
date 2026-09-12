@@ -6,6 +6,7 @@ import { LoginScreen } from "./components/LoginScreen";
 import { Layout } from "./components/Layout";
 import { HomePage } from "./pages/HomePage";
 import { EmployerFormPage } from "./pages/EmployerFormPage";
+import { BackfillEntryPage } from "./pages/BackfillEntryPage";
 import { StatsPage } from "./pages/StatsPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import "./App.css";
@@ -34,6 +35,7 @@ function App() {
           <Route path="/" element={<HomePage uid={user.uid} />} />
           <Route path="/employers/new" element={<EmployerFormPage uid={user.uid} />} />
           <Route path="/employers/:employerId" element={<EmployerFormPage uid={user.uid} />} />
+          <Route path="/entries/new" element={<BackfillEntryPage uid={user.uid} />} />
           <Route path="/stats" element={<StatsPage uid={user.uid} />} />
           <Route path="/settings" element={<SettingsPage uid={user.uid} />} />
         </Route>

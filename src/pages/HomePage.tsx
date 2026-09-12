@@ -2,9 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { clockIn, clockOut, watchEmployers, watchTimeEntries } from "../lib/firestore";
 import { entryPay, mergedHoursToday } from "../lib/pay";
-import type { Employer, Mood, TimeEntry } from "../lib/types";
+import type { Adjustment, Employer, Mood, TimeEntry } from "../lib/types";
 import { Mascot } from "../components/Mascot";
 import { PunchConfirmModal } from "../components/PunchConfirmModal";
+import { SETTINGS_KEYS, useLocalToggle } from "../lib/settings";
 import "./HomePage.css";
 
 function startOfToday() {
@@ -17,6 +18,8 @@ export function HomePage({ uid }: { uid: string }) {
   const [employers, setEmployers] = useState<Employer[]>([]);
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [confirmingEntry, setConfirmingEntry] = useState<{ entry: TimeEntry; employer: Employer } | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [simpleMode] = useLocalToggle(SETTINGS_KEYS.simpleMode, false);
 
   useEffect(() => {
     const unsubEmployers = watchEmployers(uid, setEmployers);
@@ -60,24 +63,31 @@ export function HomePage({ uid }: { uid: string }) {
     }
   }
 
-  function handleConfirm(mood: Mood | undefined, moodNote: string | undefined, note: string) {
+  function handleConfirm(
+    mood: Mood | undefined,
+    moodNote: string | undefined,
+    note: string,
+    adjustment: Adjustment[] | undefined,
+  ) {
     if (!confirmingEntry) return;
-    clockOut(uid, confirmingEntry.entry.id, { mood, moodNote, note: note || undefined });
+    clockOut(uid, confirmingEntry.entry.id, { mood, moodNote, note: note || undefined, adjustment });
     setConfirmingEntry(null);
   }
 
   return (
     <div className="home-page">
-      <div className="banner">
-        <Mascot size={44} />
-        <div className="banner-text">
-          <p className="banner-title">今天也要加油搬砖</p>
+      {!simpleMode && (
+        <div className="banner">
+          <Mascot size={44} />
+          <div className="banner-text">
+            <p className="banner-title">今天也要加油搬砖</p>
+          </div>
         </div>
-      </div>
+      )}
 
       {employers.length > 0 ? (
         <>
-          {workingCount >= 2 && (
+          {!simpleMode && workingCount >= 2 && (
             <div className="combo-badge">
               <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
                 <path d="M13 2L4 14h6l-1 8 9-12h-6z" fill="#FFD93D" stroke="#1A1A1A" strokeWidth="1.8" strokeLinejoin="round" />
@@ -98,7 +108,7 @@ export function HomePage({ uid }: { uid: string }) {
               return (
                 <div className={`row${active ? " is-working" : ""}`} key={emp.id}>
                   <span className="dot" style={{ background: emp.color }} />
-                  <div className="row-name">
+                  <Link to={`/employers/${emp.id}`} className="row-name">
                     <div className="row-title-line">
                       <p className="row-title">{emp.name}</p>
                       <span className="row-rate">
@@ -107,7 +117,7 @@ export function HomePage({ uid }: { uid: string }) {
                           : emp.payType}
                       </span>
                     </div>
-                  </div>
+                  </Link>
                   <button
                     className={`punch-btn${active ? " working" : ""}`}
                     onClick={() => handlePunch(emp)}
@@ -128,11 +138,33 @@ export function HomePage({ uid }: { uid: string }) {
       )}
 
       {employers.length > 0 && (
-        <Link className="fab" to="/employers/new">
-          <svg viewBox="0 0 24 24" fill="none" width="26" height="26">
-            <path d="M12 5v14M5 12h14" stroke="#1A1A1A" strokeWidth="3" strokeLinecap="round" />
-          </svg>
-        </Link>
+        <div className="fab-wrap">
+          {menuOpen && (
+            <>
+              <Link className="fab-menu-item" to="/entries/new" onClick={() => setMenuOpen(false)}>
+                <span className="fab-menu-label">补录工时</span>
+                <span className="fab-mini" style={{ background: "#FFD93D" }}>
+                  <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
+                    <path d="M14 3l4 4-9.5 9.5L4 18l1.5-4.5z" fill="#fff" stroke="#1A1A1A" strokeWidth="1.8" strokeLinejoin="round" />
+                  </svg>
+                </span>
+              </Link>
+              <Link className="fab-menu-item" to="/employers/new" onClick={() => setMenuOpen(false)}>
+                <span className="fab-menu-label">添加雇主</span>
+                <span className="fab-mini" style={{ background: "#5AC8FA" }}>
+                  <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
+                    <path d="M12 5v14M5 12h14" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" />
+                  </svg>
+                </span>
+              </Link>
+            </>
+          )}
+          <button className={`fab${menuOpen ? " open" : ""}`} onClick={() => setMenuOpen(!menuOpen)}>
+            <svg viewBox="0 0 24 24" fill="none" width="26" height="26">
+              <path d="M12 5v14M5 12h14" stroke="#1A1A1A" strokeWidth="3" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
       )}
 
       {confirmingEntry && (

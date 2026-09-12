@@ -1,7 +1,8 @@
-import { useState, type ReactElement } from "react";
-import { useNavigate } from "react-router-dom";
-import { addEmployer } from "../lib/firestore";
-import type { PayType } from "../lib/types";
+import { useEffect, useState, type ReactElement } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { doc, getDoc } from "firebase/firestore";
+import { addEmployer, employersCol, updateEmployer } from "../lib/firestore";
+import type { Employer, PayType } from "../lib/types";
 import "./EmployerFormPage.css";
 
 const PALETTE = ["#FFD93D", "#4361EE", "#FF6B6B", "#39C97A", "#B084F5", "#5AC8FA"];
@@ -55,19 +56,62 @@ const MODES: { key: PayType; label: string }[] = [
   { key: "per-order", label: "按单计费" },
 ];
 
+const OVERTIME_OPTIONS = [1.5, 2, 3];
+const HOLIDAY_OPTIONS = [2, 3];
+const BREAK_OPTIONS = [0, 30, 60];
+const CYCLES: { key: NonNullable<Employer["settlementCycle"]>; label: string }[] = [
+  { key: "daily", label: "日结" },
+  { key: "weekly", label: "周结" },
+  { key: "monthly", label: "月结" },
+];
+
 export function EmployerFormPage({ uid }: { uid: string }) {
   const navigate = useNavigate();
+  const { employerId } = useParams();
+  const isEdit = !!employerId;
+
   const [name, setName] = useState("");
   const [colorIdx, setColorIdx] = useState(0);
   const [payType, setPayType] = useState<PayType>("hourly");
   const [rate, setRate] = useState("");
+  const [overtimeMultiplier, setOvertimeMultiplier] = useState<number | undefined>(undefined);
+  const [holidayMultiplier, setHolidayMultiplier] = useState<number | undefined>(undefined);
+  const [breakMinutes, setBreakMinutes] = useState<number | undefined>(undefined);
+  const [settlementCycle, setSettlementCycle] = useState<Employer["settlementCycle"]>(undefined);
+  const [commuteOpen, setCommuteOpen] = useState(false);
+  const [commuteMinutes, setCommuteMinutes] = useState("");
+  const [commuteCost, setCommuteCost] = useState("");
+  const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
+  const [loaded, setLoaded] = useState(!isEdit);
+
+  useEffect(() => {
+    if (!employerId) return;
+    getDoc(doc(employersCol(uid), employerId)).then((snap) => {
+      const data = snap.data() as Employer | undefined;
+      if (data) {
+        setName(data.name);
+        setColorIdx(Math.max(0, PALETTE.indexOf(data.color)));
+        setPayType(data.payType);
+        setRate(String(data.hourlyRate ?? data.dailyRate ?? data.monthlySalary ?? data.pricePerOrder ?? ""));
+        setOvertimeMultiplier(data.overtimeMultiplier);
+        setHolidayMultiplier(data.holidayMultiplier);
+        setBreakMinutes(data.breakMinutes);
+        setSettlementCycle(data.settlementCycle);
+        setCommuteMinutes(data.commuteMinutes ? String(data.commuteMinutes) : "");
+        setCommuteCost(data.commuteCost ? String(data.commuteCost) : "");
+        setNote(data.note ?? "");
+        if (data.commuteMinutes || data.commuteCost) setCommuteOpen(true);
+      }
+      setLoaded(true);
+    });
+  }, [uid, employerId]);
 
   async function handleSave() {
     if (!name.trim()) return;
     setSaving(true);
     const rateNum = Number(rate) || 0;
-    await addEmployer(uid, {
+    const data: Omit<Employer, "id"> = {
       name: name.trim(),
       color: PALETTE[colorIdx],
       payType,
@@ -77,7 +121,19 @@ export function EmployerFormPage({ uid }: { uid: string }) {
       ...(payType === "daily" ? { dailyRate: rateNum } : {}),
       ...(payType === "monthly" ? { monthlySalary: rateNum } : {}),
       ...(payType === "per-order" ? { pricePerOrder: rateNum } : {}),
-    });
+      ...(overtimeMultiplier ? { overtimeMultiplier } : {}),
+      ...(holidayMultiplier ? { holidayMultiplier } : {}),
+      ...(breakMinutes ? { breakMinutes } : {}),
+      ...(settlementCycle ? { settlementCycle } : {}),
+      ...(commuteMinutes ? { commuteMinutes: Number(commuteMinutes) } : {}),
+      ...(commuteCost ? { commuteCost: Number(commuteCost) } : {}),
+      ...(note.trim() ? { note: note.trim() } : {}),
+    };
+    if (isEdit && employerId) {
+      await updateEmployer(uid, employerId, data);
+    } else {
+      await addEmployer(uid, data);
+    }
     setSaving(false);
     navigate("/");
   }
@@ -91,6 +147,8 @@ export function EmployerFormPage({ uid }: { uid: string }) {
     "per-order": "每单价格",
   }[payType];
 
+  if (!loaded) return <p className="loading">加载中...</p>;
+
   return (
     <div className="employer-form">
       <div className="topbar">
@@ -99,7 +157,7 @@ export function EmployerFormPage({ uid }: { uid: string }) {
             <path d="M6 6l12 12M18 6L6 18" stroke="#1A1A1A" strokeWidth="2.5" strokeLinecap="round" />
           </svg>
         </button>
-        <h1>添加雇主</h1>
+        <h1>{isEdit ? "编辑雇主" : "添加雇主"}</h1>
         <button className="save-btn" onClick={handleSave} disabled={saving || !name.trim()}>
           保存
         </button>
@@ -160,6 +218,107 @@ export function EmployerFormPage({ uid }: { uid: string }) {
             placeholder="¥"
             value={rate}
             onChange={(e) => setRate(e.target.value)}
+          />
+        </div>
+
+        <div>
+          <p className="field-label">加班费率倍数 <span className="opt">可选</span></p>
+          <div className="chip-row">
+            {OVERTIME_OPTIONS.map((v) => (
+              <button
+                key={v}
+                type="button"
+                className={`chip${overtimeMultiplier === v ? " selected" : ""}`}
+                onClick={() => setOvertimeMultiplier(overtimeMultiplier === v ? undefined : v)}
+              >
+                {v}倍
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="field-label">节假日费率倍数 <span className="opt">可选</span></p>
+          <div className="chip-row">
+            {HOLIDAY_OPTIONS.map((v) => (
+              <button
+                key={v}
+                type="button"
+                className={`chip${holidayMultiplier === v ? " selected" : ""}`}
+                onClick={() => setHolidayMultiplier(holidayMultiplier === v ? undefined : v)}
+              >
+                {v}倍
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="field-label">休息扣除时长 <span className="opt">可选</span></p>
+          <div className="chip-row">
+            {BREAK_OPTIONS.map((v) => (
+              <button
+                key={v}
+                type="button"
+                className={`chip${breakMinutes === v ? " selected" : ""}`}
+                onClick={() => setBreakMinutes(v)}
+              >
+                {v === 0 ? "不扣除" : `${v}分钟`}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <p className="field-label">结算周期 <span className="opt">可选</span></p>
+          <div className="chip-row">
+            {CYCLES.map((c) => (
+              <button
+                key={c.key}
+                type="button"
+                className={`chip${settlementCycle === c.key ? " selected" : ""}`}
+                onClick={() => setSettlementCycle(settlementCycle === c.key ? undefined : c.key)}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <div className="collapse-header" onClick={() => setCommuteOpen(!commuteOpen)}>
+            <span>净收益对比设置（可选）</span>
+            <svg viewBox="0 0 24 24" fill="none" width="16" height="16" style={{ transform: commuteOpen ? "rotate(180deg)" : undefined }}>
+              <path d="M6 9l6 6 6-6" stroke="#1A1A1A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          {commuteOpen && (
+            <div className="collapse-body">
+              <input
+                className="rate-input"
+                type="number"
+                placeholder="预估通勤时长（分钟）"
+                value={commuteMinutes}
+                onChange={(e) => setCommuteMinutes(e.target.value)}
+              />
+              <input
+                className="rate-input"
+                type="number"
+                placeholder="预估通勤交通费（元）"
+                value={commuteCost}
+                onChange={(e) => setCommuteCost(e.target.value)}
+              />
+            </div>
+          )}
+        </div>
+
+        <div>
+          <p className="field-label">备注 <span className="opt">可选</span></p>
+          <textarea
+            className="note-input"
+            placeholder="工种、联系方式之类都可以写这里"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
           />
         </div>
       </div>

@@ -2,7 +2,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import { BottomNav } from "./BottomNav";
 import "./Layout.css";
 
-const NO_NAV_PREFIXES = ["/employers/"];
+const NO_NAV_PREFIXES = ["/employers/", "/entries/"];
 
 export function Layout({ uid }: { uid: string }) {
   const location = useLocation();

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { Employer, Mood, TimeEntry } from "../lib/types";
+import type { Adjustment, Employer, Mood, TimeEntry } from "../lib/types";
 import { entryHours, entryPay } from "../lib/pay";
 import "./PunchConfirmModal.css";
 
@@ -19,12 +19,24 @@ export function PunchConfirmModal({
   employer: Employer;
   entry: TimeEntry;
   onCancel: () => void;
-  onConfirm: (mood: Mood | undefined, moodNote: string | undefined, note: string) => void;
+  onConfirm: (
+    mood: Mood | undefined,
+    moodNote: string | undefined,
+    note: string,
+    adjustment: Adjustment[] | undefined,
+  ) => void;
 }) {
   const [mood, setMood] = useState<Mood | undefined>(undefined);
   const [note, setNote] = useState("");
+  const [adjType, setAdjType] = useState<"none" | "bonus" | "deduction">("none");
+  const [adjAmount, setAdjAmount] = useState("");
 
-  const previewEntry: TimeEntry = { ...entry, endTime: Date.now() };
+  const adjustment: Adjustment[] | undefined =
+    adjType !== "none" && Number(adjAmount) > 0
+      ? [{ type: adjType, amount: Number(adjAmount) }]
+      : undefined;
+
+  const previewEntry: TimeEntry = { ...entry, endTime: Date.now(), adjustment };
   const hours = entryHours(previewEntry);
   const pay = entryPay(employer, previewEntry);
 
@@ -58,6 +70,26 @@ export function PunchConfirmModal({
 
         <div>
           <p className="section-label">
+            本次补贴/扣款<span className="opt">（可选，一次性）</span>
+          </p>
+          <div className="adj-row">
+            <button className={`adj-toggle${adjType === "none" ? " selected" : ""}`} onClick={() => setAdjType("none")}>无</button>
+            <button className={`adj-toggle${adjType === "bonus" ? " selected" : ""}`} onClick={() => setAdjType("bonus")}>补贴</button>
+            <button className={`adj-toggle${adjType === "deduction" ? " selected" : ""}`} onClick={() => setAdjType("deduction")}>扣款</button>
+          </div>
+          {adjType !== "none" && (
+            <input
+              className="adj-input"
+              type="number"
+              placeholder="金额（元）"
+              value={adjAmount}
+              onChange={(e) => setAdjAmount(e.target.value)}
+            />
+          )}
+        </div>
+
+        <div>
+          <p className="section-label">
             备注<span className="opt">（可选）</span>
           </p>
           <textarea
@@ -70,7 +102,7 @@ export function PunchConfirmModal({
 
         <button
           className="confirm-btn"
-          onClick={() => onConfirm(mood, mood ? "" : undefined, note)}
+          onClick={() => onConfirm(mood, mood ? "" : undefined, note, adjustment)}
         >
           确认保存
         </button>
