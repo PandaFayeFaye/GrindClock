@@ -1,6 +1,6 @@
 # GigTime — 产品需求文档（PRD）
 
-版本：v0.1（草案） · 更新日期：2026-09-11
+版本：v0.3 · 更新日期：2026-09-12
 
 ## 1. 产品定位
 
@@ -21,9 +21,13 @@ React + TypeScript + Vite + Capacitor（iOS/Android/Web三端一套代码）+ Fi
 users/{uid}/employers/{employerId}
   - name: string
   - hourlyRate: number
-  - payType: "hourly" | "daily" | "base+overtime" | "comprehensive"
+  - payType: "hourly" | "daily" | "base+overtime" | "comprehensive" | "monthly" | "per-order"
       // comprehensive（综合工时）MVP阶段按"hourly"同等计算，仅作展示标签，
       // 不实现法定加班周期判定（见FEATURE_SPEC 3.2简化说明）
+      // per-order（按单计费，如外卖/网约车骑手）：不按时长算钱，按订单数×单价，
+      // 打卡仍记录工时用于统计"在线时长"，但收入计算走 pricePerOrder × 当次订单数
+  - monthlySalary?: number      // monthly模式必填
+  - pricePerOrder?: number      // per-order模式必填
   - color: string
   - overtimeMultiplier?: number
   - holidayMultiplier?: number
@@ -40,8 +44,10 @@ users/{uid}/timeEntries/{entryId}
   - endTime: number | null
   - status: "confirmed" | "draft"   // OCR/语音识别生成的记录先落 draft，用户确认后转 confirmed
   - source: "manual" | "ocr" | "voice"
-  - mood?: "happy" | "neutral" | "tired"   // 可选，用于月度总结的"最累的一天"
+  - mood?: "crash" | "normal" | "great" | "heartbeat"   // 崩溃/普通/爽/心动，可选，用于统计页心情曲线+月度总结的"最累的一天"
+  - moodNote?: string           // 心情标签追加的可选短文本，上限20字
   - adjustment?: { type: "bonus" | "deduction"; amount: number; note?: string }[]  // 单次的补贴/扣款
+  - orderCount?: number         // 仅per-order模式使用，本次记录完成的订单数
   - note?: string
 
 users/{uid}/workers/{workerId}      // 团队代记工时功能专用（对应FEATURE_SPEC 3.8）
@@ -75,6 +81,9 @@ users/{uid}/workers/{workerId}      // 团队代记工时功能专用（对应FE
 | 12 | 多雇主净收益横向比较 | 扣除预估通勤/等待时间成本后，计算并展示各雇主的实际到手时薪排名 | 海外Reddit零工社区反复提到的未满足诉求 | ⬜ 待开发 |
 | 13 | 拍照识别排班表/收入截图（OCR） | 拍照或上传截图后，自动识别出时间段/金额并生成待确认的工时记录草稿 | AI/多模态拓展：降低多雇主场景录入摩擦 | ⬜ 待开发（技术方案：Tesseract.js + Gemini API结构化） |
 | 14 | 语音记工 | 说一句"今天在奶茶店干了6小时"，自动解析生成工时记录草稿 | AI/多模态拓展：适配碎片化记录习惯 | ⬜ 待开发（技术方案：Web Speech API + Gemini API解析） |
+| 23 | 统计页多样化数据可视化 | 除柱状图外，至少再实现热力日历（月度活跃度）、环形进度（目标达成）、雇主横向排行榜三种图表类型 | 调研发现现有工时App统计可视化普遍薄弱（仅列表+柱状图），这是差异化机会点；详见FEATURE_SPEC 3.4 | ⬜ 待开发 |
+| 24 | 每日轻量小结推送 | 检测到当天最后一次下班打卡后30-60分钟内推送，内容仅"今日工时+今日收入+本周累计"三项；仅当天有打卡记录才发；设置里可一键关闭 | 调研Duolingo/Oura/WHOOP/Toggl后的结论：值得做但要走"轻量确认"而非"损失厌恶"路线，见FEATURE_SPEC 3.13 | ⬜ 待开发 |
+| 25 | 心情标签（升级版） | 打卡确认卡片的心情选择从3个emoji升级为带文字标签（崩溃/普通/爽/心动），可选追加≤20字短文本；周/月总结页展示心情曲线小结 | 调研Daylio/格志日记后的结论：纯标签点选留存率最好，强制长文写作留存最差；见FEATURE_SPEC 3.3/3.14 | ⬜ 待开发（升级已有的3.3心情emoji字段） |
 
 ### P2 — 后续版本（视资源投入）
 
@@ -98,6 +107,8 @@ users/{uid}/workers/{workerId}      // 团队代记工时功能专用（对应FE
 | 后台持续定位追踪 | 国内耗电投诉、Hubstaff式监控反感 |
 | 功能拆分逐个收费（nickel-and-dime） | Everlance被GetApp评价诟病 |
 | 声纹/环境音辅助打卡等激进感知功能 | 技术未成熟且易引发新隐私争议，观察期暂缓 |
+| 情绪日记做成独立Tab/社交广场（点赞、公开可见、好友互动） | 调研发现工具型App硬加社交属性容易造成定位分裂、两头不专精，是有共识的行业教训；情绪记录必须轻量嵌入现有流程，不单独立项 |
+| 高频/强制性推送（每日总结做成Duolingo式连续打卡惩罚机制） | 调研发现零工是自由选择上下班，"没打卡=失败"式推送易被视为道德绑架；且周推送≥5条会导致64%用户卸载App |
 
 ## 6. 里程碑建议
 
