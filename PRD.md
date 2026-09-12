@@ -1,6 +1,6 @@
 # GigTime — 产品需求文档（PRD）
 
-版本：v0.3 · 更新日期：2026-09-12
+版本：v0.4 · 更新日期：2026-09-12
 
 ## 1. 产品定位
 
@@ -13,7 +13,25 @@
 
 ## 2. 技术栈
 
-React + TypeScript + Vite + Capacitor（iOS/Android/Web三端一套代码）+ Firebase（Auth + Firestore，Spark免费方案）
+### 2.1 App端（iOS / Android / Web）
+
+React + TypeScript + Vite + Capacitor（三端一套代码）+ Firebase（Auth + Firestore，Spark免费方案）
+
+### 2.2 微信小程序端（独立代码库，架构决策）
+
+**决策**：微信小程序**不能**复用App端的Capacitor/React/Firebase技术栈，属于硬性技术阻塞，不是可以绕过的小问题。调研确认：
+
+- 小程序逻辑层没有DOM，Capacitor打包的Web产物无法直接运行，UI层必须用小程序原生语法（或Taro等框架）重写
+- 小程序请求后端必须走微信后台配置的**已ICP备案**HTTPS域名白名单，Firebase域名是境外域名，**无法完成国内ICP备案**，进不了白名单
+- Firebase官方不支持小程序平台，Auth/Firestore的Web SDK依赖浏览器环境（DOM/WebSocket），小程序逻辑层不具备
+
+**采用路径**：App端和小程序端做成**两套独立代码**——
+- App端：现状不变，继续用Capacitor+React+Firebase
+- 小程序端：原生小程序框架（或视团队熟悉程度选Taro），后端换成**微信云开发**（腾讯自己的BaaS，域名合规由平台处理，不需要自己搞ICP备案，免费额度与Firebase Spark方案类似）
+
+**代价**：核心功能（打卡、多雇主统计等）需要在两个后端（Firestore + 微信云开发的云数据库）分别实现一遍，数据模型要在两边保持一致但不会自动同步——如果同一用户想在App和小程序间共享数据，需要额外设计跨后端同步方案（当前MVP阶段不做，视需求再评估）。
+
+**保持不变的部分**：DESIGN_SYSTEM.md的视觉规范、FEATURE_SPEC.md的文案语气和交互原则，小程序端应尽量复用，只是实现层的技术栈不同。
 
 ## 3. 数据模型
 
