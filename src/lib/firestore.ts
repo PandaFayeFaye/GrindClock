@@ -50,13 +50,18 @@ export function watchTimeEntries(uid: string, cb: (list: TimeEntry[]) => void) {
 
 // Multiple employers can be clocked in at once (gig workers commonly "dual-app" across
 // platforms) -- callers are responsible for blocking only same-employer double clock-ins.
-export function clockIn(uid: string, employerId: string) {
+export function clockIn(
+  uid: string,
+  employerId: string,
+  clockInLocation?: { lat: number; lng: number; accuracy: number },
+) {
   return addDoc(timeEntriesCol(uid), {
     employerId,
     startTime: Date.now(),
     endTime: null,
     status: "confirmed",
     source: "manual",
+    ...(clockInLocation ? { clockInLocation } : {}),
   });
 }
 

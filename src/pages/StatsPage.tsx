@@ -225,7 +225,15 @@ export function StatsPage({ uid }: { uid: string }) {
                 <span className="dot" style={{ background: emp.color }} />
                 <div className="info">
                   <p className="n">{emp.name}</p>
-                  <p className="d">{new Date(e.startTime).toLocaleDateString()} · {entryHours(e).toFixed(1)}小时</p>
+                  <p className="d">
+                    {new Date(e.startTime).toLocaleDateString()} · {entryHours(e).toFixed(1)}小时
+                    {e.clockInLocation && (
+                      <svg viewBox="0 0 24 24" fill="none" width="12" height="12" className="loc-ic">
+                        <path d="M12 2a7 7 0 00-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 00-7-7z" fill="#8AB4A0" />
+                        <circle cx="12" cy="9" r="2.4" fill="#fff" />
+                      </svg>
+                    )}
+                  </p>
                 </div>
                 <span className="pay">¥{entryPay(emp, e).toFixed(1)}</span>
               </div>

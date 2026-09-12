@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { watchTimeEntries } from "../lib/firestore";
+import { watchEmployers, watchTimeEntries } from "../lib/firestore";
 import { entryHours } from "../lib/pay";
-import { currentStreak, dateKey } from "../lib/stats";
-import type { TimeEntry } from "../lib/types";
+import { consecutiveWeeksMeetingGoal, currentStreak, dateKey } from "../lib/stats";
+import { useWeeklyGoal } from "../lib/settings";
+import type { Employer, TimeEntry } from "../lib/types";
 import "./BadgeWallPage.css";
 
 const TIERS = [
@@ -23,7 +24,14 @@ interface Badge {
 export function BadgeWallPage({ uid }: { uid: string }) {
   const navigate = useNavigate();
   const [entries, setEntries] = useState<TimeEntry[]>([]);
-  useEffect(() => watchTimeEntries(uid, setEntries), [uid]);
+  const [employers, setEmployers] = useState<Employer[]>([]);
+  const [weeklyGoal] = useWeeklyGoal();
+  useEffect(() => {
+    const unsubEntries = watchTimeEntries(uid, setEntries);
+    const unsubEmployers = watchEmployers(uid, setEmployers);
+    return () => { unsubEntries(); unsubEmployers(); };
+  }, [uid]);
+  const employerById = useMemo(() => new Map(employers.map((e) => [e.id, e])), [employers]);
 
   const personalConfirmed = useMemo(
     () => entries.filter((e) => !e.workerId && e.status === "confirmed" && e.endTime),
@@ -57,12 +65,20 @@ export function BadgeWallPage({ uid }: { uid: string }) {
 
   const nightShiftCount = personalConfirmed.filter((e) => new Date(e.startTime).getHours() >= 22).length;
   const streak = currentStreak(personalConfirmed);
+  const goalStreak = useMemo(
+    () => consecutiveWeeksMeetingGoal(personalConfirmed, employerById, weeklyGoal),
+    [personalConfirmed, employerById, weeklyGoal],
+  );
 
   const funBadges: Badge[] = [
     { name: "双开达人", cond: "同一天内为2个及以上雇主打卡", unlocked: hasComboDay },
     { name: "不灭火苗", cond: "连续打卡满30天", unlocked: streak >= 30 },
     { name: "深夜战士", cond: "完成10次22点后打卡", unlocked: nightShiftCount >= 10 },
-    { name: "省钱达人", cond: "连续3周达成收入目标（需先在统计页设置目标）", unlocked: false },
+    {
+      name: "省钱达人",
+      cond: `连续3周收入达到¥${weeklyGoal}目标（目标可在统计页修改，当前已连续${goalStreak}周）`,
+      unlocked: goalStreak >= 3,
+    },
   ];
 
   const [selected, setSelected] = useState<Badge | null>(null);

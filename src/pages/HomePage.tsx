@@ -6,6 +6,8 @@ import type { Adjustment, Employer, Mood, TimeEntry } from "../lib/types";
 import { Mascot } from "../components/Mascot";
 import { PunchConfirmModal } from "../components/PunchConfirmModal";
 import { SETTINGS_KEYS, useLocalToggle } from "../lib/settings";
+import { getCurrentLocation } from "../lib/geolocation";
+import { useT } from "../lib/i18n";
 import "./HomePage.css";
 
 function startOfToday() {
@@ -15,11 +17,13 @@ function startOfToday() {
 }
 
 export function HomePage({ uid }: { uid: string }) {
+  const t = useT();
   const [employers, setEmployers] = useState<Employer[]>([]);
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [confirmingEntry, setConfirmingEntry] = useState<{ entry: TimeEntry; employer: Employer } | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [simpleMode] = useLocalToggle(SETTINGS_KEYS.simpleMode, false);
+  const [locationPunch] = useLocalToggle(SETTINGS_KEYS.locationPunch, false);
 
   useEffect(() => {
     const unsubEmployers = watchEmployers(uid, setEmployers);
@@ -54,10 +58,13 @@ export function HomePage({ uid }: { uid: string }) {
   const todaysHours = useMemo(() => mergedHoursToday(personalEntries), [personalEntries]);
   const workingCount = activeByEmployer.size;
 
-  function handlePunch(employer: Employer) {
+  async function handlePunch(employer: Employer) {
     const active = activeByEmployer.get(employer.id);
     if (active) {
       setConfirmingEntry({ entry: active, employer });
+    } else if (locationPunch) {
+      const loc = await getCurrentLocation();
+      clockIn(uid, employer.id, loc ?? undefined);
     } else {
       clockIn(uid, employer.id);
     }
@@ -80,7 +87,7 @@ export function HomePage({ uid }: { uid: string }) {
         <div className="banner">
           <Mascot size={44} />
           <div className="banner-text">
-            <p className="banner-title">今天也要加油搬砖</p>
+            <p className="banner-title">{t("homeBanner")}</p>
           </div>
         </div>
       )}
@@ -92,14 +99,14 @@ export function HomePage({ uid }: { uid: string }) {
               <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
                 <path d="M13 2L4 14h6l-1 8 9-12h-6z" fill="#FFD93D" stroke="#1A1A1A" strokeWidth="1.8" strokeLinejoin="round" />
               </svg>
-              <span>双开中！{workingCount}份工作同时计时</span>
+              <span>{t("comboBadge", { n: workingCount })}</span>
             </div>
           )}
 
           <div className="income-card">
-            <p className="income-label">今日已赚</p>
+            <p className="income-label">{t("todayEarned")}</p>
             <p className="income-value">¥{todaysIncome.toFixed(1)}</p>
-            <p className="income-note">今日已工作 {todaysHours.toFixed(1)} 小时</p>
+            <p className="income-note">{t("todayWorked", { h: todaysHours.toFixed(1) })}</p>
           </div>
 
           <div className="list">
@@ -122,7 +129,7 @@ export function HomePage({ uid }: { uid: string }) {
                     className={`punch-btn${active ? " working" : ""}`}
                     onClick={() => handlePunch(emp)}
                   >
-                    {active ? "下班打卡" : "上班打卡"}
+                    {active ? t("clockOut") : t("clockIn")}
                   </button>
                 </div>
               );
@@ -132,8 +139,8 @@ export function HomePage({ uid }: { uid: string }) {
       ) : (
         <div className="empty">
           <Mascot size={100} />
-          <p>还没有雇主？点击下方开始你的搬砖之旅</p>
-          <Link className="empty-cta" to="/employers/new">+ 添加第一个雇主</Link>
+          <p>{t("noEmployersHint")}</p>
+          <Link className="empty-cta" to="/employers/new">{t("addFirstEmployer")}</Link>
         </div>
       )}
 
@@ -142,7 +149,7 @@ export function HomePage({ uid }: { uid: string }) {
           {menuOpen && (
             <>
               <Link className="fab-menu-item" to="/ai-capture" onClick={() => setMenuOpen(false)}>
-                <span className="fab-menu-label">AI记工（拍照/语音）</span>
+                <span className="fab-menu-label">{t("aiCapture")}</span>
                 <span className="fab-mini" style={{ background: "#B084F5" }}>
                   <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
                     <path d="M12 3l1.8 4.4L18 9l-4.2 1.6L12 15l-1.8-4.4L6 9l4.2-1.6z" fill="#fff" />
@@ -150,7 +157,7 @@ export function HomePage({ uid }: { uid: string }) {
                 </span>
               </Link>
               <Link className="fab-menu-item" to="/entries/new" onClick={() => setMenuOpen(false)}>
-                <span className="fab-menu-label">补录工时</span>
+                <span className="fab-menu-label">{t("backfill")}</span>
                 <span className="fab-mini" style={{ background: "#FFD93D" }}>
                   <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
                     <path d="M14 3l4 4-9.5 9.5L4 18l1.5-4.5z" fill="#fff" stroke="#1A1A1A" strokeWidth="1.8" strokeLinejoin="round" />
@@ -158,7 +165,7 @@ export function HomePage({ uid }: { uid: string }) {
                 </span>
               </Link>
               <Link className="fab-menu-item" to="/employers/new" onClick={() => setMenuOpen(false)}>
-                <span className="fab-menu-label">添加雇主</span>
+                <span className="fab-menu-label">{t("addEmployer")}</span>
                 <span className="fab-mini" style={{ background: "#5AC8FA" }}>
                   <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
                     <path d="M12 5v14M5 12h14" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" />

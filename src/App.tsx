@@ -15,6 +15,7 @@ import { AddWorkerFormPage } from "./pages/AddWorkerFormPage";
 import { MonthlyRecapPage } from "./pages/MonthlyRecapPage";
 import { BadgeWallPage } from "./pages/BadgeWallPage";
 import { AICapturePage } from "./pages/AICapturePage";
+import { LanguageProvider } from "./lib/i18n";
 import "./App.css";
 
 function App() {
@@ -35,24 +36,26 @@ function App() {
   if (!user) return <LoginScreen />;
 
   return (
-    <HashRouter>
-      <Routes>
-        <Route element={<Layout uid={user.uid} />}>
-          <Route path="/" element={<HomePage uid={user.uid} />} />
-          <Route path="/employers/new" element={<EmployerFormPage uid={user.uid} />} />
-          <Route path="/employers/:employerId" element={<EmployerFormPage uid={user.uid} />} />
-          <Route path="/entries/new" element={<BackfillEntryPage uid={user.uid} />} />
-          <Route path="/stats" element={<StatsPage uid={user.uid} />} />
-          <Route path="/settings" element={<SettingsPage uid={user.uid} />} />
-          <Route path="/net-pay" element={<NetPayComparePage uid={user.uid} />} />
-          <Route path="/team" element={<TeamRosterPage uid={user.uid} />} />
-          <Route path="/workers/new" element={<AddWorkerFormPage uid={user.uid} />} />
-          <Route path="/recap" element={<MonthlyRecapPage uid={user.uid} />} />
-          <Route path="/badges" element={<BadgeWallPage uid={user.uid} />} />
-          <Route path="/ai-capture" element={<AICapturePage uid={user.uid} />} />
-        </Route>
-      </Routes>
-    </HashRouter>
+    <LanguageProvider>
+      <HashRouter>
+        <Routes>
+          <Route element={<Layout uid={user.uid} />}>
+            <Route path="/" element={<HomePage uid={user.uid} />} />
+            <Route path="/employers/new" element={<EmployerFormPage uid={user.uid} />} />
+            <Route path="/employers/:employerId" element={<EmployerFormPage uid={user.uid} />} />
+            <Route path="/entries/new" element={<BackfillEntryPage uid={user.uid} />} />
+            <Route path="/stats" element={<StatsPage uid={user.uid} />} />
+            <Route path="/settings" element={<SettingsPage uid={user.uid} />} />
+            <Route path="/net-pay" element={<NetPayComparePage uid={user.uid} />} />
+            <Route path="/team" element={<TeamRosterPage uid={user.uid} />} />
+            <Route path="/workers/new" element={<AddWorkerFormPage uid={user.uid} />} />
+            <Route path="/recap" element={<MonthlyRecapPage uid={user.uid} />} />
+            <Route path="/badges" element={<BadgeWallPage uid={user.uid} />} />
+            <Route path="/ai-capture" element={<AICapturePage uid={user.uid} />} />
+          </Route>
+        </Routes>
+      </HashRouter>
+    </LanguageProvider>
   );
 }
 

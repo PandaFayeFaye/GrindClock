@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { watchEmployers, watchTimeEntries } from "../lib/firestore";
 import { entryHours, entryPay } from "../lib/pay";
 import { currentStreak, dateKey, leaderboard, startOfMonth } from "../lib/stats";
+import { downloadBlob, renderRecapShareImage } from "../lib/shareImage";
 import type { Employer, TimeEntry } from "../lib/types";
 import "./MonthlyRecapPage.css";
 
@@ -15,6 +16,7 @@ export function MonthlyRecapPage({ uid }: { uid: string }) {
   const navigate = useNavigate();
   const [employers, setEmployers] = useState<Employer[]>([]);
   const [entries, setEntries] = useState<TimeEntry[]>([]);
+  const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
     const unsubEmployers = watchEmployers(uid, setEmployers);
@@ -82,6 +84,25 @@ export function MonthlyRecapPage({ uid }: { uid: string }) {
   const heatHex = ["rgba(255,255,255,.08)", "rgba(255,217,61,.35)", "rgba(255,217,61,.65)", "#FFD93D"];
   const monthLabel = `${new Date().getFullYear()}年${new Date().getMonth() + 1}月`;
 
+  async function handleShare() {
+    setGenerating(true);
+    try {
+      const blob = await renderRecapShareImage({
+        monthLabel,
+        totalHours,
+        totalPay,
+        employerCount: employers.length,
+        streak,
+        topEmployer,
+        hardestDay,
+        heatCells,
+      });
+      downloadBlob(blob, `gigtime-recap-${monthLabel}.png`);
+    } finally {
+      setGenerating(false);
+    }
+  }
+
   return (
     <div className="recap-page">
       <span className="sticker c1" />
@@ -117,8 +138,8 @@ export function MonthlyRecapPage({ uid }: { uid: string }) {
         </div>
 
         <div className="actions">
-          <button className="share-btn" onClick={() => window.alert("生成分享长图功能开发中")}>
-            生成分享长图
+          <button className="share-btn" onClick={handleShare} disabled={generating}>
+            {generating ? "生成中..." : "生成分享长图"}
           </button>
           <button className="detail-link" onClick={() => navigate("/stats")}>查看完整明细 →</button>
         </div>

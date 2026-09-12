@@ -94,3 +94,35 @@ export function startOfMonth(now = Date.now()): number {
   d.setHours(0, 0, 0, 0);
   return d.getTime();
 }
+
+/**
+ * Number of consecutive fully-completed weeks (ending last week, not the
+ * in-progress current week) whose total pay met `goal`. Used by the
+ * "省钱达人" badge (needs >=3).
+ */
+export function consecutiveWeeksMeetingGoal(
+  entries: TimeEntry[],
+  employerById: Map<string, Employer>,
+  goal: number,
+  now = Date.now(),
+): number {
+  if (goal <= 0) return 0;
+  let weekStart = startOfWeek(now) - 7 * 24 * 3600_000; // last full week, walking backwards
+  let streak = 0;
+  for (let i = 0; i < 26; i++) {
+    const weekEnd = weekStart + 7 * 24 * 3600_000;
+    let pay = 0;
+    for (const e of entries) {
+      if (!isConfirmedPersonal(e) || e.startTime < weekStart || e.startTime >= weekEnd) continue;
+      const emp = employerById.get(e.employerId);
+      if (emp) pay += entryPay(emp, e);
+    }
+    if (pay >= goal) {
+      streak += 1;
+      weekStart -= 7 * 24 * 3600_000;
+    } else {
+      break;
+    }
+  }
+  return streak;
+}

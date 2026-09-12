@@ -42,6 +42,7 @@ export interface TimeEntry {
   isOvertime?: boolean; // applies employer.overtimeMultiplier when computing pay
   isHoliday?: boolean; // applies employer.holidayMultiplier when computing pay
   note?: string;
+  clockInLocation?: { lat: number; lng: number; accuracy: number };
 }
 
 export interface Worker {

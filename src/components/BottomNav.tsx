@@ -1,10 +1,11 @@
 import { NavLink } from "react-router-dom";
+import { useT } from "../lib/i18n";
 import "./BottomNav.css";
 
 const TABS = [
   {
     to: "/",
-    label: "首页",
+    labelKey: "home" as const,
     accent: "var(--accent-coral)",
     icon: (
       <>
@@ -15,7 +16,7 @@ const TABS = [
   },
   {
     to: "/stats",
-    label: "统计",
+    labelKey: "stats" as const,
     accent: "var(--accent-blue)",
     icon: (
       <>
@@ -28,7 +29,7 @@ const TABS = [
   },
   {
     to: "/settings",
-    label: "我的",
+    labelKey: "settings" as const,
     accent: "var(--accent-purple)",
     icon: (
       <>
@@ -40,6 +41,7 @@ const TABS = [
 ];
 
 export function BottomNav() {
+  const t = useT();
   return (
     <div className="tabbar-dock">
       <div className="tabbar">
@@ -56,7 +58,7 @@ export function BottomNav() {
                 {tab.icon}
               </svg>
             </span>
-            {tab.label}
+            {t(tab.labelKey)}
           </NavLink>
         ))}
       </div>
