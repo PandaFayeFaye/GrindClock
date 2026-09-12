@@ -9,6 +9,12 @@ import { EmployerFormPage } from "./pages/EmployerFormPage";
 import { BackfillEntryPage } from "./pages/BackfillEntryPage";
 import { StatsPage } from "./pages/StatsPage";
 import { SettingsPage } from "./pages/SettingsPage";
+import { NetPayComparePage } from "./pages/NetPayComparePage";
+import { TeamRosterPage } from "./pages/TeamRosterPage";
+import { AddWorkerFormPage } from "./pages/AddWorkerFormPage";
+import { MonthlyRecapPage } from "./pages/MonthlyRecapPage";
+import { BadgeWallPage } from "./pages/BadgeWallPage";
+import { AICapturePage } from "./pages/AICapturePage";
 import "./App.css";
 
 function App() {
@@ -38,6 +44,12 @@ function App() {
           <Route path="/entries/new" element={<BackfillEntryPage uid={user.uid} />} />
           <Route path="/stats" element={<StatsPage uid={user.uid} />} />
           <Route path="/settings" element={<SettingsPage uid={user.uid} />} />
+          <Route path="/net-pay" element={<NetPayComparePage uid={user.uid} />} />
+          <Route path="/team" element={<TeamRosterPage uid={user.uid} />} />
+          <Route path="/workers/new" element={<AddWorkerFormPage uid={user.uid} />} />
+          <Route path="/recap" element={<MonthlyRecapPage uid={user.uid} />} />
+          <Route path="/badges" element={<BadgeWallPage uid={user.uid} />} />
+          <Route path="/ai-capture" element={<AICapturePage uid={user.uid} />} />
         </Route>
       </Routes>
     </HashRouter>

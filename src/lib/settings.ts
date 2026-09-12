@@ -31,3 +31,25 @@ export const SETTINGS_KEYS = {
   locationPunch: "gigtime_location_punch",
   dailyRecapPush: "gigtime_daily_recap_push",
 } as const;
+
+const WEEKLY_GOAL_KEY = "gigtime_weekly_goal";
+
+export function useWeeklyGoal(): [number, (v: number) => void] {
+  const [value, setValue] = useState(() => {
+    try {
+      return Number(window.localStorage.getItem(WEEKLY_GOAL_KEY)) || 1000;
+    } catch {
+      return 1000;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(WEEKLY_GOAL_KEY, String(value));
+    } catch {
+      // ignore
+    }
+  }, [value]);
+
+  return [value, setValue];
+}

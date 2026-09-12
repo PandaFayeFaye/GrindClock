@@ -52,12 +52,100 @@
 
 .empty-hint { font-size: 13px; color: var(--text-muted); text-align: center; padding: 24px 0; }
 
-.todo-note {
-  font-size: 11px;
-  color: var(--text-muted);
+.chart-card {
   background: var(--bg-surface);
-  border: 1.5px dashed var(--border-quiet);
-  border-radius: 12px;
-  padding: 12px 14px;
-  line-height: 1.6;
+  border: 1.5px solid var(--border-quiet);
+  border-radius: 14px;
+  padding: 16px;
 }
+
+.chart-card .title {
+  font-size: 12px;
+  font-weight: 800;
+  margin: 0 0 12px;
+}
+
+.mood-strip { display: flex; gap: 8px; }
+.mood-cell { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; }
+.mood-chip { width: 100%; aspect-ratio: 1; border-radius: 50%; border: 2px solid var(--border-bold); }
+.mood-chip.empty { border: 1.5px dashed var(--border-quiet); }
+.mood-cell .lb { font-size: 9px; color: var(--text-muted); font-weight: 700; }
+
+.viz-tabs { display: flex; gap: 6px; }
+.viz-tab {
+  flex: 1;
+  min-height: 38px;
+  border: 2px solid var(--border-bold);
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 800;
+  background: var(--bg-surface);
+  color: var(--text-muted);
+}
+.viz-tab.active { background: var(--border-bold); color: var(--accent-yellow); }
+
+.bars { display: flex; align-items: flex-end; gap: 10px; height: 120px; }
+.bar-col { flex: 1; display: flex; flex-direction: column-reverse; align-items: center; gap: 6px; height: 100%; }
+.bar-stack { width: 100%; border-radius: 4px 4px 0 0; background: var(--accent-yellow); border: 1.5px solid var(--border-bold); }
+.bar-day { font-size: 10px; color: var(--text-muted); font-weight: 700; }
+
+.streak-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--accent-yellow);
+  border: 2px solid var(--border-bold);
+  border-radius: 999px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 900;
+  margin-bottom: 10px;
+}
+
+.heatmap { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+.heat-cell { aspect-ratio: 1; border-radius: 5px; border: 1.3px solid rgba(26, 26, 26, 0.15); }
+.heat-legend { display: flex; align-items: center; gap: 6px; margin-top: 10px; justify-content: flex-end; }
+.heat-legend span { font-size: 9.5px; color: var(--text-muted); }
+.heat-legend i { width: 12px; height: 12px; border-radius: 3px; border: 1px solid rgba(26, 26, 26, 0.15); display: inline-block; }
+
+.ring-wrap { display: flex; align-items: center; gap: 18px; }
+.ring-center { position: relative; width: 104px; height: 104px; flex-shrink: 0; }
+.ring-center .num { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.ring-center .num b { font-family: var(--font-display); font-size: 22px; line-height: 1; }
+.ring-center .num span { font-size: 9px; color: var(--text-muted); font-weight: 700; }
+.ring-note { flex: 1; font-size: 12.5px; color: var(--text-muted); line-height: 1.6; cursor: pointer; }
+.ring-note b { color: var(--text-primary); }
+.goal-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid var(--border-bold);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.leaderboard { display: flex; flex-direction: column; gap: 10px; margin-top: 14px; }
+.lb-row { display: flex; align-items: center; gap: 10px; }
+.lb-rank {
+  width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border-bold);
+  display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 900; flex-shrink: 0;
+}
+.lb-bar-track {
+  flex: 1; height: 22px; border-radius: 6px; background: var(--bg-base);
+  border: 1.5px solid var(--border-quiet); overflow: hidden; position: relative;
+}
+.lb-bar-fill { height: 100%; border-radius: 5px 0 0 5px; }
+.lb-name { position: absolute; left: 8px; top: 0; bottom: 0; display: flex; align-items: center; font-size: 11px; font-weight: 800; }
+.lb-amount { font-size: 12px; font-weight: 900; flex-shrink: 0; font-variant-numeric: tabular-nums; width: 56px; text-align: right; }
+
+.recap-teaser {
+  background: var(--border-bold);
+  border-radius: 16px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-decoration: none;
+}
+.recap-teaser .t1 { color: var(--accent-yellow); font-weight: 900; font-size: 13.5px; }
+.recap-teaser .t2 { color: #fff; opacity: 0.7; font-size: 11px; }

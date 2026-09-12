@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { addManualEntry, watchEmployers } from "../lib/firestore";
-import type { Employer, Mood } from "../lib/types";
+import { addManualEntry, watchEmployers, watchWorkers } from "../lib/firestore";
+import type { Employer, Mood, Worker } from "../lib/types";
 import "./BackfillEntryPage.css";
 
 const MOODS: { key: Mood; label: string }[] = [
@@ -19,9 +19,14 @@ export function BackfillEntryPage({ uid }: { uid: string }) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const presetEmployerId = searchParams.get("employerId");
+  const workerId = searchParams.get("workerId") ?? undefined;
 
   const [employers, setEmployers] = useState<Employer[]>([]);
   useEffect(() => watchEmployers(uid, setEmployers), [uid]);
+
+  const [workers, setWorkers] = useState<Worker[]>([]);
+  useEffect(() => watchWorkers(uid, setWorkers), [uid]);
+  const worker = workers.find((w) => w.id === workerId);
 
   const [selectedEmployerId, setSelectedEmployerId] = useState(presetEmployerId ?? "");
   // Fall back to the first employer once the list loads, without a setState-in-effect
@@ -75,6 +80,7 @@ export function BackfillEntryPage({ uid }: { uid: string }) {
       source: "manual",
       isOvertime,
       isHoliday,
+      ...(workerId ? { workerId } : {}),
       ...(isPerOrder && orderCount ? { orderCount: Number(orderCount) } : {}),
       ...(mood ? { mood } : {}),
       ...(note.trim() ? { note: note.trim() } : {}),
@@ -91,7 +97,7 @@ export function BackfillEntryPage({ uid }: { uid: string }) {
             <path d="M6 6l12 12M18 6L6 18" stroke="#1A1A1A" strokeWidth="2.5" strokeLinecap="round" />
           </svg>
         </button>
-        <h1>补录工时</h1>
+        <h1>{worker ? `为${worker.name}记工时` : "补录工时"}</h1>
         <button className="save-btn" onClick={handleSave} disabled={saving || !employerId}>
           保存
         </button>

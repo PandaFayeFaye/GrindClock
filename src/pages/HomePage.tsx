@@ -141,6 +141,14 @@ export function HomePage({ uid }: { uid: string }) {
         <div className="fab-wrap">
           {menuOpen && (
             <>
+              <Link className="fab-menu-item" to="/ai-capture" onClick={() => setMenuOpen(false)}>
+                <span className="fab-menu-label">AI记工（拍照/语音）</span>
+                <span className="fab-mini" style={{ background: "#B084F5" }}>
+                  <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
+                    <path d="M12 3l1.8 4.4L18 9l-4.2 1.6L12 15l-1.8-4.4L6 9l4.2-1.6z" fill="#fff" />
+                  </svg>
+                </span>
+              </Link>
               <Link className="fab-menu-item" to="/entries/new" onClick={() => setMenuOpen(false)}>
                 <span className="fab-menu-label">补录工时</span>
                 <span className="fab-mini" style={{ background: "#FFD93D" }}>
