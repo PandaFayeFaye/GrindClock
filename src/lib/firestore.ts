@@ -2,6 +2,7 @@ import {
   addDoc,
   collection,
   deleteDoc,
+  deleteField,
   doc,
   getDoc,
   onSnapshot,
@@ -93,7 +94,11 @@ export function getTimeEntry(uid: string, entryId: string) {
   return getDoc(doc(timeEntriesCol(uid), entryId));
 }
 
-export function updateTimeEntry(uid: string, entryId: string, data: Partial<TimeEntry>) {
+export function updateTimeEntry(
+  uid: string,
+  entryId: string,
+  data: { [K in keyof TimeEntry]?: TimeEntry[K] | ReturnType<typeof deleteField> },
+) {
   return updateDoc(doc(timeEntriesCol(uid), entryId), data);
 }
 

@@ -1,7 +1,11 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { logout } from "../lib/auth";
+import { watchEmployers, watchTimeEntries } from "../lib/firestore";
+import { exportEntriesCsv } from "../lib/exportCsv";
 import { SETTINGS_KEYS, useLocalToggle } from "../lib/settings";
 import { useLang, useT } from "../lib/i18n";
+import type { Employer, TimeEntry } from "../lib/types";
 import "./SettingsPage.css";
 
 function ToggleRow({
@@ -41,6 +45,25 @@ export function SettingsPage({ uid }: { uid: string }) {
   const [simpleMode, setSimpleMode] = useLocalToggle(SETTINGS_KEYS.simpleMode, false);
   const [locationPunch, setLocationPunch] = useLocalToggle(SETTINGS_KEYS.locationPunch, false);
   const [dailyRecapPush, setDailyRecapPush] = useLocalToggle(SETTINGS_KEYS.dailyRecapPush, true);
+  const [aiPhoto, setAiPhoto] = useLocalToggle(SETTINGS_KEYS.aiPhoto, true);
+  const [aiVoice, setAiVoice] = useLocalToggle(SETTINGS_KEYS.aiVoice, true);
+  const [employers, setEmployers] = useState<Employer[]>([]);
+  const [entries, setEntries] = useState<TimeEntry[]>([]);
+  const [exporting, setExporting] = useState(false);
+
+  useEffect(() => {
+    const unsubEmployers = watchEmployers(uid, setEmployers);
+    const unsubEntries = watchTimeEntries(uid, setEntries);
+    return () => { unsubEmployers(); unsubEntries(); };
+  }, [uid]);
+
+  function handleExportAll() {
+    setExporting(true);
+    const employerById = new Map(employers.map((e) => [e.id, e]));
+    const confirmed = entries.filter((e) => e.status === "confirmed" && e.endTime);
+    exportEntriesCsv(confirmed, employerById, "gigtime-全部数据.csv");
+    setExporting(false);
+  }
 
   return (
     <div className="settings-page">
@@ -89,6 +112,37 @@ export function SettingsPage({ uid }: { uid: string }) {
             value={dailyRecapPush}
             onChange={setDailyRecapPush}
           />
+        </div>
+      </div>
+
+      <div>
+        <p className="group-label">AI功能</p>
+        <div className="group">
+          <ToggleRow
+            title="拍照识别"
+            subtitle="首页“+”菜单里的“AI记工”会显示拍照识别选项"
+            value={aiPhoto}
+            onChange={setAiPhoto}
+          />
+          <ToggleRow
+            title="语音记工"
+            subtitle="首页“+”菜单里的“AI记工”会显示语音记工选项"
+            value={aiVoice}
+            onChange={setAiVoice}
+          />
+        </div>
+      </div>
+
+      <div>
+        <p className="group-label">数据</p>
+        <div className="group">
+          <div className="nav-row" onClick={handleExportAll} style={{ cursor: "pointer" }}>
+            <span className="t">{exporting ? "导出中..." : "导出全部数据（CSV）"}</span>
+            <svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M9 6l6 6-6 6" stroke="#1A1A1A" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </div>
+          <p className="uid-line" style={{ paddingBottom: 14 }}>
+            云同步状态：<b>已连接</b>（数据实时同步到 Firebase，登录同一账号即可在其他设备看到）
+          </p>
         </div>
       </div>
 

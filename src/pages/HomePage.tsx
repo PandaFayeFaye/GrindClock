@@ -24,6 +24,8 @@ export function HomePage({ uid }: { uid: string }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [simpleMode] = useLocalToggle(SETTINGS_KEYS.simpleMode, false);
   const [locationPunch] = useLocalToggle(SETTINGS_KEYS.locationPunch, false);
+  const [aiPhotoOn] = useLocalToggle(SETTINGS_KEYS.aiPhoto, true);
+  const [aiVoiceOn] = useLocalToggle(SETTINGS_KEYS.aiVoice, true);
 
   useEffect(() => {
     const unsubEmployers = watchEmployers(uid, setEmployers);
@@ -161,14 +163,16 @@ export function HomePage({ uid }: { uid: string }) {
         <div className="fab-wrap">
           {menuOpen && (
             <>
-              <Link className="fab-menu-item" to="/ai-capture" onClick={() => setMenuOpen(false)}>
-                <span className="fab-menu-label">{t("aiCapture")}</span>
-                <span className="fab-mini" style={{ background: "#B084F5" }}>
-                  <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
-                    <path d="M12 3l1.8 4.4L18 9l-4.2 1.6L12 15l-1.8-4.4L6 9l4.2-1.6z" fill="#fff" />
-                  </svg>
-                </span>
-              </Link>
+              {(aiPhotoOn || aiVoiceOn) && (
+                <Link className="fab-menu-item" to="/ai-capture" onClick={() => setMenuOpen(false)}>
+                  <span className="fab-menu-label">{t("aiCapture")}</span>
+                  <span className="fab-mini" style={{ background: "#B084F5" }}>
+                    <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
+                      <path d="M12 3l1.8 4.4L18 9l-4.2 1.6L12 15l-1.8-4.4L6 9l4.2-1.6z" fill="#fff" />
+                    </svg>
+                  </span>
+                </Link>
+              )}
               <Link className="fab-menu-item" to="/entries/new" onClick={() => setMenuOpen(false)}>
                 <span className="fab-menu-label">{t("backfill")}</span>
                 <span className="fab-mini" style={{ background: "#FFD93D" }}>

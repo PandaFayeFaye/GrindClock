@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { deleteField } from "firebase/firestore";
 import { addManualEntry, deleteTimeEntry, getTimeEntry, updateTimeEntry, watchEmployers, watchWorkers } from "../lib/firestore";
 import type { Adjustment, Employer, Mood, TimeEntry, Worker } from "../lib/types";
 import "./BackfillEntryPage.css";
@@ -108,7 +109,7 @@ export function BackfillEntryPage({ uid }: { uid: string }) {
     const range = computeRange();
     if (!range) return;
     setSaving(true);
-    const data = {
+    const base = {
       employerId,
       startTime: range.start,
       endTime: range.end,
@@ -117,15 +118,25 @@ export function BackfillEntryPage({ uid }: { uid: string }) {
       isOvertime,
       isHoliday,
       ...(workerId ? { workerId } : {}),
-      ...(isPerOrder && orderCount ? { orderCount: Number(orderCount) } : {}),
-      ...(mood ? { mood } : {}),
-      ...(note.trim() ? { note: note.trim() } : {}),
-      ...(adjustments.length > 0 ? { adjustment: adjustments } : {}),
     };
     if (editId) {
-      await updateTimeEntry(uid, editId, data);
+      // Editing merges into the existing doc (updateDoc), so a cleared field must be
+      // explicitly deleted -- omitting the key here would just leave the old value behind.
+      await updateTimeEntry(uid, editId, {
+        ...base,
+        orderCount: isPerOrder && orderCount ? Number(orderCount) : deleteField(),
+        mood: mood ?? deleteField(),
+        note: note.trim() ? note.trim() : deleteField(),
+        adjustment: adjustments.length > 0 ? adjustments : deleteField(),
+      });
     } else {
-      await addManualEntry(uid, data);
+      await addManualEntry(uid, {
+        ...base,
+        ...(isPerOrder && orderCount ? { orderCount: Number(orderCount) } : {}),
+        ...(mood ? { mood } : {}),
+        ...(note.trim() ? { note: note.trim() } : {}),
+        ...(adjustments.length > 0 ? { adjustment: adjustments } : {}),
+      });
     }
     setSaving(false);
     navigate(-1);

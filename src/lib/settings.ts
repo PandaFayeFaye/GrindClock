@@ -30,6 +30,8 @@ export const SETTINGS_KEYS = {
   simpleMode: "gigtime_simple_mode",
   locationPunch: "gigtime_location_punch",
   dailyRecapPush: "gigtime_daily_recap_push",
+  aiPhoto: "gigtime_ai_photo",
+  aiVoice: "gigtime_ai_voice",
 } as const;
 
 const WEEKLY_GOAL_KEY = "gigtime_weekly_goal";

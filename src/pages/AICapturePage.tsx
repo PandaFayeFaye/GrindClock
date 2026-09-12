@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { addManualEntry, watchEmployers } from "../lib/firestore";
 import { recognizeImageText } from "../lib/ocr";
 import { parseSpeechToDraft } from "../lib/parseSpeechToDraft";
+import { SETTINGS_KEYS, useLocalToggle } from "../lib/settings";
 import type { Employer } from "../lib/types";
 import "./AICapturePage.css";
 
@@ -29,8 +30,10 @@ export function AICapturePage({ uid }: { uid: string }) {
   const navigate = useNavigate();
   const [employers, setEmployers] = useState<Employer[]>([]);
   useEffect(() => watchEmployers(uid, setEmployers), [uid]);
+  const [aiPhotoOn] = useLocalToggle(SETTINGS_KEYS.aiPhoto, true);
+  const [aiVoiceOn] = useLocalToggle(SETTINGS_KEYS.aiVoice, true);
 
-  const [source, setSource] = useState<"ocr" | "voice">("voice");
+  const [source, setSource] = useState<"ocr" | "voice">(aiVoiceOn ? "voice" : "ocr");
   const [rawText, setRawText] = useState("");
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -127,17 +130,20 @@ export function AICapturePage({ uid }: { uid: string }) {
         </button>
         <h1>AI 记工</h1>
         <div className="src-toggle">
-          <button className={`src-btn${source === "voice" ? " active" : ""}`} onClick={() => { setSource("voice"); setRawText(""); }}>语音</button>
-          <button className={`src-btn${source === "ocr" ? " active" : ""}`} onClick={() => { setSource("ocr"); setRawText(""); }}>拍照</button>
+          {aiVoiceOn && <button className={`src-btn${source === "voice" ? " active" : ""}`} onClick={() => { setSource("voice"); setRawText(""); }}>语音</button>}
+          {aiPhotoOn && <button className={`src-btn${source === "ocr" ? " active" : ""}`} onClick={() => { setSource("ocr"); setRawText(""); }}>拍照</button>}
         </div>
       </div>
 
       <div className="body">
+        {!aiVoiceOn && !aiPhotoOn && (
+          <p className="warn">拍照识别和语音记工都在设置页关闭了，去设置页打开一个吧</p>
+        )}
         <div className="disclaimer">
           识别用的是免费的浏览器语音识别和OCR文字识别，不是真正理解语义的AI模型，只能抓一些"6小时""XX店"这样的简单信息——保存前一定要检查一下下面的字段对不对。
         </div>
 
-        {source === "voice" && !showDraftForm && (
+        {source === "voice" && aiVoiceOn && !showDraftForm && (
           <div className="capture-panel">
             {!speechSupported && <p className="warn">这个浏览器不支持语音识别，建议用Chrome，或者切到拍照/手动补录</p>}
             <button className={`mic-btn${recording ? " recording" : ""}`} onClick={recording ? stopRecording : startRecording} disabled={!speechSupported}>
@@ -150,7 +156,7 @@ export function AICapturePage({ uid }: { uid: string }) {
           </div>
         )}
 
-        {source === "ocr" && !showDraftForm && (
+        {source === "ocr" && aiPhotoOn && !showDraftForm && (
           <div className="capture-panel">
             <label className="photo-btn">
               <input type="file" accept="image/*" capture="environment" onChange={handlePhotoChange} hidden />
