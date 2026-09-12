@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { addManualEntry, deleteTimeEntry, getTimeEntry, updateTimeEntry, watchEmployers, watchWorkers } from "../lib/firestore";
-import type { Employer, Mood, TimeEntry, Worker } from "../lib/types";
+import type { Adjustment, Employer, Mood, TimeEntry, Worker } from "../lib/types";
 import "./BackfillEntryPage.css";
 
 const MOODS: { key: Mood; label: string }[] = [
@@ -46,9 +46,11 @@ export function BackfillEntryPage({ uid }: { uid: string }) {
   const [orderCount, setOrderCount] = useState("");
   const [mood, setMood] = useState<Mood | undefined>(undefined);
   const [note, setNote] = useState("");
+  const [adjustments, setAdjustments] = useState<Adjustment[]>([]);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [loadedEdit, setLoadedEdit] = useState(false);
+  const [prefilledDefaults, setPrefilledDefaults] = useState(false);
 
   useEffect(() => {
     if (!editId) return;
@@ -67,6 +69,8 @@ export function BackfillEntryPage({ uid }: { uid: string }) {
       setOrderCount(data.orderCount ? String(data.orderCount) : "");
       setMood(data.mood);
       setNote(data.note ?? "");
+      setAdjustments(data.adjustment ?? []);
+      setPrefilledDefaults(true); // editing an existing entry -- never overwrite with the employer's current defaults
       setLoadedEdit(true);
     });
     // Only ever re-run if editId itself changes -- this is a one-time load into local form state.
@@ -75,6 +79,12 @@ export function BackfillEntryPage({ uid }: { uid: string }) {
 
   const employer = useMemo(() => employers.find((e) => e.id === employerId), [employers, employerId]);
   const isPerOrder = employer?.payType === "per-order";
+
+  useEffect(() => {
+    if (prefilledDefaults || !employer) return;
+    setAdjustments(employer.defaultAdjustments ?? []);
+    setPrefilledDefaults(true);
+  }, [prefilledDefaults, employer]);
 
   function computeRange(): { start: number; end: number } | null {
     const dayStart = new Date(date + "T00:00:00");
@@ -110,6 +120,7 @@ export function BackfillEntryPage({ uid }: { uid: string }) {
       ...(isPerOrder && orderCount ? { orderCount: Number(orderCount) } : {}),
       ...(mood ? { mood } : {}),
       ...(note.trim() ? { note: note.trim() } : {}),
+      ...(adjustments.length > 0 ? { adjustment: adjustments } : {}),
     };
     if (editId) {
       await updateTimeEntry(uid, editId, data);
@@ -231,6 +242,41 @@ export function BackfillEntryPage({ uid }: { uid: string }) {
               </button>
             ))}
           </div>
+        </div>
+
+        <div>
+          <p className="field-label">补贴/扣款 <span className="opt">可选，含该雇主的默认规则</span></p>
+          {adjustments.map((adj, i) => (
+            <div className="adj-edit-row" key={i}>
+              <select
+                className="select-field"
+                value={adj.type}
+                onChange={(e) => setAdjustments(adjustments.map((a, j) => j === i ? { ...a, type: e.target.value as "bonus" | "deduction" } : a))}
+              >
+                <option value="bonus">补贴</option>
+                <option value="deduction">扣款</option>
+              </select>
+              <input
+                className="time-input"
+                type="number"
+                placeholder="金额"
+                value={adj.amount || ""}
+                onChange={(e) => setAdjustments(adjustments.map((a, j) => j === i ? { ...a, amount: Number(e.target.value) || 0 } : a))}
+              />
+              <input
+                className="time-input"
+                placeholder="备注"
+                value={adj.note ?? ""}
+                onChange={(e) => setAdjustments(adjustments.map((a, j) => j === i ? { ...a, note: e.target.value } : a))}
+              />
+              <button type="button" className="remove-adj-btn" onClick={() => setAdjustments(adjustments.filter((_, j) => j !== i))}>
+                <svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M6 6l12 12M18 6L6 18" stroke="#1A1A1A" strokeWidth="2.2" strokeLinecap="round" /></svg>
+              </button>
+            </div>
+          ))}
+          <button type="button" className="add-adj-btn" onClick={() => setAdjustments([...adjustments, { type: "bonus", amount: 0 }])}>
+            + 添加一条
+          </button>
         </div>
 
         <div>

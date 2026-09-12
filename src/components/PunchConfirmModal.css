@@ -58,6 +58,12 @@
   font-variant-numeric: tabular-nums;
 }
 
+.recurring-adj-note {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  margin: 4px 0 0;
+}
+
 .section-label {
   font-size: 12px;
   font-weight: 900;

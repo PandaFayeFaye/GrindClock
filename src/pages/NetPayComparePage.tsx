@@ -34,7 +34,12 @@ export function NetPayComparePage({ uid }: { uid: string }) {
         const shiftsCount = Math.max(1, empEntries.length);
         const totalCommuteHours = commuteHoursPerShift * shiftsCount;
         const totalCommuteCost = (emp.commuteCost ?? 0) * shiftsCount;
-        const netHours = totalHours + totalCommuteHours;
+        // Idle/waiting time isn't separately clocked (a rider stays "online" the whole
+        // shift) -- it stretches how much real time the job actually costs beyond the
+        // hours that earned money, so it inflates the denominator, not the numerator.
+        const idlePct = Math.min(95, Math.max(0, emp.idleTimePct ?? 0));
+        const idleHours = totalHours * (idlePct / (100 - idlePct));
+        const netHours = totalHours + totalCommuteHours + idleHours;
         const netPay = totalPay - totalCommuteCost;
         const actual = netHours > 0 ? netPay / netHours : nominal;
         return { employer: emp, nominal, actual };
@@ -70,7 +75,7 @@ export function NetPayComparePage({ uid }: { uid: string }) {
 
       <div className="body">
         <div className="note-card">
-          扣除预估通勤时间和费用后的「实际到手时薪」，帮你看清哪份工作真正更划算——仅供参考，通勤数据来自雇主设置里填的一次性预估，没填就按名义时薪显示
+          扣除预估通勤时间/费用、加上预估等待摸鱼时间后的「实际到手时薪」，帮你看清哪份工作真正更划算——都是雇主设置里填的一次性预估，仅供参考，没填就按名义时薪显示
         </div>
 
         {rows.map((row, i) => (
@@ -82,6 +87,9 @@ export function NetPayComparePage({ uid }: { uid: string }) {
                 名义 <b>¥{row.nominal.toFixed(1)}</b>
                 {(row.employer.commuteMinutes || row.employer.commuteCost) && (
                   <> · 通勤 <b>{row.employer.commuteMinutes ?? 0}分钟/¥{row.employer.commuteCost ?? 0}</b></>
+                )}
+                {!!row.employer.idleTimePct && (
+                  <> · 摸鱼 <b>{row.employer.idleTimePct}%</b></>
                 )}
               </p>
             </div>

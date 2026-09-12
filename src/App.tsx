@@ -16,11 +16,13 @@ import { MonthlyRecapPage } from "./pages/MonthlyRecapPage";
 import { BadgeWallPage } from "./pages/BadgeWallPage";
 import { AICapturePage } from "./pages/AICapturePage";
 import { LanguageProvider } from "./lib/i18n";
+import { OnboardingScreen, hasOnboarded } from "./components/OnboardingScreen";
 import "./App.css";
 
 function App() {
   const [user, setUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
+  const [onboarding, setOnboarding] = useState(!hasOnboarded());
 
   useEffect(() => watchAuth((u) => { setUser(u); setAuthReady(true); }), []);
 
@@ -34,6 +36,17 @@ function App() {
 
   if (!authReady) return <p className="loading">加载中...</p>;
   if (!user) return <LoginScreen />;
+
+  if (onboarding) {
+    return (
+      <OnboardingScreen
+        onDone={(goToAddEmployer) => {
+          setOnboarding(false);
+          if (goToAddEmployer) window.location.hash = "#/employers/new";
+        }}
+      />
+    );
+  }
 
   return (
     <LanguageProvider>

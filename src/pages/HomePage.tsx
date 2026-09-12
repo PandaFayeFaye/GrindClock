@@ -80,11 +80,13 @@ export function HomePage({ uid }: { uid: string }) {
     orderCount: number | undefined,
   ) {
     if (!confirmingEntry) return;
+    const recurring = confirmingEntry.employer.defaultAdjustments ?? [];
+    const combinedAdjustment = [...recurring, ...(adjustment ?? [])];
     clockOut(uid, confirmingEntry.entry.id, {
       mood,
       moodNote,
       note: note || undefined,
-      adjustment,
+      adjustment: combinedAdjustment.length > 0 ? combinedAdjustment : undefined,
       isOvertime: isOvertime || undefined,
       isHoliday: isHoliday || undefined,
       orderCount,

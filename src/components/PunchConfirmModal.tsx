@@ -43,12 +43,15 @@ export function PunchConfirmModal({
       ? [{ type: adjType, amount: Number(adjAmount) }]
       : undefined;
 
+  const recurringAdjustment = employer.defaultAdjustments ?? [];
+  const previewAdjustment = [...recurringAdjustment, ...(adjustment ?? [])];
+
   const showRateFlags = employer.overtimeMultiplier !== undefined || employer.holidayMultiplier !== undefined || employer.payType === "base+overtime";
   const isPerOrder = employer.payType === "per-order";
   const previewEntry: TimeEntry = {
     ...entry,
     endTime: Date.now(),
-    adjustment,
+    adjustment: previewAdjustment,
     isOvertime,
     isHoliday,
     orderCount: isPerOrder ? Number(orderCount) || 0 : entry.orderCount,
@@ -65,6 +68,9 @@ export function PunchConfirmModal({
           <p className="emp">{employer.name} · 本次工时</p>
           <p className="dur">{hours.toFixed(1)}小时</p>
           <p className="pay">预估收入 ¥{pay.toFixed(1)}</p>
+          {recurringAdjustment.length > 0 && (
+            <p className="recurring-adj-note">已自动套用{recurringAdjustment.length}条该雇主的默认补贴/扣款规则</p>
+          )}
         </div>
 
         {isPerOrder && (

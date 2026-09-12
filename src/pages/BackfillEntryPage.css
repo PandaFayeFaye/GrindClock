@@ -201,6 +201,50 @@
   font-family: var(--font-body);
 }
 
+.select-field {
+  border: 1.5px solid var(--border-quiet);
+  border-radius: 10px;
+  background: var(--bg-surface);
+  font-family: var(--font-body);
+}
+
+.adj-edit-row {
+  display: grid;
+  grid-template-columns: 68px 68px 1fr 32px;
+  gap: 6px;
+  margin-bottom: 8px;
+  align-items: center;
+}
+
+.adj-edit-row .select-field,
+.adj-edit-row .time-input {
+  padding: 8px;
+  font-size: 12px;
+  width: 100%;
+}
+
+.remove-adj-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border-quiet);
+  background: var(--bg-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.add-adj-btn {
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1.8px dashed var(--border-quiet);
+  background: none;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-muted);
+  width: 100%;
+}
+
 .delete-entry-btn {
   width: 100%;
   min-height: 48px;

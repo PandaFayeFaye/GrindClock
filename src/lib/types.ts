@@ -16,6 +16,8 @@ export interface Employer {
   settlementCycle?: "daily" | "weekly" | "monthly";
   commuteMinutes?: number;
   commuteCost?: number;
+  idleTimePct?: number; // estimated % of on-shift time spent idle/waiting (e.g. between rideshare/delivery orders)
+  defaultAdjustments?: Adjustment[]; // recurring per-shift bonus/deduction rules, auto-applied to every new entry
   note?: string;
 }
 

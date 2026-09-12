@@ -191,3 +191,75 @@
   resize: none;
   font-family: var(--font-body);
 }
+
+.select-field {
+  border: 1.5px solid var(--border-quiet);
+  border-radius: 10px;
+  background: var(--bg-surface);
+  font-family: var(--font-body);
+}
+
+.default-adj-row {
+  display: grid;
+  grid-template-columns: 72px 72px 1fr 32px;
+  gap: 6px;
+  margin-bottom: 8px;
+  align-items: center;
+}
+
+.default-adj-row .select-field,
+.default-adj-row .rate-input {
+  padding: 8px 8px;
+  font-size: 12px;
+}
+
+.remove-adj-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border-quiet);
+  background: var(--bg-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.add-adj-btn {
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1.8px dashed var(--border-quiet);
+  background: none;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-muted);
+  width: 100%;
+}
+
+.employer-saved-splash {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  text-align: center;
+  padding: 24px;
+  animation: splash-pop 0.4s ease;
+}
+
+@keyframes splash-pop {
+  0% { opacity: 0; transform: scale(0.9); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.splash-title {
+  font-family: var(--font-display);
+  font-size: 19px;
+  margin: 0;
+}
+
+.splash-sub {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin: 0;
+}

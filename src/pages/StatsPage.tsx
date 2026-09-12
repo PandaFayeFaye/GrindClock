@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { watchEmployers, watchTimeEntries } from "../lib/firestore";
-import { entryHours, entryPay, lumpSumAllTime } from "../lib/pay";
-import { currentStreak, dateKey, leaderboard, moodByDay, payByDay, startOfWeek } from "../lib/stats";
+import { entryHours, entryPay, lumpSumAllTime, lumpSumForPeriod } from "../lib/pay";
+import { currentStreak, dateKey, leaderboard, moodByDay, payByDay, startOfMonth, startOfWeek } from "../lib/stats";
 import { useWeeklyGoal } from "../lib/settings";
+import { exportEntriesCsv } from "../lib/exportCsv";
 import type { Employer, Mood, TimeEntry } from "../lib/types";
 import "./StatsPage.css";
 
@@ -15,6 +16,19 @@ const MOOD_COLORS: Record<Mood, string> = {
 };
 
 type Viz = "trend" | "calendar" | "rank";
+type RangeKey = "today" | "week" | "month" | "all";
+const RANGES: { key: RangeKey; label: string }[] = [
+  { key: "today", label: "今日" },
+  { key: "week", label: "本周" },
+  { key: "month", label: "本月" },
+  { key: "all", label: "全部" },
+];
+
+function startOfToday() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
 
 export function StatsPage({ uid }: { uid: string }) {
   const navigate = useNavigate();
@@ -23,6 +37,8 @@ export function StatsPage({ uid }: { uid: string }) {
   const [viz, setViz] = useState<Viz>("trend");
   const [weeklyGoal, setWeeklyGoal] = useWeeklyGoal();
   const [editingGoal, setEditingGoal] = useState(false);
+  const [range, setRange] = useState<RangeKey>("all");
+  const [filterEmployerIds, setFilterEmployerIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const unsubEmployers = watchEmployers(uid, setEmployers);
@@ -36,11 +52,40 @@ export function StatsPage({ uid }: { uid: string }) {
     [entries],
   );
 
-  const totalHours = personalConfirmed.reduce((sum, e) => sum + entryHours(e), 0);
-  const totalPay = personalConfirmed.reduce((sum, e) => {
+  function toggleFilterEmployer(id: string) {
+    setFilterEmployerIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }
+
+  // ---- Filtered view: date range + employer filter apply to the summary card and detail list ----
+  const rangeStart = range === "today" ? startOfToday() : range === "week" ? startOfWeek() : range === "month" ? startOfMonth() : 0;
+  const filteredEntries = useMemo(
+    () => personalConfirmed.filter((e) => e.startTime >= rangeStart && (filterEmployerIds.size === 0 || filterEmployerIds.has(e.employerId))),
+    [personalConfirmed, rangeStart, filterEmployerIds],
+  );
+
+  const visibleEmployers = useMemo(
+    () => employers.filter((emp) => filterEmployerIds.size === 0 || filterEmployerIds.has(emp.id)),
+    [employers, filterEmployerIds],
+  );
+
+  const totalHours = filteredEntries.reduce((sum, e) => sum + entryHours(e), 0);
+  const totalPay = filteredEntries.reduce((sum, e) => {
     const emp = employerById.get(e.employerId);
     return emp ? sum + entryPay(emp, e) : sum;
-  }, 0) + employers.reduce((sum, emp) => sum + lumpSumAllTime(emp, personalConfirmed), 0);
+  }, 0) + (
+    // Lump-sum salary: all-time view sums one payout per distinct month worked;
+    // a month-bounded view adds it once if any shift fell in that exact month.
+    // A week/today view is too short a window for a monthly lump sum to fairly apply.
+    range === "all"
+      ? visibleEmployers.reduce((sum, emp) => sum + lumpSumAllTime(emp, personalConfirmed), 0)
+      : range === "month"
+        ? visibleEmployers.reduce((sum, emp) => sum + lumpSumForPeriod(emp, filteredEntries), 0)
+        : 0
+  );
 
   // ---- Mood strip: last 7 days ----
   const moodMap = useMemo(() => moodByDay(personalConfirmed), [personalConfirmed]);
@@ -80,6 +125,19 @@ export function StatsPage({ uid }: { uid: string }) {
 
   const streak = useMemo(() => currentStreak(personalConfirmed), [personalConfirmed]);
 
+  // ---- Streak calendar: same month grid as the pay heatmap, but binary punched/not ----
+  const streakCells = useMemo(() => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = now.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const daysWithEntry = new Set(personalConfirmed.map((e) => dateKey(e.startTime)));
+    return Array.from({ length: daysInMonth }, (_, i) => {
+      const key = dateKey(new Date(year, month, i + 1).getTime());
+      return daysWithEntry.has(key);
+    });
+  }, [personalConfirmed]);
+
   // ---- Rank: this week's leaderboard + goal ring ----
   const weekStart = startOfWeek();
   const board = useMemo(() => leaderboard(personalConfirmed, employers, weekStart), [personalConfirmed, employers, weekStart]);
@@ -95,9 +153,36 @@ export function StatsPage({ uid }: { uid: string }) {
     <div className="stats-page">
       <h1>统计</h1>
 
+      <div className="range-row">
+        {RANGES.map((r) => (
+          <button key={r.key} className={`range-chip${range === r.key ? " active" : ""}`} onClick={() => setRange(r.key)}>
+            {r.label}
+          </button>
+        ))}
+      </div>
+
+      {employers.length > 1 && (
+        <div className="filter-row">
+          {employers.map((emp) => {
+            const active = filterEmployerIds.has(emp.id);
+            return (
+              <button
+                key={emp.id}
+                className={`filter-chip${active ? " active" : ""}`}
+                style={active ? { borderColor: emp.color } : undefined}
+                onClick={() => toggleFilterEmployer(emp.id)}
+              >
+                <span className="dot" style={{ background: emp.color }} />
+                {emp.name}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       <div className="summary-card">
-        <div className="stat"><p className="num">{totalHours.toFixed(1)}h</p><p className="lb">累计总工时</p></div>
-        <div className="stat"><p className="num">¥{totalPay.toFixed(0)}</p><p className="lb">累计总收入</p></div>
+        <div className="stat"><p className="num">{totalHours.toFixed(1)}h</p><p className="lb">{range === "all" ? "累计总工时" : "本时段工时"}</p></div>
+        <div className="stat"><p className="num">¥{totalPay.toFixed(0)}</p><p className="lb">{range === "all" ? "累计总收入" : "本时段收入"}</p></div>
       </div>
 
       <div className="chart-card">
@@ -153,6 +238,19 @@ export function StatsPage({ uid }: { uid: string }) {
             <span>少</span>
             {heatHex.map((hex) => <i key={hex} style={{ background: hex }} />)}
             <span>多</span>
+          </div>
+
+          <p className="title" style={{ marginTop: 16 }}>连续打卡日历（有没有打卡，不看赚多少）</p>
+          <div className="heatmap streak-grid">
+            {streakCells.map((punched, i) => (
+              <div key={i} className={`streak-cell${punched ? " lit" : ""}`}>
+                {punched && (
+                  <svg viewBox="0 0 24 24" fill="none" width="11" height="11">
+                    <path d="M12 2.5c-1.2 2.3-4.5 3.6-4.5 8a4.5 4.5 0 009 0c0-1.4-.5-2.3-1.1-3 .1 1.2-.5 2-1.3 2.3.6-2.4-1-3.6-2.1-7.3z" fill="#fff" />
+                  </svg>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -212,10 +310,19 @@ export function StatsPage({ uid }: { uid: string }) {
         <span className="t2">点击生成本月总结 →</span>
       </Link>
 
-      <p className="list-title">明细</p>
+      <div className="list-title-row">
+        <p className="list-title">明细{range !== "all" ? `（${RANGES.find((r) => r.key === range)?.label}）` : ""}</p>
+        <button
+          className="export-btn"
+          disabled={filteredEntries.length === 0}
+          onClick={() => exportEntriesCsv(filteredEntries, employerById, `gigtime-明细-${range}.csv`)}
+        >
+          导出CSV
+        </button>
+      </div>
       <div className="entry-list">
-        {personalConfirmed.length === 0 && <p className="empty-hint">打完第一次卡，这里就会出现你的战绩</p>}
-        {personalConfirmed
+        {filteredEntries.length === 0 && <p className="empty-hint">打完第一次卡，这里就会出现你的战绩</p>}
+        {filteredEntries
           .slice()
           .sort((a, b) => b.startTime - a.startTime)
           .map((e) => {

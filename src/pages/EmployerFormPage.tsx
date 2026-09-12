@@ -2,7 +2,8 @@ import { useEffect, useState, type ReactElement } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import { addEmployer, employersCol, updateEmployer } from "../lib/firestore";
-import type { Employer, PayType } from "../lib/types";
+import type { Adjustment, Employer, PayType } from "../lib/types";
+import { Mascot } from "../components/Mascot";
 import "./EmployerFormPage.css";
 
 const PALETTE = ["#FFD93D", "#4361EE", "#FF6B6B", "#39C97A", "#B084F5", "#5AC8FA"];
@@ -74,6 +75,7 @@ export function EmployerFormPage({ uid }: { uid: string }) {
   const [colorIdx, setColorIdx] = useState(0);
   const [payType, setPayType] = useState<PayType>("hourly");
   const [rate, setRate] = useState("");
+  const [baseSalary, setBaseSalary] = useState("");
   const [overtimeMultiplier, setOvertimeMultiplier] = useState<number | undefined>(undefined);
   const [holidayMultiplier, setHolidayMultiplier] = useState<number | undefined>(undefined);
   const [breakMinutes, setBreakMinutes] = useState<number | undefined>(undefined);
@@ -81,9 +83,12 @@ export function EmployerFormPage({ uid }: { uid: string }) {
   const [commuteOpen, setCommuteOpen] = useState(false);
   const [commuteMinutes, setCommuteMinutes] = useState("");
   const [commuteCost, setCommuteCost] = useState("");
+  const [idleTimePct, setIdleTimePct] = useState("");
+  const [defaultAdjustments, setDefaultAdjustments] = useState<Adjustment[]>([]);
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(!isEdit);
+  const [justSaved, setJustSaved] = useState(false);
 
   useEffect(() => {
     if (!employerId) return;
@@ -94,14 +99,17 @@ export function EmployerFormPage({ uid }: { uid: string }) {
         setColorIdx(Math.max(0, PALETTE.indexOf(data.color)));
         setPayType(data.payType);
         setRate(String(data.hourlyRate ?? data.dailyRate ?? data.monthlySalary ?? data.pricePerOrder ?? ""));
+        setBaseSalary(data.baseSalary ? String(data.baseSalary) : "");
         setOvertimeMultiplier(data.overtimeMultiplier);
         setHolidayMultiplier(data.holidayMultiplier);
         setBreakMinutes(data.breakMinutes);
         setSettlementCycle(data.settlementCycle);
         setCommuteMinutes(data.commuteMinutes ? String(data.commuteMinutes) : "");
         setCommuteCost(data.commuteCost ? String(data.commuteCost) : "");
+        setIdleTimePct(data.idleTimePct ? String(data.idleTimePct) : "");
+        setDefaultAdjustments(data.defaultAdjustments ?? []);
         setNote(data.note ?? "");
-        if (data.commuteMinutes || data.commuteCost) setCommuteOpen(true);
+        if (data.commuteMinutes || data.commuteCost || data.idleTimePct) setCommuteOpen(true);
       }
       setLoaded(true);
     });
@@ -121,33 +129,49 @@ export function EmployerFormPage({ uid }: { uid: string }) {
       ...(payType === "daily" ? { dailyRate: rateNum } : {}),
       ...(payType === "monthly" ? { monthlySalary: rateNum } : {}),
       ...(payType === "per-order" ? { pricePerOrder: rateNum } : {}),
+      ...(payType === "base+overtime" ? { baseSalary: Number(baseSalary) || 0 } : {}),
       ...(overtimeMultiplier ? { overtimeMultiplier } : {}),
       ...(holidayMultiplier ? { holidayMultiplier } : {}),
       ...(breakMinutes ? { breakMinutes } : {}),
       ...(settlementCycle ? { settlementCycle } : {}),
       ...(commuteMinutes ? { commuteMinutes: Number(commuteMinutes) } : {}),
       ...(commuteCost ? { commuteCost: Number(commuteCost) } : {}),
+      ...(idleTimePct ? { idleTimePct: Number(idleTimePct) } : {}),
+      ...(defaultAdjustments.length > 0 ? { defaultAdjustments } : {}),
       ...(note.trim() ? { note: note.trim() } : {}),
     };
     if (isEdit && employerId) {
       await updateEmployer(uid, employerId, data);
+      setSaving(false);
+      navigate("/");
     } else {
       await addEmployer(uid, data);
+      setSaving(false);
+      setJustSaved(true);
+      setTimeout(() => navigate("/"), 1400);
     }
-    setSaving(false);
-    navigate("/");
   }
 
   const rateLabel = {
     hourly: "基础时薪",
     comprehensive: "基础时薪",
-    "base+overtime": "时薪",
+    "base+overtime": "加班时薪",
     daily: "日结金额",
     monthly: "月薪",
     "per-order": "每单价格",
   }[payType];
 
   if (!loaded) return <p className="loading">加载中...</p>;
+
+  if (justSaved) {
+    return (
+      <div className="employer-saved-splash">
+        <Mascot size={110} />
+        <p className="splash-title">新雇主「{name.trim()}」入职啦！</p>
+        <p className="splash-sub">现在可以去打第一次卡了</p>
+      </div>
+    );
+  }
 
   return (
     <div className="employer-form">
@@ -209,6 +233,19 @@ export function EmployerFormPage({ uid }: { uid: string }) {
             ))}
           </div>
         </div>
+
+        {payType === "base+overtime" && (
+          <div>
+            <p className="field-label">底薪（月）</p>
+            <input
+              className="rate-input"
+              type="number"
+              placeholder="¥ 每月固定拿到手的底薪"
+              value={baseSalary}
+              onChange={(e) => setBaseSalary(e.target.value)}
+            />
+          </div>
+        )}
 
         <div>
           <p className="field-label">{rateLabel}</p>
@@ -308,8 +345,54 @@ export function EmployerFormPage({ uid }: { uid: string }) {
                 value={commuteCost}
                 onChange={(e) => setCommuteCost(e.target.value)}
               />
+              <input
+                className="rate-input"
+                type="number"
+                placeholder="预估等待/摸鱼时间占比（%，如接单间隙）"
+                value={idleTimePct}
+                onChange={(e) => setIdleTimePct(e.target.value)}
+              />
             </div>
           )}
+        </div>
+
+        <div>
+          <p className="field-label">默认补贴/扣款规则 <span className="opt">可选，会自动套用到每一条新记录</span></p>
+          {defaultAdjustments.map((adj, i) => (
+            <div className="default-adj-row" key={i}>
+              <select
+                className="select-field"
+                value={adj.type}
+                onChange={(e) => setDefaultAdjustments(defaultAdjustments.map((a, j) => j === i ? { ...a, type: e.target.value as "bonus" | "deduction" } : a))}
+              >
+                <option value="bonus">补贴</option>
+                <option value="deduction">扣款</option>
+              </select>
+              <input
+                className="rate-input"
+                type="number"
+                placeholder="金额"
+                value={adj.amount || ""}
+                onChange={(e) => setDefaultAdjustments(defaultAdjustments.map((a, j) => j === i ? { ...a, amount: Number(e.target.value) || 0 } : a))}
+              />
+              <input
+                className="rate-input"
+                placeholder="备注（如：夜班补贴）"
+                value={adj.note ?? ""}
+                onChange={(e) => setDefaultAdjustments(defaultAdjustments.map((a, j) => j === i ? { ...a, note: e.target.value } : a))}
+              />
+              <button type="button" className="remove-adj-btn" onClick={() => setDefaultAdjustments(defaultAdjustments.filter((_, j) => j !== i))}>
+                <svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M6 6l12 12M18 6L6 18" stroke="#1A1A1A" strokeWidth="2.2" strokeLinecap="round" /></svg>
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            className="add-adj-btn"
+            onClick={() => setDefaultAdjustments([...defaultAdjustments, { type: "bonus", amount: 0 }])}
+          >
+            + 添加一条规则
+          </button>
         </div>
 
         <div>

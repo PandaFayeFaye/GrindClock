@@ -32,7 +32,61 @@
 
 .list-title { font-size: 12px; font-weight: 900; margin: 0; }
 
+.list-title-row { display: flex; align-items: center; justify-content: space-between; }
+
+.export-btn {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 6px 12px;
+  border: 1.6px solid var(--border-bold);
+  border-radius: 8px;
+  background: var(--bg-surface);
+}
+
+.export-btn:disabled { opacity: 0.4; }
+
 .entry-list { display: flex; flex-direction: column; gap: 10px; }
+
+.range-row, .filter-row {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.range-chip {
+  flex-shrink: 0;
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1.8px solid var(--border-bold);
+  background: var(--bg-surface);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.range-chip.active {
+  background: var(--accent-blue);
+}
+
+.filter-chip {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1.8px solid var(--border-quiet);
+  background: var(--bg-surface);
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.filter-chip .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+.filter-chip.active {
+  color: var(--text-body, #1A1A1A);
+  border-width: 2px;
+}
 
 .entry {
   display: flex;
@@ -109,6 +163,20 @@
 .heat-legend { display: flex; align-items: center; gap: 6px; margin-top: 10px; justify-content: flex-end; }
 .heat-legend span { font-size: 9.5px; color: var(--text-muted); }
 .heat-legend i { width: 12px; height: 12px; border-radius: 3px; border: 1px solid rgba(26, 26, 26, 0.15); display: inline-block; }
+
+.streak-cell {
+  aspect-ratio: 1;
+  border-radius: 5px;
+  border: 1.3px solid rgba(26, 26, 26, 0.15);
+  background: var(--bg-surface);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.streak-cell.lit {
+  background: var(--accent-coral);
+  border-color: var(--border-bold);
+}
 
 .ring-wrap { display: flex; align-items: center; gap: 18px; }
 .ring-center { position: relative; width: 104px; height: 104px; flex-shrink: 0; }
