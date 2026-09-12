@@ -1,5 +1,5 @@
 import type { Employer, Mood, TimeEntry } from "./types";
-import { entryHours, entryPay } from "./pay";
+import { entryHours, entryPay, lumpSumForPeriod } from "./pay";
 
 export function dateKey(ms: number): string {
   const d = new Date(ms);
@@ -64,15 +64,35 @@ export interface LeaderboardRow {
   pay: number;
 }
 
-export function leaderboard(entries: TimeEntry[], employers: Employer[], since: number): LeaderboardRow[] {
+/**
+ * `includeLumpSum` adds back monthly/base-salary lump sums for employers with
+ * a shift logged in the period -- only correct when `since` bounds exactly one
+ * settlement window (e.g. a calendar month for the Monthly Recap). Leave it
+ * off for a sub-month window (e.g. StatsPage's weekly board), where crediting
+ * a full month's salary every week would wildly overcount.
+ */
+export function leaderboard(
+  entries: TimeEntry[],
+  employers: Employer[],
+  since: number,
+  includeLumpSum = false,
+): LeaderboardRow[] {
   const byId = new Map(employers.map((e) => [e.id, e]));
   const totals = new Map<string, { hours: number; pay: number }>();
-  for (const e of entries) {
-    if (!isConfirmedPersonal(e) || e.startTime < since) continue;
+  const periodEntries = entries.filter((e) => isConfirmedPersonal(e) && e.startTime >= since);
+  for (const e of periodEntries) {
     const emp = byId.get(e.employerId);
     if (!emp) continue;
     const prev = totals.get(emp.id) ?? { hours: 0, pay: 0 };
     totals.set(emp.id, { hours: prev.hours + entryHours(e), pay: prev.pay + entryPay(emp, e) });
+  }
+  if (includeLumpSum) {
+    for (const emp of employers) {
+      const lump = lumpSumForPeriod(emp, periodEntries);
+      if (lump <= 0) continue;
+      const prev = totals.get(emp.id) ?? { hours: 0, pay: 0 };
+      totals.set(emp.id, { hours: prev.hours, pay: prev.pay + lump });
+    }
   }
   return [...totals.entries()]
     .map(([id, t]) => ({ employer: byId.get(id)!, ...t }))

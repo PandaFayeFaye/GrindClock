@@ -200,3 +200,15 @@
   resize: none;
   font-family: var(--font-body);
 }
+
+.delete-entry-btn {
+  width: 100%;
+  min-height: 48px;
+  border: 2px solid var(--border-bold);
+  border-radius: 12px;
+  background: var(--bg-surface);
+  color: var(--accent-coral);
+  font-weight: 900;
+  font-size: 13.5px;
+  margin-top: 4px;
+}

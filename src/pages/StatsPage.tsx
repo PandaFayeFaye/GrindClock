@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { watchEmployers, watchTimeEntries } from "../lib/firestore";
-import { entryHours, entryPay } from "../lib/pay";
+import { entryHours, entryPay, lumpSumAllTime } from "../lib/pay";
 import { currentStreak, dateKey, leaderboard, moodByDay, payByDay, startOfWeek } from "../lib/stats";
 import { useWeeklyGoal } from "../lib/settings";
 import type { Employer, Mood, TimeEntry } from "../lib/types";
@@ -17,6 +17,7 @@ const MOOD_COLORS: Record<Mood, string> = {
 type Viz = "trend" | "calendar" | "rank";
 
 export function StatsPage({ uid }: { uid: string }) {
+  const navigate = useNavigate();
   const [employers, setEmployers] = useState<Employer[]>([]);
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [viz, setViz] = useState<Viz>("trend");
@@ -39,7 +40,7 @@ export function StatsPage({ uid }: { uid: string }) {
   const totalPay = personalConfirmed.reduce((sum, e) => {
     const emp = employerById.get(e.employerId);
     return emp ? sum + entryPay(emp, e) : sum;
-  }, 0);
+  }, 0) + employers.reduce((sum, emp) => sum + lumpSumAllTime(emp, personalConfirmed), 0);
 
   // ---- Mood strip: last 7 days ----
   const moodMap = useMemo(() => moodByDay(personalConfirmed), [personalConfirmed]);
@@ -221,7 +222,7 @@ export function StatsPage({ uid }: { uid: string }) {
             const emp = employerById.get(e.employerId);
             if (!emp) return null;
             return (
-              <div className="entry" key={e.id}>
+              <div className="entry" key={e.id} onClick={() => navigate(`/entries/new?editId=${e.id}`)} role="button" tabIndex={0}>
                 <span className="dot" style={{ background: emp.color }} />
                 <div className="info">
                   <p className="n">{emp.name}</p>

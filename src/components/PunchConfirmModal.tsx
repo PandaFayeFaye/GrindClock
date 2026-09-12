@@ -24,19 +24,35 @@ export function PunchConfirmModal({
     moodNote: string | undefined,
     note: string,
     adjustment: Adjustment[] | undefined,
+    isOvertime: boolean,
+    isHoliday: boolean,
+    orderCount: number | undefined,
   ) => void;
 }) {
   const [mood, setMood] = useState<Mood | undefined>(undefined);
+  const [moodNote, setMoodNote] = useState("");
   const [note, setNote] = useState("");
   const [adjType, setAdjType] = useState<"none" | "bonus" | "deduction">("none");
   const [adjAmount, setAdjAmount] = useState("");
+  const [isOvertime, setIsOvertime] = useState(false);
+  const [isHoliday, setIsHoliday] = useState(false);
+  const [orderCount, setOrderCount] = useState("");
 
   const adjustment: Adjustment[] | undefined =
     adjType !== "none" && Number(adjAmount) > 0
       ? [{ type: adjType, amount: Number(adjAmount) }]
       : undefined;
 
-  const previewEntry: TimeEntry = { ...entry, endTime: Date.now(), adjustment };
+  const showRateFlags = employer.overtimeMultiplier !== undefined || employer.holidayMultiplier !== undefined || employer.payType === "base+overtime";
+  const isPerOrder = employer.payType === "per-order";
+  const previewEntry: TimeEntry = {
+    ...entry,
+    endTime: Date.now(),
+    adjustment,
+    isOvertime,
+    isHoliday,
+    orderCount: isPerOrder ? Number(orderCount) || 0 : entry.orderCount,
+  };
   const hours = entryHours(previewEntry);
   const pay = entryPay(employer, previewEntry);
 
@@ -50,6 +66,19 @@ export function PunchConfirmModal({
           <p className="dur">{hours.toFixed(1)}小时</p>
           <p className="pay">预估收入 ¥{pay.toFixed(1)}</p>
         </div>
+
+        {isPerOrder && (
+          <div>
+            <p className="section-label">完成了几单？</p>
+            <input
+              className="adj-input"
+              type="number"
+              placeholder="单数"
+              value={orderCount}
+              onChange={(e) => setOrderCount(e.target.value)}
+            />
+          </div>
+        )}
 
         <div>
           <p className="section-label">
@@ -66,7 +95,26 @@ export function PunchConfirmModal({
               </button>
             ))}
           </div>
+          {mood && (
+            <input
+              className="adj-input"
+              maxLength={20}
+              placeholder="想补一句吗？（最多20字，可跳过）"
+              value={moodNote}
+              onChange={(e) => setMoodNote(e.target.value)}
+            />
+          )}
         </div>
+
+        {showRateFlags && (
+          <div>
+            <p className="section-label">这次算加班/节假日吗？<span className="opt">（影响倍率计算）</span></p>
+            <div className="adj-row">
+              <button className={`adj-toggle${isOvertime ? " selected" : ""}`} onClick={() => setIsOvertime(!isOvertime)}>加班</button>
+              <button className={`adj-toggle${isHoliday ? " selected" : ""}`} onClick={() => setIsHoliday(!isHoliday)}>节假日</button>
+            </div>
+          </div>
+        )}
 
         <div>
           <p className="section-label">
@@ -102,7 +150,15 @@ export function PunchConfirmModal({
 
         <button
           className="confirm-btn"
-          onClick={() => onConfirm(mood, mood ? "" : undefined, note, adjustment)}
+          onClick={() => onConfirm(
+            mood,
+            mood ? (moodNote.trim() || undefined) : undefined,
+            note,
+            adjustment,
+            isOvertime,
+            isHoliday,
+            isPerOrder ? Number(orderCount) || 0 : undefined,
+          )}
         >
           确认保存
         </button>

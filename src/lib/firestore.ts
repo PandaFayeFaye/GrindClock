@@ -3,6 +3,7 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDoc,
   onSnapshot,
   orderBy,
   query,
@@ -68,7 +69,15 @@ export function clockIn(
 export function clockOut(
   uid: string,
   entryId: string,
-  extra?: { mood?: Mood; moodNote?: string; adjustment?: Adjustment[]; note?: string },
+  extra?: {
+    mood?: Mood;
+    moodNote?: string;
+    adjustment?: Adjustment[];
+    note?: string;
+    isOvertime?: boolean;
+    isHoliday?: boolean;
+    orderCount?: number;
+  },
 ) {
   return updateDoc(doc(timeEntriesCol(uid), entryId), {
     endTime: Date.now(),
@@ -78,6 +87,14 @@ export function clockOut(
 
 export function addManualEntry(uid: string, data: Omit<TimeEntry, "id">) {
   return addDoc(timeEntriesCol(uid), data);
+}
+
+export function getTimeEntry(uid: string, entryId: string) {
+  return getDoc(doc(timeEntriesCol(uid), entryId));
+}
+
+export function updateTimeEntry(uid: string, entryId: string, data: Partial<TimeEntry>) {
+  return updateDoc(doc(timeEntriesCol(uid), entryId), data);
 }
 
 export function deleteTimeEntry(uid: string, entryId: string) {

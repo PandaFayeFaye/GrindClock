@@ -24,8 +24,14 @@ function rateMultiplier(employer: Employer, entry: TimeEntry): number {
   return 1;
 }
 
+/** Hours actually paid for a shift: clocked duration minus the employer's unpaid break. */
+function payableHours(employer: Employer, entry: TimeEntry, now = Date.now()): number {
+  const breakHours = (employer.breakMinutes ?? 0) / 60;
+  return Math.max(0, entryHours(entry, now) - breakHours);
+}
+
 export function entryPay(employer: Employer, entry: TimeEntry, now = Date.now()): number {
-  const hours = entryHours(entry, now);
+  const hours = payableHours(employer, entry, now);
   let base = 0;
   switch (employer.payType) {
     case "hourly":
@@ -50,6 +56,41 @@ export function entryPay(employer: Employer, entry: TimeEntry, now = Date.now())
       break;
   }
   return base + adjustmentTotal(entry.adjustment);
+}
+
+function isConfirmedPersonalFor(employerId: string) {
+  return (e: TimeEntry) => e.employerId === employerId && !e.workerId && e.status === "confirmed" && !!e.endTime;
+}
+
+/**
+ * `monthly` and `base+overtime` pay a fixed lump sum that isn't tied to any
+ * single shift -- entryPay() deliberately returns 0 for it there. This adds
+ * that lump sum back in for a given set of entries, once, if the employee
+ * actually logged at least one shift for that employer in the period (no
+ * shifts logged = nothing earned, even on a nominal salary).
+ */
+export function lumpSumForPeriod(employer: Employer, periodEntries: TimeEntry[]): number {
+  const amount = employer.payType === "monthly" ? employer.monthlySalary ?? 0
+    : employer.payType === "base+overtime" ? employer.baseSalary ?? 0
+    : 0;
+  if (amount <= 0) return 0;
+  return periodEntries.some(isConfirmedPersonalFor(employer.id)) ? amount : 0;
+}
+
+/** All-time version of lumpSumForPeriod: pays once per distinct calendar month
+ * the employee logged at least one shift, since a monthly salary recurs monthly. */
+export function lumpSumAllTime(employer: Employer, entries: TimeEntry[]): number {
+  const amount = employer.payType === "monthly" ? employer.monthlySalary ?? 0
+    : employer.payType === "base+overtime" ? employer.baseSalary ?? 0
+    : 0;
+  if (amount <= 0) return 0;
+  const months = new Set<string>();
+  for (const e of entries) {
+    if (!isConfirmedPersonalFor(employer.id)(e)) continue;
+    const d = new Date(e.startTime);
+    months.add(`${d.getFullYear()}-${d.getMonth()}`);
+  }
+  return months.size * amount;
 }
 
 /** Physical time actually worked today, deduplicating overlapping concurrent shifts

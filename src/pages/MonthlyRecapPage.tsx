@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { watchEmployers, watchTimeEntries } from "../lib/firestore";
-import { entryHours, entryPay } from "../lib/pay";
+import { entryHours, entryPay, lumpSumForPeriod } from "../lib/pay";
 import { currentStreak, dateKey, leaderboard, startOfMonth } from "../lib/stats";
 import { downloadBlob, renderRecapShareImage } from "../lib/shareImage";
 import type { Employer, TimeEntry } from "../lib/types";
@@ -35,9 +35,9 @@ export function MonthlyRecapPage({ uid }: { uid: string }) {
   const totalPay = monthEntries.reduce((s, e) => {
     const emp = employerById.get(e.employerId);
     return emp ? s + entryPay(emp, e) : s;
-  }, 0);
+  }, 0) + employers.reduce((s, emp) => s + lumpSumForPeriod(emp, monthEntries), 0);
 
-  const board = useMemo(() => leaderboard(monthEntries, employers, monthStart), [monthEntries, employers, monthStart]);
+  const board = useMemo(() => leaderboard(monthEntries, employers, monthStart, true), [monthEntries, employers, monthStart]);
   const topEmployer = board[0]?.employer.name ?? "—";
   const streak = useMemo(() => currentStreak(entries), [entries]);
 

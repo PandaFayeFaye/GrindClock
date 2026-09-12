@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { addManualEntry, watchEmployers, watchWorkers } from "../lib/firestore";
-import type { Employer, Mood, Worker } from "../lib/types";
+import { addManualEntry, deleteTimeEntry, getTimeEntry, updateTimeEntry, watchEmployers, watchWorkers } from "../lib/firestore";
+import type { Employer, Mood, TimeEntry, Worker } from "../lib/types";
 import "./BackfillEntryPage.css";
 
 const MOODS: { key: Mood; label: string }[] = [
@@ -20,6 +20,7 @@ export function BackfillEntryPage({ uid }: { uid: string }) {
   const [searchParams] = useSearchParams();
   const presetEmployerId = searchParams.get("employerId");
   const workerId = searchParams.get("workerId") ?? undefined;
+  const editId = searchParams.get("editId");
 
   const [employers, setEmployers] = useState<Employer[]>([]);
   useEffect(() => watchEmployers(uid, setEmployers), [uid]);
@@ -46,6 +47,31 @@ export function BackfillEntryPage({ uid }: { uid: string }) {
   const [mood, setMood] = useState<Mood | undefined>(undefined);
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [loadedEdit, setLoadedEdit] = useState(false);
+
+  useEffect(() => {
+    if (!editId) return;
+    getTimeEntry(uid, editId).then((snap) => {
+      const data = snap.data() as TimeEntry | undefined;
+      if (!data) return;
+      setSelectedEmployerId(data.employerId);
+      const start = new Date(data.startTime);
+      const end = new Date(data.endTime ?? data.startTime);
+      setDate(toDateInputValue(start));
+      setMode("range");
+      setStartTime(`${String(start.getHours()).padStart(2, "0")}:${String(start.getMinutes()).padStart(2, "0")}`);
+      setEndTime(`${String(end.getHours()).padStart(2, "0")}:${String(end.getMinutes()).padStart(2, "0")}`);
+      setIsOvertime(!!data.isOvertime);
+      setIsHoliday(!!data.isHoliday);
+      setOrderCount(data.orderCount ? String(data.orderCount) : "");
+      setMood(data.mood);
+      setNote(data.note ?? "");
+      setLoadedEdit(true);
+    });
+    // Only ever re-run if editId itself changes -- this is a one-time load into local form state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editId, uid]);
 
   const employer = useMemo(() => employers.find((e) => e.id === employerId), [employers, employerId]);
   const isPerOrder = employer?.payType === "per-order";
@@ -72,20 +98,33 @@ export function BackfillEntryPage({ uid }: { uid: string }) {
     const range = computeRange();
     if (!range) return;
     setSaving(true);
-    await addManualEntry(uid, {
+    const data = {
       employerId,
       startTime: range.start,
       endTime: range.end,
-      status: "confirmed",
-      source: "manual",
+      status: "confirmed" as const,
+      source: "manual" as const,
       isOvertime,
       isHoliday,
       ...(workerId ? { workerId } : {}),
       ...(isPerOrder && orderCount ? { orderCount: Number(orderCount) } : {}),
       ...(mood ? { mood } : {}),
       ...(note.trim() ? { note: note.trim() } : {}),
-    });
+    };
+    if (editId) {
+      await updateTimeEntry(uid, editId, data);
+    } else {
+      await addManualEntry(uid, data);
+    }
     setSaving(false);
+    navigate(-1);
+  }
+
+  async function handleDelete() {
+    if (!editId) return;
+    setDeleting(true);
+    await deleteTimeEntry(uid, editId);
+    setDeleting(false);
     navigate(-1);
   }
 
@@ -97,8 +136,8 @@ export function BackfillEntryPage({ uid }: { uid: string }) {
             <path d="M6 6l12 12M18 6L6 18" stroke="#1A1A1A" strokeWidth="2.5" strokeLinecap="round" />
           </svg>
         </button>
-        <h1>{worker ? `为${worker.name}记工时` : "补录工时"}</h1>
-        <button className="save-btn" onClick={handleSave} disabled={saving || !employerId}>
+        <h1>{editId ? "编辑工时记录" : worker ? `为${worker.name}记工时` : "补录工时"}</h1>
+        <button className="save-btn" onClick={handleSave} disabled={saving || !employerId || (!!editId && !loadedEdit)}>
           保存
         </button>
       </div>
@@ -198,6 +237,12 @@ export function BackfillEntryPage({ uid }: { uid: string }) {
           <p className="field-label">备注 <span className="opt">可选</span></p>
           <textarea className="note-input" placeholder="今天发生了什么值得记一笔的事吗" value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
+
+        {editId && (
+          <button className="delete-entry-btn" onClick={handleDelete} disabled={deleting}>
+            删除这条记录
+          </button>
+        )}
       </div>
     </div>
   );

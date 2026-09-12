@@ -75,9 +75,20 @@ export function HomePage({ uid }: { uid: string }) {
     moodNote: string | undefined,
     note: string,
     adjustment: Adjustment[] | undefined,
+    isOvertime: boolean,
+    isHoliday: boolean,
+    orderCount: number | undefined,
   ) {
     if (!confirmingEntry) return;
-    clockOut(uid, confirmingEntry.entry.id, { mood, moodNote, note: note || undefined, adjustment });
+    clockOut(uid, confirmingEntry.entry.id, {
+      mood,
+      moodNote,
+      note: note || undefined,
+      adjustment,
+      isOvertime: isOvertime || undefined,
+      isHoliday: isHoliday || undefined,
+      orderCount,
+    });
     setConfirmingEntry(null);
   }
 

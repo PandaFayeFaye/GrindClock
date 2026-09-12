@@ -42,6 +42,7 @@
   background: var(--bg-surface);
   border: 1.5px solid var(--border-quiet);
   border-radius: 12px;
+  cursor: pointer;
 }
 
 .entry .dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
