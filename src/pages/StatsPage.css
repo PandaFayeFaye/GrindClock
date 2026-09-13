@@ -70,6 +70,8 @@
 
 .range-chip.active {
   background: var(--accent-blue);
+  border-color: var(--border-bold);
+  color: #fff;
 }
 
 .filter-chip {

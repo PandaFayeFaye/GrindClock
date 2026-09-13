@@ -111,6 +111,7 @@ const dict = {
   workdaysLabel: { zh: "哪几天上班", en: "Which days" },
   batchTimeLabel: { zh: "哪几天上班 · 每天的上下班时间", en: "Which days · start/end time per day" },
   batchPerDayTimeHint: { zh: "点击选中/取消某一天，每天的时间可以单独设置", en: "Tap a day to toggle it -- each day's time can be set independently" },
+  batchAutoOvertimeHint: { zh: "超出雇主排班的部分会自动记为加班", en: "Hours beyond the employer's scheduled time will be auto-flagged as overtime" },
   batchPreviewCount: { zh: "将生成 {n} 条记录", en: "Will create {n} entries" },
   batchSaveBtn: { zh: "一键生成", en: "Create all" },
   batchSaving: { zh: "生成中...", en: "Creating..." },
@@ -461,6 +462,7 @@ const dict = {
   periodHours: { zh: "本时段工时", en: "Hours this period" },
   periodPay: { zh: "本时段收入", en: "Earned this period" },
   overtimeHoursLabel: { zh: "加班时长", en: "Overtime hours" },
+  includesOvertimeNote: { zh: "其中加班 {h} 小时", en: "including {h}h overtime" },
 
   // ---- Coach tour ----
   coachSkip: { zh: "跳过", en: "Skip" },

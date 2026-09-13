@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { addManualEntries, deleteTimeEntries, watchEmployers, watchTimeEntries } from "../lib/firestore";
-import { WEEKDAYS, combineDateAndTime, type WeekdayKey } from "../lib/schedule";
+import { WEEKDAYS, combineDateAndTime, scheduleDurationHours, type WeekdayKey } from "../lib/schedule";
 import { dateKey } from "../lib/stats";
 import { useT } from "../lib/i18n";
 import type { Employer, TimeEntry } from "../lib/types";
@@ -27,6 +27,9 @@ export function BatchBackfillPage({ uid }: { uid: string }) {
 
   const [employerId, setEmployerId] = useState("");
   const employerIdOrFirst = employerId || employers[0]?.id || "";
+  const selectedEmployer = employers.find((e) => e.id === employerIdOrFirst);
+  const supportsAutoOvertime = selectedEmployer?.scheduleMode === "fixed"
+    && (selectedEmployer.payType === "monthly" || selectedEmployer.payType === "comprehensive");
 
   const today = toDateInputValue(new Date());
   const [rangeStart, setRangeStart] = useState(today);
@@ -97,17 +100,30 @@ export function BatchBackfillPage({ uid }: { uid: string }) {
   async function handleCreate() {
     if (!employerIdOrFirst || matchingDates.length === 0) return;
     setSaving(true);
+    const employer = selectedEmployer;
     const newEntries: Omit<TimeEntry, "id">[] = matchingDates.map((date) => {
-      const day = dayTimes[String(date.getDay()) as WeekdayKey]!;
+      const weekday = String(date.getDay()) as WeekdayKey;
+      const day = dayTimes[weekday]!;
       const start = combineDateAndTime(date, day.start);
       let end = combineDateAndTime(date, day.end);
       if (end <= start) end += 24 * 3_600_000;
+      const enteredHours = (end - start) / 3_600_000;
+
+      // Auto-flag overtime for a fixed-schedule salaried employer: hours entered
+      // beyond what that weekday is actually scheduled for, same rule as a live
+      // clock-out or single backfill.
+      const scheduledDay = employer?.fixedSchedule?.[weekday];
+      const overtimeHours = supportsAutoOvertime && scheduledDay
+        ? Math.max(0, enteredHours - scheduleDurationHours(scheduledDay))
+        : 0;
+
       return {
         employerId: employerIdOrFirst,
         startTime: start,
         endTime: end,
         status: "confirmed",
         source: "manual",
+        ...(overtimeHours > 0.05 ? { overtimeHours } : {}),
       };
     });
     await addManualEntries(uid, newEntries);
@@ -227,6 +243,7 @@ export function BatchBackfillPage({ uid }: { uid: string }) {
               </div>
             </div>
             <p className="batch-preview">{t("batchPreviewCount", { n: matchingDates.length })}</p>
+            {supportsAutoOvertime && <p className="bws-hint">{t("batchAutoOvertimeHint")}</p>}
           </>
         )}
 

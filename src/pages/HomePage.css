@@ -137,6 +137,14 @@
   opacity: 0.8;
 }
 
+.income-overtime-note {
+  font-size: 11px;
+  font-weight: 700;
+  margin: 3px 0 0;
+  color: var(--border-bold);
+  opacity: 0.65;
+}
+
 .list {
   display: flex;
   flex-direction: column;

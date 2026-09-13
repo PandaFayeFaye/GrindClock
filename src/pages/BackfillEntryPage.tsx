@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { deleteField } from "firebase/firestore";
 import { addManualEntry, deleteTimeEntry, getTimeEntry, updateTimeEntry, watchEmployers, watchWorkers } from "../lib/firestore";
+import { scheduleDurationHours, todaysSchedule } from "../lib/schedule";
 import { useT } from "../lib/i18n";
 import type { Adjustment, Employer, Mood, TimeEntry, Worker } from "../lib/types";
 import "./BackfillEntryPage.css";
@@ -69,6 +70,10 @@ export function BackfillEntryPage({ uid }: { uid: string }) {
       setStartTime(`${String(start.getHours()).padStart(2, "0")}:${String(start.getMinutes()).padStart(2, "0")}`);
       setEndTime(`${String(end.getHours()).padStart(2, "0")}:${String(end.getMinutes()).padStart(2, "0")}`);
       setIsOvertime(!!data.isOvertime);
+      if (data.overtimeHours) {
+        setOvertimeTouched(true);
+        setOvertimeHoursStr(String(data.overtimeHours));
+      }
       setIsHoliday(!!data.isHoliday);
       setOrderCount(data.orderCount ? String(data.orderCount) : "");
       setMood(data.mood);
@@ -83,6 +88,9 @@ export function BackfillEntryPage({ uid }: { uid: string }) {
 
   const employer = useMemo(() => employers.find((e) => e.id === employerId), [employers, employerId]);
   const isPerOrder = employer?.payType === "per-order";
+
+  const [overtimeHoursStr, setOvertimeHoursStr] = useState("");
+  const [overtimeTouched, setOvertimeTouched] = useState(false);
 
   useEffect(() => {
     if (prefilledDefaults || !employer) return;
@@ -106,6 +114,19 @@ export function BackfillEntryPage({ uid }: { uid: string }) {
     if (end <= start) end += 24 * 3_600_000; // overnight shift
     return { start, end };
   }
+
+  // Auto-detect overtime for a fixed-schedule salaried employee, same rule as
+  // clocking out live: hours entered beyond that weekday's scheduled duration.
+  const previewRange = computeRange();
+  const daySchedule = employer ? todaysSchedule(employer, new Date(date + "T00:00:00")) : null;
+  const scheduledHoursForDate = daySchedule ? scheduleDurationHours(daySchedule) : 0;
+  const supportsAutoOvertime = daySchedule !== null && (employer?.payType === "monthly" || employer?.payType === "comprehensive");
+  const enteredHours = previewRange ? (previewRange.end - previewRange.start) / 3_600_000 : 0;
+  const detectedOvertimeHours = supportsAutoOvertime ? Math.max(0, enteredHours - scheduledHoursForDate) : 0;
+  const showOvertimeSection = supportsAutoOvertime && detectedOvertimeHours > 0.05;
+  const overtimeHoursValue = showOvertimeSection
+    ? Number(overtimeTouched ? overtimeHoursStr : detectedOvertimeHours.toFixed(1)) || 0
+    : undefined;
 
   async function handleSave() {
     if (!employerId) return;
@@ -131,10 +152,12 @@ export function BackfillEntryPage({ uid }: { uid: string }) {
         mood: mood ?? deleteField(),
         note: note.trim() ? note.trim() : deleteField(),
         adjustment: adjustments.length > 0 ? adjustments : deleteField(),
+        overtimeHours: overtimeHoursValue ?? deleteField(),
       });
     } else {
       await addManualEntry(uid, {
         ...base,
+        ...(overtimeHoursValue !== undefined ? { overtimeHours: overtimeHoursValue } : {}),
         ...(isPerOrder && orderCount ? { orderCount: Number(orderCount) } : {}),
         ...(mood ? { mood } : {}),
         ...(note.trim() ? { note: note.trim() } : {}),
@@ -236,6 +259,28 @@ export function BackfillEntryPage({ uid }: { uid: string }) {
           <span>{t("holidayRateToggle")}</span>
           <div className={`switch${isHoliday ? " on" : ""}`}><div className="knob" /></div>
         </div>
+
+        {showOvertimeSection && (
+          <div className="overtime-detected">
+            <p className="field-label">{t("overtimeDetectedTitle")}</p>
+            <p className="overtime-detected-note">
+              {t("overtimeDetectedNote", { scheduled: scheduledHoursForDate.toFixed(1), worked: enteredHours.toFixed(1) })}
+            </p>
+            <div className="overtime-detected-row">
+              <input
+                className="time-input"
+                type="number"
+                step="0.1"
+                value={overtimeTouched ? overtimeHoursStr : detectedOvertimeHours.toFixed(1)}
+                onChange={(e) => { setOvertimeTouched(true); setOvertimeHoursStr(e.target.value); }}
+              />
+              <span className="overtime-detected-unit">{t("overtimeHoursUnit")}</span>
+            </div>
+            <p className="overtime-detected-mult">
+              {t("overtimeMultiplierNote", { mult: (employer?.overtimeMultiplier ?? 1.5).toFixed(1) })}
+            </p>
+          </div>
+        )}
 
         {isPerOrder && (
           <div>

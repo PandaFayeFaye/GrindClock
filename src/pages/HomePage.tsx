@@ -115,6 +115,10 @@ export function HomePage({ uid }: { uid: string }) {
     () => (incomeRange === "today" ? todaysHours : rangeEntries.reduce((s, e) => s + entryHours(e), 0)),
     [incomeRange, todaysHours, rangeEntries],
   );
+  const rangeOvertimeHours = useMemo(
+    () => rangeEntries.reduce((s, e) => s + (e.overtimeHours ?? 0), 0),
+    [rangeEntries],
+  );
   const rangeIncomeByCurrency = useMemo(() => {
     const map = new Map<string, number>();
     for (const e of rangeEntries) {
@@ -264,6 +268,9 @@ export function HomePage({ uid }: { uid: string }) {
             <p className="income-label">{t(incomeLabelKey)}</p>
             <p className="income-value">{formatGroupedPay(rangeIncomeByCurrency, 1)}</p>
             <p className="income-note">{t(workedLabelKey, { h: rangeHours.toFixed(1) })}</p>
+            {rangeOvertimeHours > 0.05 && (
+              <p className="income-overtime-note">{t("includesOvertimeNote", { h: rangeOvertimeHours.toFixed(1) })}</p>
+            )}
           </div>
 
           <div className="list">

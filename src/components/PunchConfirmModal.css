@@ -150,38 +150,38 @@
   background: var(--bg-surface);
 }
 
-.overtime-detected {
+.punch-modal-sheet .overtime-detected {
   background: #FFF8E8;
   border: 1.8px solid var(--accent-yellow);
   border-radius: 12px;
   padding: 12px 14px;
 }
 
-.overtime-detected-note {
+.punch-modal-sheet .overtime-detected-note {
   font-size: 11px;
   color: var(--text-muted);
   margin: 0 0 8px;
 }
 
-.overtime-detected-row {
+.punch-modal-sheet .overtime-detected-row {
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.overtime-detected-row .adj-input {
+.punch-modal-sheet .overtime-detected-row .adj-input {
   margin-top: 0;
   width: 90px;
   flex-shrink: 0;
 }
 
-.overtime-detected-unit {
+.punch-modal-sheet .overtime-detected-unit {
   font-size: 12.5px;
   font-weight: 700;
   color: var(--text-muted);
 }
 
-.overtime-detected-mult {
+.punch-modal-sheet .overtime-detected-mult {
   font-size: 10.5px;
   color: var(--text-muted);
   margin: 8px 0 0;
