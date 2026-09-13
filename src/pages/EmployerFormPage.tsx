@@ -5,6 +5,7 @@ import { addEmployer, employersCol, updateEmployer, watchEmployers } from "../li
 import type { Adjustment, Employer, PayType } from "../lib/types";
 import { Mascot } from "../components/Mascot";
 import { CURRENCIES, DEFAULT_CURRENCY } from "../lib/currency";
+import { useT, type DictKey } from "../lib/i18n";
 import "./EmployerFormPage.css";
 
 const PALETTE = ["#FFD93D", "#4361EE", "#FF6B6B", "#39C97A", "#B084F5", "#5AC8FA"];
@@ -49,25 +50,26 @@ const MODE_ICONS: Record<PayType, ReactElement> = {
   ),
 };
 
-const MODES: { key: PayType; label: string }[] = [
-  { key: "hourly", label: "时薪" },
-  { key: "daily", label: "日结" },
-  { key: "base+overtime", label: "底薪+加班" },
-  { key: "comprehensive", label: "综合工时" },
-  { key: "monthly", label: "月结" },
-  { key: "per-order", label: "按单计费" },
+const MODES: { key: PayType; labelKey: DictKey }[] = [
+  { key: "hourly", labelKey: "payTypeHourly" },
+  { key: "daily", labelKey: "payTypeDaily" },
+  { key: "base+overtime", labelKey: "payTypeBaseOvertime" },
+  { key: "comprehensive", labelKey: "payTypeComprehensive" },
+  { key: "monthly", labelKey: "payTypeMonthly" },
+  { key: "per-order", labelKey: "payTypePerOrder" },
 ];
 
 const OVERTIME_OPTIONS = [1.5, 2, 3];
 const HOLIDAY_OPTIONS = [2, 3];
 const BREAK_OPTIONS = [0, 30, 60];
-const CYCLES: { key: NonNullable<Employer["settlementCycle"]>; label: string }[] = [
-  { key: "daily", label: "日结" },
-  { key: "weekly", label: "周结" },
-  { key: "monthly", label: "月结" },
+const CYCLES: { key: NonNullable<Employer["settlementCycle"]>; labelKey: DictKey }[] = [
+  { key: "daily", labelKey: "cycleDaily" },
+  { key: "weekly", labelKey: "cycleWeekly" },
+  { key: "monthly", labelKey: "cycleMonthly" },
 ];
 
 export function EmployerFormPage({ uid }: { uid: string }) {
+  const t = useT();
   const navigate = useNavigate();
   const { employerId } = useParams();
   const isEdit = !!employerId;
@@ -174,23 +176,23 @@ export function EmployerFormPage({ uid }: { uid: string }) {
     }
   }
 
-  const rateLabel = {
-    hourly: "基础时薪",
-    comprehensive: "基础时薪",
-    "base+overtime": "加班时薪",
-    daily: "日结金额",
-    monthly: "月薪",
-    "per-order": "每单价格",
-  }[payType];
+  const rateLabelKey: DictKey = ({
+    hourly: "rateLabelHourly",
+    comprehensive: "rateLabelHourly",
+    "base+overtime": "rateLabelOvertime",
+    daily: "rateLabelDaily",
+    monthly: "rateLabelMonthly",
+    "per-order": "rateLabelPerOrder",
+  } satisfies Record<PayType, DictKey>)[payType];
 
-  if (!loaded) return <p className="loading">加载中...</p>;
+  if (!loaded) return <p className="loading">{t("loading")}</p>;
 
   if (justSaved) {
     return (
       <div className="employer-saved-splash">
         <Mascot size={110} />
-        <p className="splash-title">新雇主「{name.trim()}」入职啦！</p>
-        <p className="splash-sub">现在可以去打第一次卡了</p>
+        <p className="splash-title">{t("savedSplashTitle", { name: name.trim() })}</p>
+        <p className="splash-sub">{t("savedSplashSub")}</p>
       </div>
     );
   }
@@ -203,28 +205,28 @@ export function EmployerFormPage({ uid }: { uid: string }) {
             <path d="M6 6l12 12M18 6L6 18" stroke="#1A1A1A" strokeWidth="2.5" strokeLinecap="round" />
           </svg>
         </button>
-        <h1>{isEdit ? "编辑雇主" : "添加雇主"}</h1>
+        <h1>{isEdit ? t("editEmployerTitle") : t("addEmployerTitle")}</h1>
         <button className="save-btn" onClick={handleSaveClick} disabled={saving || !name.trim()}>
-          保存
+          {t("save")}
         </button>
       </div>
 
       <div className="body">
         <div>
-          <p className="field-label">雇主名称</p>
+          <p className="field-label">{t("employerNameLabel")}</p>
           <input
             className="name-input"
-            placeholder="比如：楼下奶茶店"
+            placeholder={t("employerNamePlaceholder")}
             value={name}
             onChange={(e) => { setName(e.target.value); setDuplicateConfirm(false); }}
           />
           {findDuplicate() && (
-            <p className="dup-warning">已有同名雇主「{findDuplicate()!.name}」，再次点击保存即确认要重复添加</p>
+            <p className="dup-warning">{t("duplicateNameWarning", { name: findDuplicate()!.name })}</p>
           )}
         </div>
 
         <div>
-          <p className="field-label">颜色标签</p>
+          <p className="field-label">{t("colorLabel")}</p>
           <div className="swatches">
             {PALETTE.map((hex, i) => (
               <div
@@ -244,7 +246,7 @@ export function EmployerFormPage({ uid }: { uid: string }) {
         </div>
 
         <div>
-          <p className="field-label">结算模式</p>
+          <p className="field-label">{t("settlementModeLabel")}</p>
           <div className="mode-cards">
             {MODES.map((m) => (
               <div
@@ -253,28 +255,28 @@ export function EmployerFormPage({ uid }: { uid: string }) {
                 onClick={() => setPayType(m.key)}
               >
                 <span className="ic">{MODE_ICONS[m.key]}</span>
-                <span className="lb">{m.label}</span>
+                <span className="lb">{t(m.labelKey)}</span>
               </div>
             ))}
           </div>
         </div>
 
         <div>
-          <p className="field-label">币种</p>
+          <p className="field-label">{t("currencyLabel")}</p>
           <select className="select-field currency-select" value={currency} onChange={(e) => setCurrency(e.target.value)}>
             {CURRENCIES.map((c) => (
-              <option key={c.code} value={c.code}>{c.symbol} {c.label}（{c.code}）</option>
+              <option key={c.code} value={c.code}>{c.symbol} {c.code} · {c.label}</option>
             ))}
           </select>
         </div>
 
         {payType === "base+overtime" && (
           <div>
-            <p className="field-label">底薪（月）</p>
+            <p className="field-label">{t("baseSalaryLabel")}</p>
             <input
               className="rate-input"
               type="number"
-              placeholder={`${CURRENCIES.find((c) => c.code === currency)?.symbol ?? "¥"} 每月固定拿到手的底薪`}
+              placeholder={t("baseSalaryPlaceholder", { sym: CURRENCIES.find((c) => c.code === currency)?.symbol ?? "¥" })}
               value={baseSalary}
               onChange={(e) => setBaseSalary(e.target.value)}
             />
@@ -282,7 +284,7 @@ export function EmployerFormPage({ uid }: { uid: string }) {
         )}
 
         <div>
-          <p className="field-label">{rateLabel}</p>
+          <p className="field-label">{t(rateLabelKey)}</p>
           <input
             className="rate-input"
             type="number"
@@ -293,7 +295,7 @@ export function EmployerFormPage({ uid }: { uid: string }) {
         </div>
 
         <div>
-          <p className="field-label">加班费率倍数 <span className="opt">可选</span></p>
+          <p className="field-label">{t("overtimeMultiplierLabel")} <span className="opt">{t("optional")}</span></p>
           <div className="chip-row">
             {OVERTIME_OPTIONS.map((v) => (
               <button
@@ -302,14 +304,14 @@ export function EmployerFormPage({ uid }: { uid: string }) {
                 className={`chip${overtimeMultiplier === v ? " selected" : ""}`}
                 onClick={() => setOvertimeMultiplier(overtimeMultiplier === v ? undefined : v)}
               >
-                {v}倍
+                {t("multiplierSuffix", { v })}
               </button>
             ))}
           </div>
         </div>
 
         <div>
-          <p className="field-label">节假日费率倍数 <span className="opt">可选</span></p>
+          <p className="field-label">{t("holidayMultiplierLabel")} <span className="opt">{t("optional")}</span></p>
           <div className="chip-row">
             {HOLIDAY_OPTIONS.map((v) => (
               <button
@@ -318,14 +320,14 @@ export function EmployerFormPage({ uid }: { uid: string }) {
                 className={`chip${holidayMultiplier === v ? " selected" : ""}`}
                 onClick={() => setHolidayMultiplier(holidayMultiplier === v ? undefined : v)}
               >
-                {v}倍
+                {t("multiplierSuffix", { v })}
               </button>
             ))}
           </div>
         </div>
 
         <div>
-          <p className="field-label">休息扣除时长 <span className="opt">可选</span></p>
+          <p className="field-label">{t("breakLabel")} <span className="opt">{t("optional")}</span></p>
           <div className="chip-row">
             {BREAK_OPTIONS.map((v) => (
               <button
@@ -334,14 +336,14 @@ export function EmployerFormPage({ uid }: { uid: string }) {
                 className={`chip${breakMinutes === v ? " selected" : ""}`}
                 onClick={() => setBreakMinutes(v)}
               >
-                {v === 0 ? "不扣除" : `${v}分钟`}
+                {v === 0 ? t("breakNone") : t("breakMinutesFmt", { m: v })}
               </button>
             ))}
           </div>
         </div>
 
         <div>
-          <p className="field-label">结算周期 <span className="opt">可选</span></p>
+          <p className="field-label">{t("settlementCycleLabel")} <span className="opt">{t("optional")}</span></p>
           <div className="chip-row">
             {CYCLES.map((c) => (
               <button
@@ -350,7 +352,7 @@ export function EmployerFormPage({ uid }: { uid: string }) {
                 className={`chip${settlementCycle === c.key ? " selected" : ""}`}
                 onClick={() => setSettlementCycle(settlementCycle === c.key ? undefined : c.key)}
               >
-                {c.label}
+                {t(c.labelKey)}
               </button>
             ))}
           </div>
@@ -358,7 +360,7 @@ export function EmployerFormPage({ uid }: { uid: string }) {
 
         <div>
           <div className="collapse-header" onClick={() => setCommuteOpen(!commuteOpen)}>
-            <span>净收益对比设置（可选）</span>
+            <span>{t("netPaySettingsLabel")}</span>
             <svg viewBox="0 0 24 24" fill="none" width="16" height="16" style={{ transform: commuteOpen ? "rotate(180deg)" : undefined }}>
               <path d="M6 9l6 6 6-6" stroke="#1A1A1A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
@@ -368,21 +370,21 @@ export function EmployerFormPage({ uid }: { uid: string }) {
               <input
                 className="rate-input"
                 type="number"
-                placeholder="预估通勤时长（分钟）"
+                placeholder={t("commuteMinutesPlaceholder")}
                 value={commuteMinutes}
                 onChange={(e) => setCommuteMinutes(e.target.value)}
               />
               <input
                 className="rate-input"
                 type="number"
-                placeholder="预估通勤交通费（元）"
+                placeholder={t("commuteCostPlaceholder")}
                 value={commuteCost}
                 onChange={(e) => setCommuteCost(e.target.value)}
               />
               <input
                 className="rate-input"
                 type="number"
-                placeholder="预估等待/摸鱼时间占比（%，如接单间隙）"
+                placeholder={t("idleTimePlaceholder")}
                 value={idleTimePct}
                 onChange={(e) => setIdleTimePct(e.target.value)}
               />
@@ -391,7 +393,7 @@ export function EmployerFormPage({ uid }: { uid: string }) {
         </div>
 
         <div>
-          <p className="field-label">默认补贴/扣款规则 <span className="opt">可选，会自动套用到每一条新记录</span></p>
+          <p className="field-label">{t("defaultAdjLabel")} <span className="opt">{t("defaultAdjSub")}</span></p>
           {defaultAdjustments.map((adj, i) => (
             <div className="default-adj-row" key={i}>
               <select
@@ -399,19 +401,19 @@ export function EmployerFormPage({ uid }: { uid: string }) {
                 value={adj.type}
                 onChange={(e) => setDefaultAdjustments(defaultAdjustments.map((a, j) => j === i ? { ...a, type: e.target.value as "bonus" | "deduction" } : a))}
               >
-                <option value="bonus">补贴</option>
-                <option value="deduction">扣款</option>
+                <option value="bonus">{t("bonus")}</option>
+                <option value="deduction">{t("deduction")}</option>
               </select>
               <input
                 className="rate-input"
                 type="number"
-                placeholder="金额"
+                placeholder={t("amountLabel")}
                 value={adj.amount || ""}
                 onChange={(e) => setDefaultAdjustments(defaultAdjustments.map((a, j) => j === i ? { ...a, amount: Number(e.target.value) || 0 } : a))}
               />
               <input
                 className="rate-input"
-                placeholder="备注（如：夜班补贴）"
+                placeholder={t("defaultAdjNotePlaceholder")}
                 value={adj.note ?? ""}
                 onChange={(e) => setDefaultAdjustments(defaultAdjustments.map((a, j) => j === i ? { ...a, note: e.target.value } : a))}
               />
@@ -425,15 +427,15 @@ export function EmployerFormPage({ uid }: { uid: string }) {
             className="add-adj-btn"
             onClick={() => setDefaultAdjustments([...defaultAdjustments, { type: "bonus", amount: 0 }])}
           >
-            + 添加一条规则
+            {t("addRuleBtn")}
           </button>
         </div>
 
         <div>
-          <p className="field-label">备注 <span className="opt">可选</span></p>
+          <p className="field-label">{t("employerNoteLabel")} <span className="opt">{t("optional")}</span></p>
           <textarea
             className="note-input"
-            placeholder="工种、联系方式之类都可以写这里"
+            placeholder={t("employerNotePlaceholder")}
             value={note}
             onChange={(e) => setNote(e.target.value)}
           />

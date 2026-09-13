@@ -61,7 +61,7 @@ export function SettingsPage({ uid }: { uid: string }) {
     setExporting(true);
     const employerById = new Map(employers.map((e) => [e.id, e]));
     const confirmed = entries.filter((e) => e.status === "confirmed" && e.endTime);
-    exportEntriesCsv(confirmed, employerById, "gigtime-全部数据.csv");
+    exportEntriesCsv(confirmed, employerById, "gigtime-all-data.csv");
     setExporting(false);
   }
 
@@ -116,17 +116,17 @@ export function SettingsPage({ uid }: { uid: string }) {
       </div>
 
       <div>
-        <p className="group-label">AI功能</p>
+        <p className="group-label">{t("groupAiFeatures")}</p>
         <div className="group">
           <ToggleRow
-            title="拍照识别"
-            subtitle="首页“+”菜单里的“AI记工”会显示拍照识别选项"
+            title={t("aiPhotoTitle")}
+            subtitle={t("aiPhotoSub")}
             value={aiPhoto}
             onChange={setAiPhoto}
           />
           <ToggleRow
-            title="语音记工"
-            subtitle="首页“+”菜单里的“AI记工”会显示语音记工选项"
+            title={t("aiVoiceTitle")}
+            subtitle={t("aiVoiceSub")}
             value={aiVoice}
             onChange={setAiVoice}
           />
@@ -134,15 +134,13 @@ export function SettingsPage({ uid }: { uid: string }) {
       </div>
 
       <div>
-        <p className="group-label">数据</p>
+        <p className="group-label">{t("groupData")}</p>
         <div className="group">
           <div className="nav-row" onClick={handleExportAll} style={{ cursor: "pointer" }}>
-            <span className="t">{exporting ? "导出中..." : "导出全部数据（CSV）"}</span>
+            <span className="t">{exporting ? t("exporting") : t("exportAllData")}</span>
             <svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M9 6l6 6-6 6" stroke="#1A1A1A" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </div>
-          <p className="uid-line" style={{ paddingBottom: 14 }}>
-            云同步状态：<b>已连接</b>（数据实时同步到 Firebase，登录同一账号即可在其他设备看到）
-          </p>
+          <p className="uid-line" style={{ paddingBottom: 14 }}>{t("syncStatus")}</p>
         </div>
       </div>
 

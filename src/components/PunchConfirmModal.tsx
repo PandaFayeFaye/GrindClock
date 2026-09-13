@@ -2,13 +2,14 @@ import { useState } from "react";
 import type { Adjustment, Employer, Mood, TimeEntry } from "../lib/types";
 import { entryHours, entryPay } from "../lib/pay";
 import { currencySymbol } from "../lib/currency";
+import { useT } from "../lib/i18n";
 import "./PunchConfirmModal.css";
 
-const MOODS: { key: Mood; label: string }[] = [
-  { key: "crash", label: "崩溃" },
-  { key: "normal", label: "普通" },
-  { key: "great", label: "爽" },
-  { key: "heartbeat", label: "心动" },
+const MOOD_KEYS = [
+  { key: "crash" as Mood, labelKey: "moodCrash" as const },
+  { key: "normal" as Mood, labelKey: "moodNormal" as const },
+  { key: "great" as Mood, labelKey: "moodGreat" as const },
+  { key: "heartbeat" as Mood, labelKey: "moodHeartbeat" as const },
 ];
 
 export function PunchConfirmModal({
@@ -30,6 +31,7 @@ export function PunchConfirmModal({
     orderCount: number | undefined,
   ) => void;
 }) {
+  const t = useT();
   const [mood, setMood] = useState<Mood | undefined>(undefined);
   const [moodNote, setMoodNote] = useState("");
   const [note, setNote] = useState("");
@@ -66,21 +68,21 @@ export function PunchConfirmModal({
         <div className="punch-modal-handle" />
 
         <div className="punch-modal-summary">
-          <p className="emp">{employer.name} · 本次工时</p>
-          <p className="dur">{hours.toFixed(1)}小时</p>
-          <p className="pay">预估收入 {currencySymbol(employer.currency)}{pay.toFixed(1)}</p>
+          <p className="emp">{employer.name} · {t("thisShift")}</p>
+          <p className="dur">{t("hoursUnit", { h: hours.toFixed(1) })}</p>
+          <p className="pay">{t("estimatedPay")} {currencySymbol(employer.currency)}{pay.toFixed(1)}</p>
           {recurringAdjustment.length > 0 && (
-            <p className="recurring-adj-note">已自动套用{recurringAdjustment.length}条该雇主的默认补贴/扣款规则</p>
+            <p className="recurring-adj-note">{t("recurringAdjApplied", { n: recurringAdjustment.length })}</p>
           )}
         </div>
 
         {isPerOrder && (
           <div>
-            <p className="section-label">完成了几单？</p>
+            <p className="section-label">{t("howManyOrders")}</p>
             <input
               className="adj-input"
               type="number"
-              placeholder="单数"
+              placeholder={t("orderCountPlaceholder")}
               value={orderCount}
               onChange={(e) => setOrderCount(e.target.value)}
             />
@@ -89,16 +91,16 @@ export function PunchConfirmModal({
 
         <div>
           <p className="section-label">
-            今天感觉怎么样？<span className="opt">（可跳过）</span>
+            {t("howAreYouFeeling")}<span className="opt">{t("optionalSkip")}</span>
           </p>
           <div className="mood-tags">
-            {MOODS.map((m) => (
+            {MOOD_KEYS.map((m) => (
               <button
                 key={m.key}
                 className={`mood-tag${mood === m.key ? " selected" : ""}`}
                 onClick={() => setMood(mood === m.key ? undefined : m.key)}
               >
-                {m.label}
+                {t(m.labelKey)}
               </button>
             ))}
           </div>
@@ -106,7 +108,7 @@ export function PunchConfirmModal({
             <input
               className="adj-input"
               maxLength={20}
-              placeholder="想补一句吗？（最多20字，可跳过）"
+              placeholder={t("moodNotePlaceholder")}
               value={moodNote}
               onChange={(e) => setMoodNote(e.target.value)}
             />
@@ -115,28 +117,28 @@ export function PunchConfirmModal({
 
         {showRateFlags && (
           <div>
-            <p className="section-label">这次算加班/节假日吗？<span className="opt">（影响倍率计算）</span></p>
+            <p className="section-label">{t("overtimeHolidayQ")}<span className="opt">{t("affectsRateNote")}</span></p>
             <div className="adj-row">
-              <button className={`adj-toggle${isOvertime ? " selected" : ""}`} onClick={() => setIsOvertime(!isOvertime)}>加班</button>
-              <button className={`adj-toggle${isHoliday ? " selected" : ""}`} onClick={() => setIsHoliday(!isHoliday)}>节假日</button>
+              <button className={`adj-toggle${isOvertime ? " selected" : ""}`} onClick={() => setIsOvertime(!isOvertime)}>{t("overtime")}</button>
+              <button className={`adj-toggle${isHoliday ? " selected" : ""}`} onClick={() => setIsHoliday(!isHoliday)}>{t("holiday")}</button>
             </div>
           </div>
         )}
 
         <div>
           <p className="section-label">
-            本次补贴/扣款<span className="opt">（可选，一次性）</span>
+            {t("oneTimeAdjustment")}<span className="opt">{t("optionalOnce")}</span>
           </p>
           <div className="adj-row">
-            <button className={`adj-toggle${adjType === "none" ? " selected" : ""}`} onClick={() => setAdjType("none")}>无</button>
-            <button className={`adj-toggle${adjType === "bonus" ? " selected" : ""}`} onClick={() => setAdjType("bonus")}>补贴</button>
-            <button className={`adj-toggle${adjType === "deduction" ? " selected" : ""}`} onClick={() => setAdjType("deduction")}>扣款</button>
+            <button className={`adj-toggle${adjType === "none" ? " selected" : ""}`} onClick={() => setAdjType("none")}>{t("none")}</button>
+            <button className={`adj-toggle${adjType === "bonus" ? " selected" : ""}`} onClick={() => setAdjType("bonus")}>{t("bonus")}</button>
+            <button className={`adj-toggle${adjType === "deduction" ? " selected" : ""}`} onClick={() => setAdjType("deduction")}>{t("deduction")}</button>
           </div>
           {adjType !== "none" && (
             <input
               className="adj-input"
               type="number"
-              placeholder="金额（元）"
+              placeholder={t("amountPlaceholder")}
               value={adjAmount}
               onChange={(e) => setAdjAmount(e.target.value)}
             />
@@ -145,11 +147,11 @@ export function PunchConfirmModal({
 
         <div>
           <p className="section-label">
-            备注<span className="opt">（可选）</span>
+            {t("noteLabel")}<span className="opt">{t("optional")}</span>
           </p>
           <textarea
             className="note-input"
-            placeholder="今天发生了什么值得记一笔的事吗"
+            placeholder={t("notePlaceholder")}
             value={note}
             onChange={(e) => setNote(e.target.value)}
           />
@@ -167,7 +169,7 @@ export function PunchConfirmModal({
             isPerOrder ? Number(orderCount) || 0 : undefined,
           )}
         >
-          确认保存
+          {t("confirmSave")}
         </button>
       </div>
     </div>

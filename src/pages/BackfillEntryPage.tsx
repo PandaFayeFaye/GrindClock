@@ -2,14 +2,15 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { deleteField } from "firebase/firestore";
 import { addManualEntry, deleteTimeEntry, getTimeEntry, updateTimeEntry, watchEmployers, watchWorkers } from "../lib/firestore";
+import { useT } from "../lib/i18n";
 import type { Adjustment, Employer, Mood, TimeEntry, Worker } from "../lib/types";
 import "./BackfillEntryPage.css";
 
-const MOODS: { key: Mood; label: string }[] = [
-  { key: "crash", label: "崩溃" },
-  { key: "normal", label: "普通" },
-  { key: "great", label: "爽" },
-  { key: "heartbeat", label: "心动" },
+const MOOD_KEYS = [
+  { key: "crash" as Mood, labelKey: "moodCrash" as const },
+  { key: "normal" as Mood, labelKey: "moodNormal" as const },
+  { key: "great" as Mood, labelKey: "moodGreat" as const },
+  { key: "heartbeat" as Mood, labelKey: "moodHeartbeat" as const },
 ];
 
 function toDateInputValue(d: Date) {
@@ -17,6 +18,7 @@ function toDateInputValue(d: Date) {
 }
 
 export function BackfillEntryPage({ uid }: { uid: string }) {
+  const t = useT();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const presetEmployerId = searchParams.get("employerId");
@@ -158,17 +160,17 @@ export function BackfillEntryPage({ uid }: { uid: string }) {
             <path d="M6 6l12 12M18 6L6 18" stroke="#1A1A1A" strokeWidth="2.5" strokeLinecap="round" />
           </svg>
         </button>
-        <h1>{editId ? "编辑工时记录" : worker ? `为${worker.name}记工时` : "补录工时"}</h1>
+        <h1>{editId ? t("editEntryTitle") : worker ? t("logForTitle", { name: worker.name }) : t("backfillTitle")}</h1>
         <button className="save-btn" onClick={handleSave} disabled={saving || !employerId || (!!editId && !loadedEdit)}>
-          保存
+          {t("save")}
         </button>
       </div>
 
       <div className="body">
         <div>
-          <p className="field-label">雇主</p>
+          <p className="field-label">{t("employerLabel")}</p>
           <select className="select-field" value={employerId} onChange={(e) => setEmployerId(e.target.value)}>
-            {employers.length === 0 && <option value="">还没有雇主</option>}
+            {employers.length === 0 && <option value="">{t("noEmployersOption")}</option>}
             {employers.map((e) => (
               <option key={e.id} value={e.id}>{e.name}</option>
             ))}
@@ -176,43 +178,43 @@ export function BackfillEntryPage({ uid }: { uid: string }) {
         </div>
 
         <div>
-          <p className="field-label">日期</p>
+          <p className="field-label">{t("dateLabel")}</p>
           <input className="date-field" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         </div>
 
         <div>
-          <p className="field-label">记录方式</p>
+          <p className="field-label">{t("entryModeLabel")}</p>
           <div className="mode-tabs">
             <button
               type="button"
               className={`mode-tab${mode === "duration" ? " active" : ""}`}
               onClick={() => setMode("duration")}
             >
-              直接填时长
+              {t("modeDuration")}
             </button>
             <button
               type="button"
               className={`mode-tab${mode === "range" ? " active" : ""}`}
               onClick={() => setMode("range")}
             >
-              填上下班时间点
+              {t("modeRange")}
             </button>
           </div>
         </div>
 
         {mode === "duration" ? (
           <div>
-            <p className="field-label">工时时长</p>
+            <p className="field-label">{t("durationLabel")}</p>
             <div className="time-row">
-              <input className="time-input" type="number" placeholder="小时" value={hours} onChange={(e) => setHours(e.target.value)} />
-              <span className="time-sep">小时</span>
-              <input className="time-input" type="number" placeholder="分钟" value={minutes} onChange={(e) => setMinutes(e.target.value)} />
-              <span className="time-sep">分钟</span>
+              <input className="time-input" type="number" placeholder={t("hoursPlaceholder")} value={hours} onChange={(e) => setHours(e.target.value)} />
+              <span className="time-sep">{t("hoursSuffix")}</span>
+              <input className="time-input" type="number" placeholder={t("minutesPlaceholder")} value={minutes} onChange={(e) => setMinutes(e.target.value)} />
+              <span className="time-sep">{t("minutesSuffix")}</span>
             </div>
           </div>
         ) : (
           <div>
-            <p className="field-label">上下班时间点</p>
+            <p className="field-label">{t("startEndLabel")}</p>
             <div className="time-row">
               <input className="time-input" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
               <span className="time-sep">→</span>
@@ -222,41 +224,41 @@ export function BackfillEntryPage({ uid }: { uid: string }) {
         )}
 
         <div className="toggle-row" onClick={() => setIsOvertime(!isOvertime)}>
-          <span>按加班倍率计算</span>
+          <span>{t("overtimeRateToggle")}</span>
           <div className={`switch${isOvertime ? " on" : ""}`}><div className="knob" /></div>
         </div>
         <div className="toggle-row" onClick={() => setIsHoliday(!isHoliday)}>
-          <span>按节假日倍率计算</span>
+          <span>{t("holidayRateToggle")}</span>
           <div className={`switch${isHoliday ? " on" : ""}`}><div className="knob" /></div>
         </div>
 
         {isPerOrder && (
           <div>
-            <p className="field-label">完成单数</p>
-            <input className="time-input" type="number" placeholder="单数" value={orderCount} onChange={(e) => setOrderCount(e.target.value)} style={{ width: "100%" }} />
+            <p className="field-label">{t("orderCountLabel")}</p>
+            <input className="time-input" type="number" placeholder={t("orderCountPlaceholder")} value={orderCount} onChange={(e) => setOrderCount(e.target.value)} style={{ width: "100%" }} />
           </div>
         )}
 
         <div>
           <p className="field-label">
-            今天感觉怎么样？<span className="opt">（可跳过）</span>
+            {t("howAreYouFeeling")}<span className="opt">{t("optionalSkip")}</span>
           </p>
           <div className="mood-tags">
-            {MOODS.map((m) => (
+            {MOOD_KEYS.map((m) => (
               <button
                 key={m.key}
                 type="button"
                 className={`mood-tag${mood === m.key ? " selected" : ""}`}
                 onClick={() => setMood(mood === m.key ? undefined : m.key)}
               >
-                {m.label}
+                {t(m.labelKey)}
               </button>
             ))}
           </div>
         </div>
 
         <div>
-          <p className="field-label">补贴/扣款 <span className="opt">可选，含该雇主的默认规则</span></p>
+          <p className="field-label">{t("adjustmentsLabel")} <span className="opt">{t("adjustmentsWithDefaultsSub")}</span></p>
           {adjustments.map((adj, i) => (
             <div className="adj-edit-row" key={i}>
               <select
@@ -264,19 +266,19 @@ export function BackfillEntryPage({ uid }: { uid: string }) {
                 value={adj.type}
                 onChange={(e) => setAdjustments(adjustments.map((a, j) => j === i ? { ...a, type: e.target.value as "bonus" | "deduction" } : a))}
               >
-                <option value="bonus">补贴</option>
-                <option value="deduction">扣款</option>
+                <option value="bonus">{t("bonus")}</option>
+                <option value="deduction">{t("deduction")}</option>
               </select>
               <input
                 className="time-input"
                 type="number"
-                placeholder="金额"
+                placeholder={t("amountLabel")}
                 value={adj.amount || ""}
                 onChange={(e) => setAdjustments(adjustments.map((a, j) => j === i ? { ...a, amount: Number(e.target.value) || 0 } : a))}
               />
               <input
                 className="time-input"
-                placeholder="备注"
+                placeholder={t("adjNotePlaceholder")}
                 value={adj.note ?? ""}
                 onChange={(e) => setAdjustments(adjustments.map((a, j) => j === i ? { ...a, note: e.target.value } : a))}
               />
@@ -286,18 +288,18 @@ export function BackfillEntryPage({ uid }: { uid: string }) {
             </div>
           ))}
           <button type="button" className="add-adj-btn" onClick={() => setAdjustments([...adjustments, { type: "bonus", amount: 0 }])}>
-            + 添加一条
+            {t("addOneRule")}
           </button>
         </div>
 
         <div>
-          <p className="field-label">备注 <span className="opt">可选</span></p>
-          <textarea className="note-input" placeholder="今天发生了什么值得记一笔的事吗" value={note} onChange={(e) => setNote(e.target.value)} />
+          <p className="field-label">{t("noteLabel")} <span className="opt">{t("optional")}</span></p>
+          <textarea className="note-input" placeholder={t("notePlaceholder")} value={note} onChange={(e) => setNote(e.target.value)} />
         </div>
 
         {editId && (
           <button className="delete-entry-btn" onClick={handleDelete} disabled={deleting}>
-            删除这条记录
+            {t("deleteEntry")}
           </button>
         )}
       </div>
