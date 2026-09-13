@@ -10,6 +10,24 @@ export interface CoachStep {
 
 const PADDING = 8;
 
+const COACH_TOUR_SEEN_KEY = "gigtime_coach_tour_seen";
+
+export function hasSeenCoachTour(): boolean {
+  try {
+    return window.localStorage.getItem(COACH_TOUR_SEEN_KEY) === "true";
+  } catch {
+    return true; // fail open -- never force the tour on due to a storage error
+  }
+}
+
+export function markCoachTourSeen() {
+  try {
+    window.localStorage.setItem(COACH_TOUR_SEEN_KEY, "true");
+  } catch {
+    // ignore
+  }
+}
+
 export function CoachTour({ steps, onDone }: { steps: CoachStep[]; onDone: () => void }) {
   const t = useT();
   const [availableSteps, setAvailableSteps] = useState<{ step: CoachStep; rect: DOMRect }[] | null>(null);

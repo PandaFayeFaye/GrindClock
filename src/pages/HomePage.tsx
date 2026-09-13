@@ -10,8 +10,7 @@ import { AvatarBadge, type AnimalKey } from "../lib/avatar";
 import { PET_STAGES, currentPetStageIndex, hoursSinceFed, isPetHungry } from "../lib/pet";
 import { PunchConfirmModal } from "../components/PunchConfirmModal";
 import { CompanionWidget } from "../components/CompanionWidget";
-import { CoachTour, type CoachStep } from "../components/CoachTour";
-import { PENDING_COACH_TOUR_KEY } from "../components/OnboardingScreen";
+import { CoachTour, hasSeenCoachTour, markCoachTourSeen, type CoachStep } from "../components/CoachTour";
 import { RetroClockInModal } from "../components/RetroClockInModal";
 import { ScheduleConfirmModal } from "../components/ScheduleConfirmModal";
 import { SETTINGS_KEYS, useLocalToggle } from "../lib/settings";
@@ -64,28 +63,19 @@ export function HomePage({ uid }: { uid: string }) {
     return () => { unsubEmployers(); unsubEntries(); unsubProfile(); };
   }, [uid]);
 
-  // A fresh sign-up finishing onboarding leaves this flag set -- start the
-  // coach tour once the real Home layout (employer rows, companion, etc.)
-  // has had a moment to render, so its target elements actually exist.
+  // Runs once per device/browser -- covers both a brand-new sign-up (right
+  // after onboarding) and an already-registered user who just never happened
+  // to see it yet. Delayed slightly so the real Home layout (employer rows,
+  // companion, etc.) has had a moment to render before we measure targets.
   useEffect(() => {
-    let pending = false;
-    try {
-      pending = window.localStorage.getItem(PENDING_COACH_TOUR_KEY) === "true";
-    } catch {
-      // ignore
-    }
-    if (!pending) return;
+    if (hasSeenCoachTour()) return;
     const timer = setTimeout(() => setShowTour(true), 600);
     return () => clearTimeout(timer);
   }, []);
 
   function dismissTour() {
     setShowTour(false);
-    try {
-      window.localStorage.removeItem(PENDING_COACH_TOUR_KEY);
-    } catch {
-      // ignore
-    }
+    markCoachTourSeen();
   }
 
   // Personal entries only -- team-logged (workerId set) entries never mix into this view.
