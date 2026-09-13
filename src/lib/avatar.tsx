@@ -83,10 +83,15 @@ export function AvatarBadge({
         />
       </div>
       {accessory === "star" && (
-        <span style={{ position: "absolute", top: -6, left: -4, fontSize: Math.max(12, size * 0.32) }}>⭐</span>
+        <svg viewBox="0 0 24 24" fill="none" width={Math.max(14, size * 0.34)} height={Math.max(14, size * 0.34)} style={{ position: "absolute", top: -6, left: -4 }}>
+          <path d="M12 3l2.4 5.8L21 9.4l-4.5 4 1.3 6.6L12 16.8l-5.8 3.2 1.3-6.6-4.5-4 6.6-.6z" fill="#FFD93D" stroke="#1A1A1A" strokeWidth="1.4" strokeLinejoin="round" />
+        </svg>
       )}
       {accessory === "crown" && (
-        <span style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", fontSize: Math.max(14, size * 0.38) }}>👑</span>
+        <svg viewBox="0 0 24 24" fill="none" width={Math.max(16, size * 0.4)} height={Math.max(16, size * 0.4)} style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)" }}>
+          <path d="M4 18.5h16l-1.3-7.6-4 3.3-2.7-5.5-2.7 5.5-4-3.3z" fill="#FFD93D" stroke="#1A1A1A" strokeWidth="1.4" strokeLinejoin="round" />
+          <rect x="4" y="18.5" width="16" height="1.8" rx="0.9" fill="#FFD93D" stroke="#1A1A1A" strokeWidth="1.2" />
+        </svg>
       )}
       {mbti && (
         <span

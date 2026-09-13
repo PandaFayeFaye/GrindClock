@@ -63,9 +63,23 @@ export function CompanionWidget({
           src={characterImageSrc(animal, mbti)}
           alt={t("petCardTitle")}
         />
-        {stageAccessory === "star" && <span className="companion-accessory companion-accessory-star">⭐</span>}
-        {stageAccessory === "crown" && <span className="companion-accessory companion-accessory-crown">👑</span>}
-        {hungry && <span className="companion-status-badge">💤</span>}
+        {stageAccessory === "star" && (
+          <svg viewBox="0 0 24 24" fill="none" width="22" height="22" className="companion-accessory companion-accessory-star">
+            <path d="M12 3l2.4 5.8L21 9.4l-4.5 4 1.3 6.6L12 16.8l-5.8 3.2 1.3-6.6-4.5-4 6.6-.6z" fill="#FFD93D" stroke="#1A1A1A" strokeWidth="1.4" strokeLinejoin="round" />
+          </svg>
+        )}
+        {stageAccessory === "crown" && (
+          <svg viewBox="0 0 24 24" fill="none" width="26" height="26" className="companion-accessory companion-accessory-crown">
+            <path d="M4 18.5h16l-1.3-7.6-4 3.3-2.7-5.5-2.7 5.5-4-3.3z" fill="#FFD93D" stroke="#1A1A1A" strokeWidth="1.4" strokeLinejoin="round" />
+            <rect x="4" y="18.5" width="16" height="1.8" rx="0.9" fill="#FFD93D" stroke="#1A1A1A" strokeWidth="1.2" />
+          </svg>
+        )}
+        {hungry && (
+          <svg viewBox="0 0 24 24" fill="none" width="20" height="20" className="companion-status-badge">
+            <ellipse cx="12" cy="12" rx="8" ry="3" stroke="#1A1A1A" strokeWidth="1.6" />
+            <path d="M4 12v1.5c0 2.5 3.6 4.5 8 4.5s8-2 8-4.5V12" stroke="#1A1A1A" strokeWidth="1.6" fill="#fff" />
+          </svg>
+        )}
       </button>
     </div>
   );

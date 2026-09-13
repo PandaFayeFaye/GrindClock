@@ -261,7 +261,11 @@ export function HomePage({ uid }: { uid: string }) {
                 {!active && employerIdsWithEntryToday.has(emp.id) && (
                   <div className="done-today-wrap">
                     <span className="done-today-badge">
-                      <span className="done-today-icon">✅</span>
+                      <span className="done-today-check">
+                        <svg viewBox="0 0 24 24" fill="none" width="11" height="11">
+                          <path d="M4.5 12.5l4.5 4.5L19.5 6" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </span>
                       {t("doneToday", { h: (todaysHoursByEmployer.get(emp.id) ?? 0).toFixed(1) })}
                     </span>
                   </div>
