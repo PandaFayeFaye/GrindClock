@@ -1,6 +1,11 @@
 @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&family=ZCOOL+KuaiLe&display=swap");
 
 :root {
+  /* This app only implements a light theme -- declare it explicitly so
+     mobile browsers with a "force dark mode for websites" feature don't
+     invert/recolor the page (Android Chrome/Samsung Internet in particular). */
+  color-scheme: light;
+
   /* 2.1 base palette */
   --bg-base: #FBF7EC;
   --bg-surface: #FFFFFF;

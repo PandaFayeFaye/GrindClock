@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { User } from "firebase/auth";
 import { HashRouter, Route, Routes } from "react-router-dom";
-import { completeEmailLoginLink, isEmailLoginLink, watchAuth } from "./lib/auth";
+import { watchAuth } from "./lib/auth";
 import { LoginScreen } from "./components/LoginScreen";
 import { Layout } from "./components/Layout";
 import { HomePage } from "./pages/HomePage";
@@ -24,36 +24,19 @@ function App() {
   const [user, setUser] = useState<User | null>(null);
   const [authReady, setAuthReady] = useState(false);
   const [onboarding, setOnboarding] = useState(!hasOnboarded());
-  const [emailLinkError, setEmailLinkError] = useState<"noPendingEmail" | "linkExpired" | null>(null);
 
   useEffect(() => watchAuth((u) => { setUser(u); setAuthReady(true); }), []);
-
-  // Finish an email magic-link sign-in if the app was opened via that link.
-  useEffect(() => {
-    const href = window.location.href;
-    if (!isEmailLoginLink(href)) return;
-    completeEmailLoginLink(href)
-      .catch((err) => {
-        console.error("Email link sign-in failed", err);
-        setEmailLinkError(
-          err instanceof Error && err.message.includes("No pending email") ? "noPendingEmail" : "linkExpired",
-        );
-      })
-      .finally(() => {
-        // Strip the one-time link params so a page reload doesn't keep retrying it.
-        window.history.replaceState(null, "", window.location.pathname + window.location.hash);
-      });
-  }, []);
 
   return (
     <LanguageProvider>
       {!authReady ? (
         <LoadingScreen />
       ) : !user ? (
-        <LoginScreen emailLinkError={emailLinkError} />
+        <LoginScreen />
       ) : onboarding ? (
         <OnboardingScreen
           uid={user.uid}
+          hasEmail={!!user.email}
           onDone={(goToAddEmployer) => {
             setOnboarding(false);
             if (goToAddEmployer) window.location.hash = "#/employers/new";

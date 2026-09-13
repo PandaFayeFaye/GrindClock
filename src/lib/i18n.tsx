@@ -238,16 +238,26 @@ const dict = {
   sendOtp: { zh: "发送验证码", en: "Send code" },
   otpPlaceholder: { zh: "6位验证码", en: "6-digit code" },
   loginBtn: { zh: "登录", en: "Log in" },
-  sendEmailLink: { zh: "发送登录链接", en: "Send login link" },
-  emailLinkSentHint: { zh: "已发送登录链接到 {email}，去邮箱点一下吧", en: "Login link sent to {email} -- go check your inbox" },
   otpSendFailed: { zh: "发送验证码失败，请检查手机号格式（需带国家区号，如+8613800000000）", en: "Couldn't send the code -- check the phone format (needs a country code, e.g. +14155551234)" },
   otpWrong: { zh: "验证码不正确，请重新输入", en: "Wrong code, please try again" },
-  emailLinkSendFailed: { zh: "发送登录链接失败，请检查邮箱格式", en: "Couldn't send the login link -- check the email format" },
-  noPendingEmailError: {
-    zh: "登录链接和这台设备/浏览器对不上（比如换了浏览器打开，或者清过缓存），请重新输入邮箱获取链接",
-    en: "This login link doesn't match this device/browser (e.g. opened in a different browser, or cache was cleared) -- please request a new one",
+  emailModeLogin: { zh: "登录", en: "Log in" },
+  emailModeRegister: { zh: "注册", en: "Register" },
+  passwordPlaceholder: { zh: "密码（至少6位）", en: "Password (6+ characters)" },
+  registerBtn: { zh: "注册", en: "Register" },
+  forgotPasswordBtn: { zh: "忘记密码？", en: "Forgot password?" },
+  passwordResetSentHint: { zh: "重置密码邮件已发送到 {email}，请查收", en: "Password reset email sent to {email}" },
+  authErrEmailInUse: { zh: "这个邮箱已经注册过了，试试直接登录？", en: "That email is already registered -- try logging in instead?" },
+  authErrInvalidEmail: { zh: "邮箱格式不对，检查一下", en: "That doesn't look like a valid email" },
+  authErrWeakPassword: { zh: "密码太简单了，至少要6位", en: "Password is too weak -- use at least 6 characters" },
+  authErrUserNotFound: { zh: "这个邮箱还没注册，先切换到「注册」吧", en: "No account with that email yet -- try Register instead" },
+  authErrWrongPassword: { zh: "邮箱或密码不对，再检查一下", en: "Wrong email or password" },
+  authErrTooManyRequests: { zh: "尝试太多次了，请稍后再试", en: "Too many attempts -- please wait and try again" },
+  authErrGeneric: { zh: "出了点问题，请重试", en: "Something went wrong -- please try again" },
+  authErrNeedEmailForReset: { zh: "先填一下邮箱地址", en: "Enter your email first" },
+  authErrProviderDisabled: {
+    zh: "邮箱密码登录还没开启，请去 Firebase 控制台的 Authentication 里启用",
+    en: "Email/password sign-in isn't enabled yet -- turn it on in the Firebase console under Authentication",
   },
-  linkExpiredError: { zh: "登录链接已失效，请重新发送", en: "This login link has expired -- please send a new one" },
 
   // ---- Onboarding ----
   skip: { zh: "跳过", en: "Skip" },
@@ -263,6 +273,12 @@ const dict = {
     en: "Enter the employer's name and pay type (hourly/daily/per-order...) and you're ready to clock in.",
   },
   addFirstEmployerArrow: { zh: "添加第一个雇主 →", en: "Add first employer →" },
+  onboard3Title: { zh: "绑定邮箱和密码", en: "Add an email and password" },
+  onboard3Body: {
+    zh: "手机号注册以后，短信验证码有时候不太稳定。顺手绑个邮箱和密码，以后可以直接用密码登录，不用等短信。",
+    en: "SMS codes can be flaky. Add an email and password now so you can log in with them directly next time, no code needed.",
+  },
+  onboard3Confirm: { zh: "绑定", en: "Save" },
 
   // ---- AI capture ----
   aiCaptureTitle: { zh: "AI 记工", en: "AI capture" },

@@ -1,17 +1,18 @@
 import {
+  EmailAuthProvider,
   RecaptchaVerifier,
-  isSignInWithEmailLink,
+  createUserWithEmailAndPassword,
+  linkWithCredential,
   onAuthStateChanged,
-  sendSignInLinkToEmail,
-  signInWithEmailLink,
+  sendEmailVerification,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
   signInWithPhoneNumber,
   signOut,
   type ConfirmationResult,
   type User,
 } from "firebase/auth";
 import { auth } from "./firebase";
-
-const PENDING_EMAIL_KEY = "gigtime_pending_email";
 
 export function watchAuth(callback: (user: User | null) => void) {
   return onAuthStateChanged(auth, callback);
@@ -21,7 +22,7 @@ export function logout() {
   return signOut(auth);
 }
 
-// ---- Phone number + SMS code (primary path for mainland China users) ----
+// ---- Phone number + SMS code ----
 
 // Firebase throws "reCAPTCHA has already been rendered in this element" if a
 // second RecaptchaVerifier is created against the same DOM node -- the widget
@@ -56,30 +57,36 @@ export function confirmPhoneOtp(confirmation: ConfirmationResult, code: string) 
   return confirmation.confirm(code);
 }
 
-// ---- Email magic link (free, primary path for overseas users) ----
-// NOTE: `url` must be an allowed redirect domain in Firebase Auth settings, and for
-// the native iOS/Android build it needs to resolve back into the app via a
-// Capacitor deep link (App URL Open listener) rather than a plain web URL.
+// ---- Email + password ----
+// Firebase's passwordless "email link" flow depends on the user receiving and
+// opening a link in the SAME browser/app that requested it, which is fragile
+// in practice (mail delayed/filtered, or opened from a different browser/app
+// than the one that asked -- very common with in-app browsers). Email +
+// password sign-in has no such dependency: the account exists the moment
+// it's created, and email verification is a non-blocking background step.
 
-export function sendEmailLoginLink(email: string) {
-  const actionCodeSettings = {
-    url: window.location.origin,
-    handleCodeInApp: true,
-  };
-  window.localStorage.setItem(PENDING_EMAIL_KEY, email);
-  return sendSignInLinkToEmail(auth, email, actionCodeSettings);
+export function registerWithEmail(email: string, password: string) {
+  return createUserWithEmailAndPassword(auth, email, password).then((cred) => {
+    sendEmailVerification(cred.user).catch(() => {
+      // Best-effort only -- a delivery failure here shouldn't block sign-up.
+    });
+    return cred;
+  });
 }
 
-export function isEmailLoginLink(url: string) {
-  return isSignInWithEmailLink(auth, url);
+export function loginWithEmail(email: string, password: string) {
+  return signInWithEmailAndPassword(auth, email, password);
 }
 
-export async function completeEmailLoginLink(url: string, fallbackEmail?: string) {
-  const email = fallbackEmail ?? window.localStorage.getItem(PENDING_EMAIL_KEY);
-  if (!email) {
-    throw new Error("No pending email found for this sign-in link.");
-  }
-  const result = await signInWithEmailLink(auth, email, url);
-  window.localStorage.removeItem(PENDING_EMAIL_KEY);
-  return result;
+export function sendPasswordReset(email: string) {
+  return sendPasswordResetEmail(auth, email);
+}
+
+// Lets a phone-only account (no email/password provider yet) add one, so it
+// can also sign in with email + password afterwards instead of always
+// needing a fresh SMS code.
+export function linkEmailPassword(email: string, password: string) {
+  const user = auth.currentUser;
+  if (!user) return Promise.reject(new Error("Not signed in"));
+  return linkWithCredential(user, EmailAuthProvider.credential(email, password));
 }

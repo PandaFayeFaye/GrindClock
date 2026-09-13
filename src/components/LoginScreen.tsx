@@ -1,15 +1,31 @@
 import { useState, type FormEvent } from "react";
 import type { ConfirmationResult } from "firebase/auth";
-import { confirmPhoneOtp, sendEmailLoginLink, sendPhoneOtp } from "../lib/auth";
-import { useT } from "../lib/i18n";
+import { confirmPhoneOtp, loginWithEmail, registerWithEmail, sendPasswordReset, sendPhoneOtp } from "../lib/auth";
+import { useT, type DictKey } from "../lib/i18n";
 
 const RECAPTCHA_CONTAINER_ID = "recaptcha-container";
 
 type Tab = "phone" | "email";
+type EmailMode = "login" | "register";
 
-export function LoginScreen({ emailLinkError }: { emailLinkError?: "noPendingEmail" | "linkExpired" | null }) {
+function friendlyAuthError(err: unknown, t: (k: DictKey) => string): string {
+  const code = err instanceof Error && "code" in err ? String((err as { code: string }).code) : "";
+  switch (code) {
+    case "auth/email-already-in-use": return t("authErrEmailInUse");
+    case "auth/invalid-email": return t("authErrInvalidEmail");
+    case "auth/weak-password": return t("authErrWeakPassword");
+    case "auth/user-not-found": return t("authErrUserNotFound");
+    case "auth/wrong-password":
+    case "auth/invalid-credential": return t("authErrWrongPassword");
+    case "auth/too-many-requests": return t("authErrTooManyRequests");
+    case "auth/operation-not-allowed": return t("authErrProviderDisabled");
+    default: return err instanceof Error ? err.message : t("authErrGeneric");
+  }
+}
+
+export function LoginScreen() {
   const t = useT();
-  const [tab, setTab] = useState<Tab>("phone");
+  const [tab, setTab] = useState<Tab>("email");
 
   // Phone flow state
   const [phone, setPhone] = useState("");
@@ -17,8 +33,10 @@ export function LoginScreen({ emailLinkError }: { emailLinkError?: "noPendingEma
   const [confirmation, setConfirmation] = useState<ConfirmationResult | null>(null);
 
   // Email flow state
+  const [emailMode, setEmailMode] = useState<EmailMode>("login");
   const [email, setEmail] = useState("");
-  const [linkSent, setLinkSent] = useState(false);
+  const [password, setPassword] = useState("");
+  const [resetSent, setResetSent] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -51,15 +69,36 @@ export function LoginScreen({ emailLinkError }: { emailLinkError?: "noPendingEma
     }
   }
 
-  async function handleSendEmailLink(e: FormEvent) {
+  async function handleEmailSubmit(e: FormEvent) {
     e.preventDefault();
+    setError(null);
+    setResetSent(false);
+    setBusy(true);
+    try {
+      if (emailMode === "register") {
+        await registerWithEmail(email, password);
+      } else {
+        await loginWithEmail(email, password);
+      }
+    } catch (err) {
+      setError(friendlyAuthError(err, t));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleForgotPassword() {
+    if (!email) {
+      setError(t("authErrNeedEmailForReset"));
+      return;
+    }
     setError(null);
     setBusy(true);
     try {
-      await sendEmailLoginLink(email);
-      setLinkSent(true);
+      await sendPasswordReset(email);
+      setResetSent(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t("emailLinkSendFailed"));
+      setError(friendlyAuthError(err, t));
     } finally {
       setBusy(false);
     }
@@ -71,9 +110,55 @@ export function LoginScreen({ emailLinkError }: { emailLinkError?: "noPendingEma
       <p>{t("appTagline")}</p>
 
       <div className="login-tabs">
-        <button className={tab === "phone" ? "active" : ""} onClick={() => setTab("phone")}>{t("tabPhone")}</button>
-        <button className={tab === "email" ? "active" : ""} onClick={() => setTab("email")}>{t("tabEmail")}</button>
+        <button className={tab === "email" ? "active" : ""} onClick={() => { setTab("email"); setError(null); }}>{t("tabEmail")}</button>
+        <button className={tab === "phone" ? "active" : ""} onClick={() => { setTab("phone"); setError(null); }}>{t("tabPhone")}</button>
       </div>
+
+      {tab === "email" && (
+        <>
+          <div className="login-mode-toggle">
+            <button
+              type="button"
+              className={emailMode === "login" ? "active" : ""}
+              onClick={() => { setEmailMode("login"); setError(null); setResetSent(false); }}
+            >
+              {t("emailModeLogin")}
+            </button>
+            <button
+              type="button"
+              className={emailMode === "register" ? "active" : ""}
+              onClick={() => { setEmailMode("register"); setError(null); setResetSent(false); }}
+            >
+              {t("emailModeRegister")}
+            </button>
+          </div>
+          <form onSubmit={handleEmailSubmit} className="login-form">
+            <input
+              type="email"
+              autoComplete="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <input
+              type="password"
+              autoComplete={emailMode === "register" ? "new-password" : "current-password"}
+              placeholder={t("passwordPlaceholder")}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+            <button type="submit" disabled={busy}>
+              {emailMode === "register" ? t("registerBtn") : t("loginBtn")}
+            </button>
+          </form>
+          {emailMode === "login" && (
+            <button type="button" className="login-forgot-btn" onClick={handleForgotPassword} disabled={busy}>
+              {t("forgotPasswordBtn")}
+            </button>
+          )}
+          {resetSent && <p className="login-hint">{t("passwordResetSentHint", { email })}</p>}
+        </>
+      )}
 
       {tab === "phone" && (
         <>
@@ -99,28 +184,7 @@ export function LoginScreen({ emailLinkError }: { emailLinkError?: "noPendingEma
         </>
       )}
 
-      {tab === "email" && (
-        <>
-          {!linkSent ? (
-            <form onSubmit={handleSendEmailLink} className="login-form">
-              <input
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              <button type="submit" disabled={busy}>{t("sendEmailLink")}</button>
-            </form>
-          ) : (
-            <p className="login-hint">{t("emailLinkSentHint", { email })}</p>
-          )}
-        </>
-      )}
-
       {error && <p className="login-error">{error}</p>}
-      {!error && emailLinkError && (
-        <p className="login-error">{t(emailLinkError === "noPendingEmail" ? "noPendingEmailError" : "linkExpiredError")}</p>
-      )}
 
       {/* Invisible reCAPTCHA host required by Firebase Phone Auth */}
       <div id={RECAPTCHA_CONTAINER_ID} />
