@@ -317,6 +317,8 @@ const dict = {
   pleaseSelect: { zh: "请选择", en: "Please select" },
   hoursLabel: { zh: "小时", en: "Hours" },
   minutesLabel: { zh: "分钟", en: "Minutes" },
+  startTimeLabel: { zh: "上班时间", en: "Start time" },
+  endTimeLabel: { zh: "下班时间", en: "End time" },
   retryRecognition: { zh: "重新识别", en: "Retry" },
 
   // ---- Badge wall ----
@@ -459,6 +461,21 @@ const dict = {
   periodHours: { zh: "本时段工时", en: "Hours this period" },
   periodPay: { zh: "本时段收入", en: "Earned this period" },
   overtimeHoursLabel: { zh: "加班时长", en: "Overtime hours" },
+
+  // ---- Coach tour ----
+  coachSkip: { zh: "跳过", en: "Skip" },
+  coachNext: { zh: "下一步", en: "Next" },
+  coachDone: { zh: "知道了", en: "Got it" },
+  coachTierTitle: { zh: "打工人晋级路线", en: "Your grind title" },
+  coachTierBody: { zh: "根据累计工时晋级称号，点这里能看到完整的成就墙和进阶路线。", en: "Your title levels up with cumulative hours -- tap to see the full badge wall and progression path." },
+  coachIncomeTitle: { zh: "收入总览", en: "Income overview" },
+  coachIncomeBody: { zh: "切换今日/本周/本月，随时看已经赚了多少。", en: "Switch between today/week/month to see how much you've earned." },
+  coachPunchTitle: { zh: "一键打卡", en: "One-tap punch" },
+  coachPunchBody: { zh: "点这个按钮记录上下班时间，多个雇主可以分别打卡、互不影响。", en: "Tap to clock in/out -- each employer punches independently." },
+  coachCompanionTitle: { zh: "你的搬砖搭子", en: "Your grind buddy" },
+  coachCompanionBody: { zh: "工作时长会喂养它成长，点击它能看到当前状态和喂养进度。", en: "Your hours worked feed it and help it grow -- tap it to check its status." },
+  coachFabTitle: { zh: "AI记工 / 补录 / 加雇主", en: "AI capture / backfill / add employer" },
+  coachFabBody: { zh: "点这个加号可以拍照/语音记工、批量补录工时、或者添加新雇主。", en: "Tap this + to capture by photo/voice, backfill hours in bulk, or add a new employer." },
   moodStripTitle: { zh: "本周心情曲线（仅自己可见）", en: "This week's mood (only you can see this)" },
   vizTrend: { zh: "趋势", en: "Trend" },
   vizCalendar: { zh: "日历", en: "Calendar" },

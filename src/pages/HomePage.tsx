@@ -10,6 +10,8 @@ import { AvatarBadge, type AnimalKey } from "../lib/avatar";
 import { PET_STAGES, currentPetStageIndex, hoursSinceFed, isPetHungry } from "../lib/pet";
 import { PunchConfirmModal } from "../components/PunchConfirmModal";
 import { CompanionWidget } from "../components/CompanionWidget";
+import { CoachTour, type CoachStep } from "../components/CoachTour";
+import { PENDING_COACH_TOUR_KEY } from "../components/OnboardingScreen";
 import { RetroClockInModal } from "../components/RetroClockInModal";
 import { ScheduleConfirmModal } from "../components/ScheduleConfirmModal";
 import { SETTINGS_KEYS, useLocalToggle } from "../lib/settings";
@@ -25,6 +27,14 @@ function startOfToday() {
   return d.getTime();
 }
 
+const COACH_STEPS: CoachStep[] = [
+  { target: "tier", titleKey: "coachTierTitle", bodyKey: "coachTierBody" },
+  { target: "income", titleKey: "coachIncomeTitle", bodyKey: "coachIncomeBody" },
+  { target: "punch", titleKey: "coachPunchTitle", bodyKey: "coachPunchBody" },
+  { target: "companion", titleKey: "coachCompanionTitle", bodyKey: "coachCompanionBody" },
+  { target: "fab", titleKey: "coachFabTitle", bodyKey: "coachFabBody" },
+];
+
 export function HomePage({ uid }: { uid: string }) {
   const t = useT();
   const [employers, setEmployers] = useState<Employer[]>([]);
@@ -36,6 +46,7 @@ export function HomePage({ uid }: { uid: string }) {
   const [retroEmployer, setRetroEmployer] = useState<Employer | null>(null);
   const [scheduleConfirmEmployer, setScheduleConfirmEmployer] = useState<Employer | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showTour, setShowTour] = useState(false);
   const [simpleMode] = useLocalToggle(SETTINGS_KEYS.simpleMode, false);
   const [locationPunch] = useLocalToggle(SETTINGS_KEYS.locationPunch, false);
   const [aiPhotoOn] = useLocalToggle(SETTINGS_KEYS.aiPhoto, true);
@@ -52,6 +63,30 @@ export function HomePage({ uid }: { uid: string }) {
     });
     return () => { unsubEmployers(); unsubEntries(); unsubProfile(); };
   }, [uid]);
+
+  // A fresh sign-up finishing onboarding leaves this flag set -- start the
+  // coach tour once the real Home layout (employer rows, companion, etc.)
+  // has had a moment to render, so its target elements actually exist.
+  useEffect(() => {
+    let pending = false;
+    try {
+      pending = window.localStorage.getItem(PENDING_COACH_TOUR_KEY) === "true";
+    } catch {
+      // ignore
+    }
+    if (!pending) return;
+    const timer = setTimeout(() => setShowTour(true), 600);
+    return () => clearTimeout(timer);
+  }, []);
+
+  function dismissTour() {
+    setShowTour(false);
+    try {
+      window.localStorage.removeItem(PENDING_COACH_TOUR_KEY);
+    } catch {
+      // ignore
+    }
+  }
 
   // Personal entries only -- team-logged (workerId set) entries never mix into this view.
   const personalEntries = useMemo(() => entries.filter((e) => !e.workerId), [entries]);
@@ -197,12 +232,12 @@ export function HomePage({ uid }: { uid: string }) {
     <div className="home-page">
       {!simpleMode && (
         <div className="banner">
-          {animal ? <AvatarBadge animal={animal} mbti={mbti} size={44} /> : <Mascot size={44} />}
+          {animal ? <AvatarBadge animal={animal} mbti={mbti} size={52} /> : <Mascot size={52} />}
           <div className="banner-text">
             <p className="banner-title">
               {nickname ? t("homeBannerNamed", { name: nickname }) : t("homeBanner")}
             </p>
-            <Link to="/badges" className="home-tier-chip">
+            <Link to="/badges" className="home-tier-chip" data-tour="tier">
               <span className="home-tier-name" style={{ color: TIER_COLORS[currentTierIdx] }}>{t(currentTier.nameKey)}</span>
               <span className="home-tier-track">
                 <span className="home-tier-fill" style={{ width: `${tierProgressPct}%`, background: TIER_COLORS[currentTierIdx] }} />
@@ -224,7 +259,7 @@ export function HomePage({ uid }: { uid: string }) {
             </div>
           )}
 
-          <div className="income-card">
+          <div className="income-card" data-tour="income">
             <div className="income-range-tabs">
               {(["today", "week", "month"] as const).map((r) => (
                 <button
@@ -292,6 +327,7 @@ export function HomePage({ uid }: { uid: string }) {
                   <button
                     className={`punch-btn${active ? " working" : ""}`}
                     onClick={() => handlePunch(emp)}
+                    data-tour={i === 0 ? "punch" : undefined}
                   >
                     {active ? t("clockOut") : t("clockIn")}
                   </button>
@@ -326,6 +362,7 @@ export function HomePage({ uid }: { uid: string }) {
 
       {!simpleMode && animal && (
         <CompanionWidget
+          dataTour="companion"
           animal={animal}
           mbti={mbti}
           stageNameKey={petStage.nameKey}
@@ -386,7 +423,7 @@ export function HomePage({ uid }: { uid: string }) {
               </Link>
             </>
           )}
-          <button className={`fab${menuOpen ? " open" : ""}`} onClick={() => setMenuOpen(!menuOpen)}>
+          <button className={`fab${menuOpen ? " open" : ""}`} onClick={() => setMenuOpen(!menuOpen)} data-tour="fab">
             <svg viewBox="0 0 24 24" fill="none" width="26" height="26">
               <path d="M12 5v14M5 12h14" stroke="#1A1A1A" strokeWidth="3" strokeLinecap="round" />
             </svg>
@@ -423,6 +460,8 @@ export function HomePage({ uid }: { uid: string }) {
           />
         );
       })()}
+
+      {showTour && <CoachTour steps={COACH_STEPS} onDone={dismissTour} />}
     </div>
   );
 }

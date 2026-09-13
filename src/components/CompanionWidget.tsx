@@ -15,6 +15,7 @@ export function CompanionWidget({
   progressCaptionVars,
   moodCaptionKey,
   moodCaptionVars,
+  dataTour,
 }: {
   animal: AnimalKey;
   mbti?: string;
@@ -26,6 +27,7 @@ export function CompanionWidget({
   progressCaptionVars?: Record<string, string | number>;
   moodCaptionKey: DictKey;
   moodCaptionVars?: Record<string, string | number>;
+  dataTour?: string;
 }) {
   const t = useT();
   const [open, setOpen] = useState(false);
@@ -37,7 +39,7 @@ export function CompanionWidget({
   }
 
   return (
-    <div className="companion-widget">
+    <div className="companion-widget" data-tour={dataTour}>
       {open && (
         <div className="companion-popover">
           <p className="companion-popover-label">{t("petCardTitle")}</p>

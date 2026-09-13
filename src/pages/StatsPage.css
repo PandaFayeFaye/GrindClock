@@ -169,6 +169,81 @@
   border: 1.5px dashed var(--border-quiet);
 }
 
+.mood-point.loggable .mood-dot {
+  border-color: var(--accent-blue);
+  border-style: solid;
+}
+
+.mood-editor {
+  background: var(--bg-base);
+  border: 1.5px solid var(--border-quiet);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mood-edit-tags {
+  display: flex;
+  gap: 6px;
+}
+
+.mood-edit-tag {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 2px;
+  border-radius: 10px;
+  border: 1.8px solid var(--border-quiet);
+  background: var(--bg-surface);
+  font-size: 9.5px;
+  font-weight: 800;
+  color: var(--text-muted);
+}
+
+.mood-edit-tag.selected {
+  border-color: var(--border-bold);
+  background: var(--accent-yellow);
+  color: var(--text-primary);
+}
+
+.mood-edit-note {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1.5px solid var(--border-quiet);
+  border-radius: 10px;
+  font-size: 12.5px;
+  background: var(--bg-surface);
+}
+
+.mood-editor-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.mood-editor-cancel, .mood-editor-save {
+  flex: 1;
+  min-height: 38px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 800;
+}
+
+.mood-editor-cancel {
+  border: 1.8px solid var(--border-quiet);
+  background: var(--bg-surface);
+  color: var(--text-muted);
+}
+
+.mood-editor-save {
+  border: 1.8px solid var(--border-bold);
+  background: var(--accent-blue);
+  color: #fff;
+}
+
 .mood-x-labels {
   position: absolute;
   left: 0;

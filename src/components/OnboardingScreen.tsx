@@ -7,6 +7,7 @@ import { useT } from "../lib/i18n";
 import "./OnboardingScreen.css";
 
 const ONBOARDED_KEY = "gigtime_onboarded";
+export const PENDING_COACH_TOUR_KEY = "gigtime_coach_tour_pending";
 
 export function hasOnboarded(): boolean {
   try {
@@ -44,6 +45,11 @@ export function OnboardingScreen({
 
   function finish(goToAddEmployer: boolean) {
     markOnboarded();
+    try {
+      window.localStorage.setItem(PENDING_COACH_TOUR_KEY, "true");
+    } catch {
+      // ignore
+    }
     onDone(goToAddEmployer);
   }
 

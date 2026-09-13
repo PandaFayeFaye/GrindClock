@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import { deleteField } from "firebase/firestore";
 import { Link, useNavigate } from "react-router-dom";
-import { watchEmployers, watchTimeEntries } from "../lib/firestore";
+import { updateTimeEntry, watchEmployers, watchTimeEntries } from "../lib/firestore";
 import { entryHours, entryPay, lumpSumAllTime, lumpSumForPeriod } from "../lib/pay";
 import { DEFAULT_CURRENCY, currencySymbol, formatGroupedPay } from "../lib/currency";
 import { currentStreak, dateKey, leaderboard, moodDetailByDay, payByDay, startOfMonth, startOfWeek } from "../lib/stats";
@@ -13,6 +14,12 @@ import "./StatsPage.css";
 // Higher mood = higher up the chart (smaller y%, since SVG y grows downward).
 const MOOD_Y: Record<Mood, number> = { crash: 78, normal: 52, great: 28, heartbeat: 10 };
 const MOOD_COLOR: Record<Mood, string> = { crash: "#5AC8FA", normal: "#B9AC9C", great: "#FFD93D", heartbeat: "#FF6B6B" };
+const MOOD_KEYS = [
+  { key: "crash" as Mood, labelKey: "moodCrash" as const },
+  { key: "normal" as Mood, labelKey: "moodNormal" as const },
+  { key: "great" as Mood, labelKey: "moodGreat" as const },
+  { key: "heartbeat" as Mood, labelKey: "moodHeartbeat" as const },
+];
 
 function MoodIcon({ mood, size = 18 }: { mood: Mood; size?: number }) {
   const c = MOOD_COLOR[mood];
@@ -144,6 +151,16 @@ export function StatsPage({ uid }: { uid: string }) {
 
   // ---- Mood curve: last 7 days ----
   const moodDetailMap = useMemo(() => moodDetailByDay(personalConfirmed), [personalConfirmed]);
+  const entriesByDayMap = useMemo(() => {
+    const map = new Map<string, TimeEntry[]>();
+    for (const e of personalConfirmed) {
+      const key = dateKey(e.startTime);
+      const list = map.get(key) ?? [];
+      list.push(e);
+      map.set(key, list);
+    }
+    return map;
+  }, [personalConfirmed]);
   const last7Days = useMemo(() => {
     const days: { key: string; label: string; mood?: Mood; note?: string }[] = [];
     for (let i = 6; i >= 0; i--) {
@@ -155,8 +172,30 @@ export function StatsPage({ uid }: { uid: string }) {
     }
     return days;
   }, [moodDetailMap, t]);
-  const [selectedMoodDay, setSelectedMoodDay] = useState<string | null>(null);
+  const [editingMoodDay, setEditingMoodDay] = useState<string | null>(null);
+  const [draftMood, setDraftMood] = useState<Mood | undefined>(undefined);
+  const [draftMoodNote, setDraftMoodNote] = useState("");
   const [exportOpen, setExportOpen] = useState(false);
+
+  function openMoodEditor(day: { key: string; mood?: Mood; note?: string }) {
+    if (!entriesByDayMap.has(day.key)) return; // nothing logged that day -- nothing to attach a mood to
+    setEditingMoodDay(day.key);
+    setDraftMood(day.mood);
+    setDraftMoodNote(day.note ?? "");
+  }
+
+  async function saveMoodEditor() {
+    const dayEntries = entriesByDayMap.get(editingMoodDay!);
+    if (!dayEntries || dayEntries.length === 0) return;
+    // Prefer whichever entry already carries the day's mood (matches moodDetailByDay's
+    // pick); otherwise just attach it to the day's first shift.
+    const target = dayEntries.find((e) => e.mood) ?? dayEntries[0];
+    await updateTimeEntry(uid, target.id, {
+      mood: draftMood ?? deleteField(),
+      moodNote: draftMood && draftMoodNote.trim() ? draftMoodNote.trim() : deleteField(),
+    });
+    setEditingMoodDay(null);
+  }
   const moodPoints = last7Days
     .map((d, i) => ({ ...d, x: (i / 6) * 100, y: d.mood ? MOOD_Y[d.mood] : null }))
     .filter((d): d is typeof d & { y: number } => d.y !== null);
@@ -294,9 +333,9 @@ export function StatsPage({ uid }: { uid: string }) {
               <button
                 key={d.key}
                 type="button"
-                className={`mood-point${d.mood ? "" : " empty"}`}
+                className={`mood-point${d.mood ? "" : " empty"}${!d.mood && entriesByDayMap.has(d.key) ? " loggable" : ""}`}
                 style={{ left: `${x}%`, top: `${y}%` }}
-                onClick={() => d.mood && setSelectedMoodDay(selectedMoodDay === d.key ? null : d.key)}
+                onClick={() => openMoodEditor(d)}
               >
                 {d.mood ? <MoodIcon mood={d.mood} /> : <span className="mood-dot" />}
               </button>
@@ -307,16 +346,36 @@ export function StatsPage({ uid }: { uid: string }) {
           </div>
         </div>
 
-        {selectedMoodDay && (() => {
-          const day = last7Days.find((d) => d.key === selectedMoodDay);
-          if (!day?.mood) return null;
-          return (
-            <div className="mood-callout">
-              <MoodIcon mood={day.mood} size={22} />
-              {day.note && <p>{t("moodNoteLabel", { note: day.note })}</p>}
+        {editingMoodDay && (
+          <div className="mood-editor">
+            <div className="mood-edit-tags">
+              {MOOD_KEYS.map((m) => (
+                <button
+                  key={m.key}
+                  type="button"
+                  className={`mood-edit-tag${draftMood === m.key ? " selected" : ""}`}
+                  onClick={() => setDraftMood(draftMood === m.key ? undefined : m.key)}
+                >
+                  <MoodIcon mood={m.key} size={16} />
+                  {t(m.labelKey)}
+                </button>
+              ))}
             </div>
-          );
-        })()}
+            {draftMood && (
+              <input
+                className="mood-edit-note"
+                maxLength={30}
+                placeholder={t("moodNotePlaceholder")}
+                value={draftMoodNote}
+                onChange={(e) => setDraftMoodNote(e.target.value)}
+              />
+            )}
+            <div className="mood-editor-actions">
+              <button type="button" className="mood-editor-cancel" onClick={() => setEditingMoodDay(null)}>{t("cancel")}</button>
+              <button type="button" className="mood-editor-save" onClick={saveMoodEditor}>{t("confirmSave")}</button>
+            </div>
+          </div>
+        )}
 
         <p className="mood-companion">{t(companionKey)}</p>
       </div>

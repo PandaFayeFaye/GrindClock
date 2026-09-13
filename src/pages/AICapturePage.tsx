@@ -108,6 +108,8 @@ export function AICapturePage({ uid }: { uid: string }) {
   const [employerId, setEmployerId] = useState("");
   const [hours, setHours] = useState("");
   const [minutes, setMinutes] = useState("0");
+  const [startTimeStr, setStartTimeStr] = useState<string | undefined>(undefined);
+  const [endTimeStr, setEndTimeStr] = useState<string | undefined>(undefined);
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -119,6 +121,8 @@ export function AICapturePage({ uid }: { uid: string }) {
     if (draft.employerId) setEmployerId(draft.employerId);
     if (draft.hours !== undefined) setHours(String(draft.hours));
     if (draft.minutes !== undefined) setMinutes(String(draft.minutes));
+    setStartTimeStr(draft.startTimeStr);
+    setEndTimeStr(draft.endTimeStr);
     setNote(text);
   }
 
@@ -198,11 +202,27 @@ export function AICapturePage({ uid }: { uid: string }) {
     const m = Number(minutes) || 0;
     if (h === 0 && m === 0) return;
     setSaving(true);
-    const start = Date.now() - (h * 3_600_000 + m * 60_000);
+
+    let start: number;
+    let end: number;
+    if (startTimeStr && endTimeStr) {
+      // Anchor the recognized clock times to today; roll to the next day if the
+      // end time is earlier than the start (overnight shift).
+      const today = new Date();
+      const [sh, sm] = startTimeStr.split(":").map(Number);
+      const [eh, em] = endTimeStr.split(":").map(Number);
+      start = new Date(today.getFullYear(), today.getMonth(), today.getDate(), sh, sm).getTime();
+      end = new Date(today.getFullYear(), today.getMonth(), today.getDate(), eh, em).getTime();
+      if (end <= start) end += 24 * 3_600_000;
+    } else {
+      end = Date.now();
+      start = end - (h * 3_600_000 + m * 60_000);
+    }
+
     await addManualEntry(uid, {
       employerId,
       startTime: start,
-      endTime: Date.now(),
+      endTime: end,
       status: "confirmed",
       source,
       ...(note.trim() ? { note: note.trim() } : {}),
@@ -300,14 +320,47 @@ export function AICapturePage({ uid }: { uid: string }) {
               </select>
             </div>
 
+            {startTimeStr && endTimeStr && (
+              <div className="field-row">
+                <div>
+                  <p className="field-label">{t("startTimeLabel")}</p>
+                  <input
+                    className="field-input"
+                    type="time"
+                    value={startTimeStr}
+                    onChange={(e) => {
+                      setStartTimeStr(e.target.value);
+                      const draft = parseSpeechToDraft(`${e.target.value}-${endTimeStr}`, []);
+                      if (draft.hours !== undefined) setHours(String(draft.hours));
+                      if (draft.minutes !== undefined) setMinutes(String(draft.minutes));
+                    }}
+                  />
+                </div>
+                <div>
+                  <p className="field-label">{t("endTimeLabel")}</p>
+                  <input
+                    className="field-input"
+                    type="time"
+                    value={endTimeStr}
+                    onChange={(e) => {
+                      setEndTimeStr(e.target.value);
+                      const draft = parseSpeechToDraft(`${startTimeStr}-${e.target.value}`, []);
+                      if (draft.hours !== undefined) setHours(String(draft.hours));
+                      if (draft.minutes !== undefined) setMinutes(String(draft.minutes));
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="field-row">
               <div>
                 <p className="field-label">{t("hoursLabel")}</p>
-                <input className="field-input" type="number" value={hours} onChange={(e) => setHours(e.target.value)} />
+                <input className="field-input" type="number" value={hours} onChange={(e) => { setHours(e.target.value); setStartTimeStr(undefined); setEndTimeStr(undefined); }} />
               </div>
               <div>
                 <p className="field-label">{t("minutesLabel")}</p>
-                <input className="field-input" type="number" value={minutes} onChange={(e) => setMinutes(e.target.value)} />
+                <input className="field-input" type="number" value={minutes} onChange={(e) => { setMinutes(e.target.value); setStartTimeStr(undefined); setEndTimeStr(undefined); }} />
               </div>
             </div>
 
