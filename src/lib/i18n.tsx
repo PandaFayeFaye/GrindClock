@@ -110,6 +110,29 @@ const dict = {
   batchDeleteBtn: { zh: "全部删除", en: "Delete all" },
   batchDeleteConfirmBtn: { zh: "再点一次，确认删除{n}条", en: "Tap again to delete {n}" },
   batchDeleting: { zh: "删除中...", en: "Deleting..." },
+
+  // ---- Export columns / panel ----
+  colDate: { zh: "日期", en: "Date" },
+  colEmployer: { zh: "雇主", en: "Employer" },
+  colStart: { zh: "开始时间", en: "Start" },
+  colEnd: { zh: "结束时间", en: "End" },
+  colHours: { zh: "时长(小时)", en: "Hours" },
+  colPay: { zh: "收入", en: "Pay" },
+  colMood: { zh: "心情", en: "Mood" },
+  colNote: { zh: "备注", en: "Note" },
+  exportPanelTitle: { zh: "选择要导出的字段", en: "Choose fields to export" },
+  exportAsCsv: { zh: "导出CSV", en: "Export CSV" },
+  exportAsImage: { zh: "导出图片", en: "Export image" },
+  exportImageHint: { zh: "生成的图片会下载到本地，长按/在相册里就能保存和分享", en: "The image downloads to your device -- save it from there to share" },
+  exportingImage: { zh: "生成图片中...", en: "Generating image..." },
+
+  // ---- Avatar picker ----
+  pickAvatarTitle: { zh: "选一个专属形象", en: "Pick your character" },
+  pickAnimalLabel: { zh: "选择动物", en: "Choose an animal" },
+  pickMbtiLabel: { zh: "选择MBTI人格类型（可选）", en: "Choose your MBTI type (optional)" },
+  skipMbti: { zh: "不选/不知道", en: "Skip / not sure" },
+  changeAvatar: { zh: "更换形象", en: "Change character" },
+  saveAvatar: { zh: "保存", en: "Save" },
   recurringAdjApplied: { zh: "已自动套用{n}条该雇主的默认补贴/扣款规则", en: "{n} recurring rule(s) for this employer applied automatically" },
   howManyOrders: { zh: "完成了几单？", en: "How many orders?" },
   orderCountPlaceholder: { zh: "单数", en: "Order count" },
@@ -411,7 +434,7 @@ const dict = {
   recapTeaserT1: { zh: "查看本月打工战绩", en: "See this month's recap" },
   recapTeaserT2: { zh: "点击生成本月总结 →", en: "Tap to generate →" },
   detailListTitle: { zh: "明细", en: "Details" },
-  exportCsv: { zh: "导出CSV", en: "Export CSV" },
+  exportCsv: { zh: "导出", en: "Export" },
   detailEmpty: { zh: "打完第一次卡，这里就会出现你的战绩", en: "Punch in once and your record shows up here" },
 } as const;
 

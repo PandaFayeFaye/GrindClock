@@ -8,6 +8,7 @@ import {
   onSnapshot,
   orderBy,
   query,
+  setDoc,
   updateDoc,
   writeBatch,
 } from "firebase/firestore";
@@ -133,4 +134,21 @@ export async function deleteTimeEntries(uid: string, entryIds: string[]) {
     batch.delete(doc(timeEntriesCol(uid), id));
   }
   await batch.commit();
+}
+
+export interface UserProfile {
+  animal?: string;
+  mbti?: string;
+}
+
+function profileDoc(uid: string) {
+  return doc(db, "users", uid, "profile", "main");
+}
+
+export function watchUserProfile(uid: string, cb: (profile: UserProfile) => void) {
+  return onSnapshot(profileDoc(uid), (snap) => cb((snap.data() as UserProfile | undefined) ?? {}));
+}
+
+export function setUserProfile(uid: string, profile: UserProfile) {
+  return setDoc(profileDoc(uid), profile, { merge: true });
 }

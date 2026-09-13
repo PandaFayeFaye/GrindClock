@@ -22,6 +22,36 @@
   box-shadow: var(--shadow-bold);
 }
 
+.avatar-btn {
+  padding: 0;
+  border: none;
+  background: none;
+  flex-shrink: 0;
+}
+
+.avatar-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 26, 26, 0.45);
+  z-index: 25;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.avatar-modal-sheet {
+  width: 100%;
+  max-width: 400px;
+  max-height: 85vh;
+  overflow-y: auto;
+  background: var(--bg-base);
+  border: 3px solid var(--border-bold);
+  border-radius: 20px;
+  padding: 20px;
+  box-shadow: var(--shadow-bold);
+}
+
 .avatar {
   width: 52px;
   height: 52px;

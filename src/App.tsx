@@ -53,6 +53,7 @@ function App() {
         <LoginScreen emailLinkError={emailLinkError} />
       ) : onboarding ? (
         <OnboardingScreen
+          uid={user.uid}
           onDone={(goToAddEmployer) => {
             setOnboarding(false);
             if (goToAddEmployer) window.location.hash = "#/employers/new";

@@ -2,8 +2,10 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import type { User } from "firebase/auth";
 import { Link } from "react-router-dom";
 import { logout, setNickname } from "../lib/auth";
-import { watchEmployers, watchTimeEntries } from "../lib/firestore";
-import { exportEntriesCsv } from "../lib/exportCsv";
+import { setUserProfile, watchEmployers, watchTimeEntries, watchUserProfile } from "../lib/firestore";
+import { ExportPanel } from "../components/ExportPanel";
+import { AvatarPicker } from "../components/AvatarPicker";
+import { AvatarBadge, type AnimalKey } from "../lib/avatar";
 import { entryHours } from "../lib/pay";
 import { currentStreak } from "../lib/stats";
 import { TIERS, currentTierIndex } from "../lib/tiers";
@@ -118,16 +120,30 @@ export function SettingsPage({ uid, user }: { uid: string; user: User }) {
   const [aiVoice, setAiVoice] = useLocalToggle(SETTINGS_KEYS.aiVoice, true);
   const [employers, setEmployers] = useState<Employer[]>([]);
   const [entries, setEntries] = useState<TimeEntry[]>([]);
-  const [exporting, setExporting] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
   const [nickname, setNicknameState] = useState(user.displayName ?? "");
   const [editingNickname, setEditingNickname] = useState(false);
   const [nicknameDraft, setNicknameDraft] = useState(nickname);
+  const [animal, setAnimal] = useState<AnimalKey>("cow");
+  const [mbti, setMbti] = useState<string | undefined>(undefined);
+  const [avatarPickerOpen, setAvatarPickerOpen] = useState(false);
 
   useEffect(() => {
     const unsubEmployers = watchEmployers(uid, setEmployers);
     const unsubEntries = watchTimeEntries(uid, setEntries);
-    return () => { unsubEmployers(); unsubEntries(); };
+    const unsubProfile = watchUserProfile(uid, (profile) => {
+      if (profile.animal) setAnimal(profile.animal as AnimalKey);
+      setMbti(profile.mbti);
+    });
+    return () => { unsubEmployers(); unsubEntries(); unsubProfile(); };
   }, [uid]);
+
+  function saveAvatar(newAnimal: AnimalKey, newMbti: string | undefined) {
+    setAnimal(newAnimal);
+    setMbti(newMbti);
+    setUserProfile(uid, { animal: newAnimal, mbti: newMbti ?? "" }).catch((err) => console.error("Failed to save avatar", err));
+    setAvatarPickerOpen(false);
+  }
 
   const personalConfirmed = useMemo(
     () => entries.filter((e) => !e.workerId && e.status === "confirmed" && e.endTime),
@@ -145,22 +161,17 @@ export function SettingsPage({ uid, user }: { uid: string; user: User }) {
     setNickname(user, trimmed).catch((err) => console.error("Failed to save nickname", err));
   }
 
-  function handleExportAll() {
-    setExporting(true);
-    const employerById = new Map(employers.map((e) => [e.id, e]));
-    const confirmed = entries.filter((e) => e.status === "confirmed" && e.endTime);
-    exportEntriesCsv(confirmed, employerById, "gigtime-all-data.csv");
-    setExporting(false);
-  }
-
-  const initial = (nickname || "U").trim().slice(0, 1).toUpperCase();
+  const employerById = useMemo(() => new Map(employers.map((e) => [e.id, e])), [employers]);
+  const confirmedEntries = useMemo(() => entries.filter((e) => e.status === "confirmed" && e.endTime), [entries]);
 
   return (
     <div className="settings-page">
       <h1>{t("settingsTitle")}</h1>
 
       <div className="profile-hero">
-        <div className="avatar">{initial}</div>
+        <button type="button" className="avatar-btn" onClick={() => setAvatarPickerOpen(true)}>
+          <AvatarBadge animal={animal} mbti={mbti} size={52} />
+        </button>
         <div className="profile-info">
           {editingNickname ? (
             <input
@@ -253,9 +264,9 @@ export function SettingsPage({ uid, user }: { uid: string; user: User }) {
       <div>
         <p className="group-label">{t("groupData")}</p>
         <div className="group">
-          <div className="nav-row" onClick={handleExportAll} style={{ cursor: "pointer" }}>
+          <div className="nav-row" onClick={() => setExportOpen(true)} style={{ cursor: "pointer" }}>
             <span className="row-icon">{ICONS.download}</span>
-            <span className="t">{exporting ? t("exporting") : t("exportAllData")}</span>
+            <span className="t">{t("exportAllData")}</span>
             <svg viewBox="0 0 24 24" fill="none" width="16" height="16"><path d="M9 6l6 6-6 6" stroke="#8A8272" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </div>
           <p className="uid-line" style={{ paddingBottom: 14 }}>{t("syncStatus")}</p>
@@ -289,6 +300,28 @@ export function SettingsPage({ uid, user }: { uid: string; user: User }) {
       <p className="todo-note">{t("pushTodo")}</p>
 
       <button className="logout-btn" onClick={() => logout()}>{t("logout")}</button>
+
+      {exportOpen && (
+        <ExportPanel
+          entries={confirmedEntries}
+          employerById={employerById}
+          filenameBase="gigtime-all-data"
+          onClose={() => setExportOpen(false)}
+        />
+      )}
+
+      {avatarPickerOpen && (
+        <div className="avatar-modal-backdrop" onClick={() => setAvatarPickerOpen(false)}>
+          <div className="avatar-modal-sheet" onClick={(e) => e.stopPropagation()}>
+            <AvatarPicker
+              initialAnimal={animal}
+              initialMbti={mbti}
+              onSave={saveAvatar}
+              onCancel={() => setAvatarPickerOpen(false)}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,8 @@
 import { useState } from "react";
 import { Mascot } from "./Mascot";
+import { AvatarPicker } from "./AvatarPicker";
+import { setUserProfile } from "../lib/firestore";
+import type { AnimalKey } from "../lib/avatar";
 import { useT } from "../lib/i18n";
 import "./OnboardingScreen.css";
 
@@ -21,13 +24,18 @@ function markOnboarded() {
   }
 }
 
-export function OnboardingScreen({ onDone }: { onDone: (goToAddEmployer: boolean) => void }) {
+export function OnboardingScreen({ uid, onDone }: { uid: string; onDone: (goToAddEmployer: boolean) => void }) {
   const t = useT();
   const [step, setStep] = useState(0);
 
   function finish(goToAddEmployer: boolean) {
     markOnboarded();
     onDone(goToAddEmployer);
+  }
+
+  function saveAvatarAndContinue(animal: AnimalKey, mbti: string | undefined) {
+    setUserProfile(uid, { animal, mbti: mbti ?? "" }).catch((err) => console.error("Failed to save avatar", err));
+    setStep(2);
   }
 
   return (
@@ -45,9 +53,18 @@ export function OnboardingScreen({ onDone }: { onDone: (goToAddEmployer: boolean
       )}
 
       {step === 1 && (
+        <div className="onboarding-card onboarding-avatar-card">
+          <div className="onboarding-dots">
+            <span /><span className="active" /><span />
+          </div>
+          <AvatarPicker onSave={saveAvatarAndContinue} />
+        </div>
+      )}
+
+      {step === 2 && (
         <div className="onboarding-card">
           <div className="onboarding-dots">
-            <span /><span className="active" />
+            <span /><span /><span className="active" />
           </div>
           <h1>{t("onboard2Title")}</h1>
           <p className="onboarding-body">{t("onboard2Body")}</p>

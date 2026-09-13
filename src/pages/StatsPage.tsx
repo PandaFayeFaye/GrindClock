@@ -5,7 +5,7 @@ import { entryHours, entryPay, lumpSumAllTime, lumpSumForPeriod } from "../lib/p
 import { DEFAULT_CURRENCY, currencySymbol, formatGroupedPay } from "../lib/currency";
 import { currentStreak, dateKey, leaderboard, moodDetailByDay, payByDay, startOfMonth, startOfWeek } from "../lib/stats";
 import { useWeeklyGoal } from "../lib/settings";
-import { exportEntriesCsv } from "../lib/exportCsv";
+import { ExportPanel } from "../components/ExportPanel";
 import { useLang, useT } from "../lib/i18n";
 import type { Employer, Mood, TimeEntry } from "../lib/types";
 import "./StatsPage.css";
@@ -155,6 +155,7 @@ export function StatsPage({ uid }: { uid: string }) {
     return days;
   }, [moodDetailMap, t]);
   const [selectedMoodDay, setSelectedMoodDay] = useState<string | null>(null);
+  const [exportOpen, setExportOpen] = useState(false);
   const moodPoints = last7Days
     .map((d, i) => ({ ...d, x: (i / 6) * 100, y: d.mood ? MOOD_Y[d.mood] : null }))
     .filter((d): d is typeof d & { y: number } => d.y !== null);
@@ -446,11 +447,20 @@ export function StatsPage({ uid }: { uid: string }) {
         <button
           className="export-btn"
           disabled={filteredEntries.length === 0}
-          onClick={() => exportEntriesCsv(filteredEntries, employerById, `gigtime-明细-${range}.csv`)}
+          onClick={() => setExportOpen(true)}
         >
           {t("exportCsv")}
         </button>
       </div>
+
+      {exportOpen && (
+        <ExportPanel
+          entries={filteredEntries}
+          employerById={employerById}
+          filenameBase={`gigtime-明细-${range}`}
+          onClose={() => setExportOpen(false)}
+        />
+      )}
       <div className="entry-list">
         {filteredEntries.length === 0 && <p className="empty-hint">{t("detailEmpty")}</p>}
         {filteredEntries
