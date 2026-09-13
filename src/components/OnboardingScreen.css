@@ -38,10 +38,9 @@
   max-width: 360px;
 }
 
-.onboarding-card h1 {
-  font-family: var(--font-display);
-  font-size: 26px;
-  margin: 4px 0 0;
+.onboarding-logo {
+  width: 200px;
+  max-width: 70%;
 }
 
 .onboarding-lead {

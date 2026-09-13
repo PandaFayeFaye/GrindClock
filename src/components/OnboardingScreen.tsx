@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Mascot } from "./Mascot";
 import { AvatarPicker } from "./AvatarPicker";
 import { setUserProfile } from "../lib/firestore";
 import type { AnimalKey } from "../lib/avatar";
@@ -44,8 +43,7 @@ export function OnboardingScreen({ uid, onDone }: { uid: string; onDone: (goToAd
 
       {step === 0 && (
         <div className="onboarding-card">
-          <Mascot size={96} />
-          <h1>{t("appName")}</h1>
+          <img src="/logo-text.png" alt={t("appName")} className="onboarding-logo" />
           <p className="onboarding-lead">{t("onboard1Lead")}</p>
           <p className="onboarding-body">{t("onboard1Body")}</p>
           <button className="onboarding-next" onClick={() => setStep(1)}>{t("nextStep")}</button>
