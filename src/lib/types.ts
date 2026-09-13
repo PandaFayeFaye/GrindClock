@@ -6,6 +6,7 @@ export interface Employer {
   color: string;
   payType: PayType;
   currency?: string; // ISO-ish code, e.g. "CNY" | "USD" | "EUR" -- see lib/currency.ts; defaults to CNY
+  industryTag?: string; // free-form or preset industry label, e.g. "Restaurant" -- display/filter only, no calculation impact
   hourlyRate?: number;
   dailyRate?: number;
   baseSalary?: number;

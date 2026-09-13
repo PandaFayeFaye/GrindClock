@@ -97,6 +97,7 @@ export function HomePage({ uid }: { uid: string }) {
     isOvertime: boolean,
     isHoliday: boolean,
     orderCount: number | undefined,
+    endTime: number,
   ) {
     if (!confirmingEntry) return;
     const recurring = confirmingEntry.employer.defaultAdjustments ?? [];
@@ -109,7 +110,7 @@ export function HomePage({ uid }: { uid: string }) {
       isOvertime: isOvertime || undefined,
       isHoliday: isHoliday || undefined,
       orderCount,
-    });
+    }, endTime);
     setConfirmingEntry(null);
   }
 
@@ -173,6 +174,11 @@ export function HomePage({ uid }: { uid: string }) {
                       <path d="M9 3h6" stroke="#8A8272" strokeWidth="1.8" strokeLinecap="round" />
                     </svg>
                     {t("retroClockIn")}
+                  </button>
+                )}
+                {active && Date.now() - active.startTime > 14 * 3_600_000 && (
+                  <button type="button" className="retro-btn long-shift" onClick={() => handlePunch(emp)}>
+                    {t("longShiftWarning", { h: Math.floor((Date.now() - active.startTime) / 3_600_000) })}
                   </button>
                 )}
                 </div>

@@ -113,7 +113,7 @@
   min-height: 44px;
   text-decoration: none;
   color: inherit;
-  border-bottom: 1.5px solid var(--border-quiet);
+  border-bottom: 1px solid var(--border-quiet);
 }
 
 .nav-row:last-child { border-bottom: none; }
@@ -153,8 +153,7 @@
 }
 
 .logout-btn {
-  width: calc(100% - 28px);
-  margin: 14px;
+  width: 100%;
   padding: 0 16px;
   min-height: 48px;
   border: 2px solid var(--border-bold);
@@ -171,7 +170,7 @@
   gap: 12px;
   padding: 13px 14px;
   min-height: 52px;
-  border-bottom: 1.5px solid var(--border-quiet);
+  border-bottom: 1px solid var(--border-quiet);
 }
 
 .toggle-row:last-child {

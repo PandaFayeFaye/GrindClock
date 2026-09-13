@@ -45,6 +45,26 @@
   margin: 0 0 6px;
 }
 
+.end-time-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(26, 26, 26, 0.65);
+  margin-bottom: 4px;
+}
+
+.end-time-input {
+  border: 1.5px solid var(--border-bold);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.6);
+  padding: 3px 8px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .punch-modal-summary .dur {
   font-family: var(--font-display);
   font-size: 28px;

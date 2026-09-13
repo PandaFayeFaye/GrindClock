@@ -29,9 +29,12 @@ export function PunchConfirmModal({
     isOvertime: boolean,
     isHoliday: boolean,
     orderCount: number | undefined,
+    endTime: number,
   ) => void;
 }) {
   const t = useT();
+  const now = new Date();
+  const [endTimeStr, setEndTimeStr] = useState(`${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`);
   const [mood, setMood] = useState<Mood | undefined>(undefined);
   const [moodNote, setMoodNote] = useState("");
   const [note, setNote] = useState("");
@@ -51,9 +54,21 @@ export function PunchConfirmModal({
 
   const showRateFlags = employer.overtimeMultiplier !== undefined || employer.holidayMultiplier !== undefined || employer.payType === "base+overtime";
   const isPerOrder = employer.payType === "per-order";
+
+  // Anchor the edited end time to the shift's start date -- if it lands before the
+  // start (e.g. shift started at 22:00, "end time" typed as 06:00), it must mean the
+  // next day, not a negative-duration shift.
+  const computedEndTime = (() => {
+    const [h, m] = endTimeStr.split(":").map(Number);
+    const startDate = new Date(entry.startTime);
+    let candidate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), h, m).getTime();
+    if (candidate < entry.startTime) candidate += 24 * 3_600_000;
+    return Math.min(candidate, Date.now());
+  })();
+
   const previewEntry: TimeEntry = {
     ...entry,
-    endTime: Date.now(),
+    endTime: computedEndTime,
     adjustment: previewAdjustment,
     isOvertime,
     isHoliday,
@@ -69,6 +84,16 @@ export function PunchConfirmModal({
 
         <div className="punch-modal-summary">
           <p className="emp">{employer.name} · {t("thisShift")}</p>
+          <div className="end-time-row">
+            <span>{t("actualEndTimeLabel")}</span>
+            <input
+              className="end-time-input"
+              type="time"
+              value={endTimeStr}
+              onChange={(e) => setEndTimeStr(e.target.value)}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
           <p className="dur">{t("hoursUnit", { h: hours.toFixed(1) })}</p>
           <p className="pay">{t("estimatedPay")} {currencySymbol(employer.currency)}{pay.toFixed(1)}</p>
           {recurringAdjustment.length > 0 && (
@@ -167,6 +192,7 @@ export function PunchConfirmModal({
             isOvertime,
             isHoliday,
             isPerOrder ? Number(orderCount) || 0 : undefined,
+            computedEndTime,
           )}
         >
           {t("confirmSave")}

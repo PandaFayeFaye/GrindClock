@@ -10,6 +10,16 @@ import "./EmployerFormPage.css";
 
 const PALETTE = ["#FFD93D", "#4361EE", "#FF6B6B", "#39C97A", "#B084F5", "#5AC8FA"];
 
+const INDUSTRY_PRESETS: DictKey[] = [
+  "industryRestaurant",
+  "industryDelivery",
+  "industryRideshare",
+  "industryCafe",
+  "industryRetail",
+  "industryTutoring",
+  "industryOffice",
+];
+
 const MODE_ICONS: Record<PayType, ReactElement> = {
   hourly: (
     <svg viewBox="0 0 24 24" fill="none">
@@ -75,6 +85,8 @@ export function EmployerFormPage({ uid }: { uid: string }) {
   const isEdit = !!employerId;
 
   const [name, setName] = useState("");
+  const [industryTag, setIndustryTag] = useState("");
+  const [industryOther, setIndustryOther] = useState(false);
   const [colorIdx, setColorIdx] = useState(0);
   const [payType, setPayType] = useState<PayType>("hourly");
   const [rate, setRate] = useState("");
@@ -104,6 +116,14 @@ export function EmployerFormPage({ uid }: { uid: string }) {
       const data = snap.data() as Employer | undefined;
       if (data) {
         setName(data.name);
+        if (data.industryTag) {
+          if ((INDUSTRY_PRESETS as string[]).includes(data.industryTag)) {
+            setIndustryTag(data.industryTag);
+          } else {
+            setIndustryTag(data.industryTag);
+            setIndustryOther(true);
+          }
+        }
         setColorIdx(Math.max(0, PALETTE.indexOf(data.color)));
         setPayType(data.payType);
         setCurrency(data.currency ?? DEFAULT_CURRENCY);
@@ -147,6 +167,7 @@ export function EmployerFormPage({ uid }: { uid: string }) {
       color: PALETTE[colorIdx],
       payType,
       currency,
+      ...(industryTag.trim() ? { industryTag: industryTag.trim() } : {}),
       ...(payType === "hourly" || payType === "comprehensive" || payType === "base+overtime"
         ? { hourlyRate: rateNum }
         : {}),
@@ -222,6 +243,38 @@ export function EmployerFormPage({ uid }: { uid: string }) {
           />
           {findDuplicate() && (
             <p className="dup-warning">{t("duplicateNameWarning", { name: findDuplicate()!.name })}</p>
+          )}
+        </div>
+
+        <div>
+          <p className="field-label">{t("industryLabel")} <span className="opt">{t("optional")}</span></p>
+          <div className="chip-row">
+            {INDUSTRY_PRESETS.map((key) => (
+              <button
+                key={key}
+                type="button"
+                className={`chip${!industryOther && industryTag === key ? " selected" : ""}`}
+                onClick={() => { setIndustryOther(false); setIndustryTag(industryTag === key ? "" : key); }}
+              >
+                {t(key)}
+              </button>
+            ))}
+            <button
+              type="button"
+              className={`chip${industryOther ? " selected" : ""}`}
+              onClick={() => { setIndustryOther(true); setIndustryTag(""); }}
+            >
+              {t("industryOther")}
+            </button>
+          </div>
+          {industryOther && (
+            <input
+              className="rate-input"
+              placeholder={t("industryOtherPlaceholder")}
+              value={industryTag}
+              onChange={(e) => setIndustryTag(e.target.value)}
+              style={{ marginTop: 8 }}
+            />
           )}
         </div>
 

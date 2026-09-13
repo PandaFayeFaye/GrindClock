@@ -213,8 +213,7 @@ export function SettingsPage({ uid, user }: { uid: string; user: User }) {
       <div>
         <p className="group-label">{t("groupAccount")}</p>
         <div className="group">
-          <p className="uid-line">{t("userId", { id: uid.slice(0, 10) })}</p>
-          <button className="logout-btn" onClick={() => logout()}>{t("logout")}</button>
+          <p className="uid-line" style={{ paddingBottom: 14 }}>{t("userId", { id: uid.slice(0, 10) })}</p>
         </div>
       </div>
 
@@ -295,6 +294,8 @@ export function SettingsPage({ uid, user }: { uid: string; user: User }) {
       </div>
 
       <p className="todo-note">{t("pushTodo")}</p>
+
+      <button className="logout-btn" onClick={() => logout()}>{t("logout")}</button>
     </div>
   );
 }

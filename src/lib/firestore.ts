@@ -80,9 +80,10 @@ export function clockOut(
     isHoliday?: boolean;
     orderCount?: number;
   },
+  endTime = Date.now(),
 ) {
   return updateDoc(doc(timeEntriesCol(uid), entryId), {
-    endTime: Date.now(),
+    endTime,
     ...extra,
   });
 }

@@ -101,6 +101,13 @@
   color: var(--text-muted);
 }
 
+.retro-btn.long-shift {
+  background: #FFF3F1;
+  border-top: 1.3px dashed var(--accent-coral);
+  color: var(--accent-coral);
+  font-weight: 800;
+}
+
 .dot {
   width: 11px;
   height: 11px;

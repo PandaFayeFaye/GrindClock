@@ -77,6 +77,8 @@ const dict = {
   thisShift: { zh: "本次工时", en: "this shift" },
   hoursUnit: { zh: "{h}小时", en: "{h}h" },
   estimatedPay: { zh: "预估收入", en: "Est. pay" },
+  actualEndTimeLabel: { zh: "实际下班时间", en: "Actual end time" },
+  longShiftWarning: { zh: "已经打卡{h}小时了，是不是忘记下班打卡了？", en: "You've been clocked in for {h}h -- forget to clock out?" },
   recurringAdjApplied: { zh: "已自动套用{n}条该雇主的默认补贴/扣款规则", en: "{n} recurring rule(s) for this employer applied automatically" },
   howManyOrders: { zh: "完成了几单？", en: "How many orders?" },
   orderCountPlaceholder: { zh: "单数", en: "Order count" },
@@ -338,6 +340,18 @@ const dict = {
     en: "This person's hours are tracked completely separately -- they'll never appear in your own Home/Stats data",
   },
   addWorkerSaveBtn: { zh: "保存", en: "Save" },
+
+  // ---- Employer industry tag ----
+  industryLabel: { zh: "雇主类型", en: "Employer type" },
+  industryRestaurant: { zh: "餐厅", en: "Restaurant" },
+  industryDelivery: { zh: "外卖骑手", en: "Delivery" },
+  industryRideshare: { zh: "网约车", en: "Rideshare" },
+  industryCafe: { zh: "咖啡厅", en: "Cafe" },
+  industryRetail: { zh: "零售", en: "Retail" },
+  industryTutoring: { zh: "家教/教培", en: "Tutoring" },
+  industryOffice: { zh: "文职/客服", en: "Office/Support" },
+  industryOther: { zh: "其他", en: "Other" },
+  industryOtherPlaceholder: { zh: "输入雇主类型", en: "Type a custom category" },
 
   statsTitle: { zh: "统计", en: "Stats" },
   rangeToday: { zh: "今日", en: "Today" },
