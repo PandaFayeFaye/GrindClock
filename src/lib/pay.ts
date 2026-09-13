@@ -44,6 +44,23 @@ function payWithOvertimeSplit(hours: number, hourlyRate: number, employer: Emplo
   return hours * hourlyRate * rateMultiplier(employer, entry);
 }
 
+/**
+ * Just the overtime slice of an entry's pay (0 if it has no overtimeHours) --
+ * uses the employer's currently-configured overtimeMultiplier, the same rate
+ * shown to and confirmed by the user when the overtime was detected/entered.
+ */
+export function entryOvertimePay(employer: Employer, entry: TimeEntry, now = Date.now()): number {
+  if (!entry.overtimeHours || entry.overtimeHours <= 0) return 0;
+  const hours = payableHours(employer, entry, now);
+  const ot = Math.min(entry.overtimeHours, hours);
+  const holidayMult = entry.isHoliday ? (employer.holidayMultiplier ?? 1) : 1;
+  const otMult = employer.overtimeMultiplier ?? 1.5;
+  let rate = 0;
+  if (employer.payType === "hourly" || employer.payType === "comprehensive") rate = employer.hourlyRate ?? 0;
+  else if (employer.payType === "monthly") rate = effectiveHourlyRate(employer) ?? 0;
+  return ot * rate * otMult * holidayMult;
+}
+
 /** Hours actually paid for a shift: clocked duration minus the employer's unpaid break. */
 function payableHours(employer: Employer, entry: TimeEntry, now = Date.now()): number {
   const breakHours = (employer.breakMinutes ?? 0) / 60;

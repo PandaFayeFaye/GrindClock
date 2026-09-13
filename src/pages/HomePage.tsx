@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { addManualEntry, clockIn, clockOut, watchEmployers, watchTimeEntries, watchUserProfile } from "../lib/firestore";
-import { entryHours, entryPay, mergedHoursToday } from "../lib/pay";
+import { entryHours, entryOvertimePay, entryPay, mergedHoursToday } from "../lib/pay";
 import { startOfMonth, startOfWeek } from "../lib/stats";
 import { TIERS, TIER_COLORS, currentTierIndex } from "../lib/tiers";
 import type { Adjustment, Employer, Mood, TimeEntry } from "../lib/types";
@@ -50,7 +50,7 @@ export function HomePage({ uid }: { uid: string }) {
   const [locationPunch] = useLocalToggle(SETTINGS_KEYS.locationPunch, false);
   const [aiPhotoOn] = useLocalToggle(SETTINGS_KEYS.aiPhoto, true);
   const [aiVoiceOn] = useLocalToggle(SETTINGS_KEYS.aiVoice, true);
-  const [incomeRange, setIncomeRange] = useState<"today" | "week" | "month">("today");
+  const [leftRange, setLeftRange] = useState<"today" | "week">("today");
 
   useEffect(() => {
     const unsubEmployers = watchEmployers(uid, setEmployers);
@@ -102,35 +102,35 @@ export function HomePage({ uid }: { uid: string }) {
 
   const todaysHours = useMemo(() => mergedHoursToday(personalEntries), [personalEntries]);
 
-  const rangeStart = useMemo(() => {
-    if (incomeRange === "week") return startOfWeek();
-    if (incomeRange === "month") return startOfMonth();
-    return startOfToday();
-  }, [incomeRange]);
-  const rangeEntries = useMemo(
-    () => personalEntries.filter((e) => e.status === "confirmed" && e.startTime >= rangeStart),
-    [personalEntries, rangeStart],
-  );
-  const rangeHours = useMemo(
-    () => (incomeRange === "today" ? todaysHours : rangeEntries.reduce((s, e) => s + entryHours(e), 0)),
-    [incomeRange, todaysHours, rangeEntries],
-  );
-  const rangeOvertimeHours = useMemo(
-    () => rangeEntries.reduce((s, e) => s + (e.overtimeHours ?? 0), 0),
-    [rangeEntries],
-  );
-  const rangeIncomeByCurrency = useMemo(() => {
-    const map = new Map<string, number>();
+  const summarizeRange = useCallback((rangeStart: number, isToday: boolean) => {
+    const rangeEntries = personalEntries.filter((e) => e.status === "confirmed" && e.startTime >= rangeStart);
+    const hours = isToday ? todaysHours : rangeEntries.reduce((s, e) => s + entryHours(e), 0);
+    const overtimeHours = rangeEntries.reduce((s, e) => s + (e.overtimeHours ?? 0), 0);
+    const payByCurrency = new Map<string, number>();
+    const overtimePayByCurrency = new Map<string, number>();
     for (const e of rangeEntries) {
       const emp = employerById.get(e.employerId);
       if (!emp) continue;
       const cur = emp.currency ?? DEFAULT_CURRENCY;
-      map.set(cur, (map.get(cur) ?? 0) + entryPay(emp, e));
+      payByCurrency.set(cur, (payByCurrency.get(cur) ?? 0) + entryPay(emp, e));
+      const otPay = entryOvertimePay(emp, e);
+      if (otPay > 0) overtimePayByCurrency.set(cur, (overtimePayByCurrency.get(cur) ?? 0) + otPay);
     }
-    return map;
-  }, [rangeEntries, employerById]);
-  const incomeLabelKey = incomeRange === "week" ? "weekEarned" : incomeRange === "month" ? "monthEarned" : "todayEarned";
-  const workedLabelKey = incomeRange === "week" ? "weekWorked" : incomeRange === "month" ? "monthWorked" : "todayWorked";
+    return { hours, overtimeHours, payByCurrency, overtimePayByCurrency };
+  }, [personalEntries, employerById, todaysHours]);
+
+  const leftRangeStart = leftRange === "week" ? startOfWeek() : startOfToday();
+  const monthStart = startOfMonth();
+  const leftSummary = useMemo(
+    () => summarizeRange(leftRangeStart, leftRange === "today"),
+    [summarizeRange, leftRangeStart, leftRange],
+  );
+  const monthSummary = useMemo(
+    () => summarizeRange(monthStart, false),
+    [summarizeRange, monthStart],
+  );
+  const leftEarnedLabelKey = leftRange === "week" ? "weekEarned" : "todayEarned";
+  const leftWorkedLabelKey = leftRange === "week" ? "weekWorked" : "todayWorked";
 
   const totalHours = useMemo(
     () => personalEntries.filter((e) => e.status === "confirmed" && e.endTime).reduce((s, e) => s + entryHours(e), 0),
@@ -253,24 +253,42 @@ export function HomePage({ uid }: { uid: string }) {
             </div>
           )}
 
-          <div className="income-card" data-tour="income">
-            <div className="income-range-tabs">
-              {(["today", "week", "month"] as const).map((r) => (
-                <button
-                  key={r}
-                  className={`income-range-tab${incomeRange === r ? " active" : ""}`}
-                  onClick={() => setIncomeRange(r)}
-                >
-                  {t(r === "today" ? "incomeRangeToday" : r === "week" ? "incomeRangeWeek" : "incomeRangeMonth")}
-                </button>
-              ))}
+          <div className="income-cards-row">
+            <div className="income-card" data-tour="income">
+              <div className="income-range-tabs">
+                {(["today", "week"] as const).map((r) => (
+                  <button
+                    key={r}
+                    className={`income-range-tab${leftRange === r ? " active" : ""}`}
+                    onClick={() => setLeftRange(r)}
+                  >
+                    {t(r === "today" ? "incomeRangeToday" : "incomeRangeWeek")}
+                  </button>
+                ))}
+              </div>
+              <p className="income-label">{t(leftEarnedLabelKey)}</p>
+              <p className="income-value">{formatGroupedPay(leftSummary.payByCurrency, 1)}</p>
+              <p className="income-note">{t(leftWorkedLabelKey, { h: leftSummary.hours.toFixed(1) })}</p>
+              {leftSummary.overtimeHours > 0.05 && (
+                <p className="income-overtime-note">
+                  {t("overtimeBreakdownNote", { h: leftSummary.overtimeHours.toFixed(1), pay: formatGroupedPay(leftSummary.overtimePayByCurrency, 1) })}
+                </p>
+              )}
             </div>
-            <p className="income-label">{t(incomeLabelKey)}</p>
-            <p className="income-value">{formatGroupedPay(rangeIncomeByCurrency, 1)}</p>
-            <p className="income-note">{t(workedLabelKey, { h: rangeHours.toFixed(1) })}</p>
-            {rangeOvertimeHours > 0.05 && (
-              <p className="income-overtime-note">{t("includesOvertimeNote", { h: rangeOvertimeHours.toFixed(1) })}</p>
-            )}
+
+            <div className="income-card income-card-month">
+              <div className="income-range-tabs">
+                <span className="income-range-tab active">{t("incomeRangeMonth")}</span>
+              </div>
+              <p className="income-label">{t("monthEarned")}</p>
+              <p className="income-value">{formatGroupedPay(monthSummary.payByCurrency, 1)}</p>
+              <p className="income-note">{t("monthWorked", { h: monthSummary.hours.toFixed(1) })}</p>
+              {monthSummary.overtimeHours > 0.05 && (
+                <p className="income-overtime-note">
+                  {t("overtimeBreakdownNote", { h: monthSummary.overtimeHours.toFixed(1), pay: formatGroupedPay(monthSummary.overtimePayByCurrency, 1) })}
+                </p>
+              )}
+            </div>
           </div>
 
           <div className="list">

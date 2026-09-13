@@ -463,6 +463,7 @@ const dict = {
   periodPay: { zh: "本时段收入", en: "Earned this period" },
   overtimeHoursLabel: { zh: "加班时长", en: "Overtime hours" },
   includesOvertimeNote: { zh: "其中加班 {h} 小时", en: "including {h}h overtime" },
+  overtimeBreakdownNote: { zh: "其中加班 {h}h · {pay}", en: "incl. {h}h OT · {pay}" },
 
   // ---- Coach tour ----
   coachSkip: { zh: "跳过", en: "Skip" },
