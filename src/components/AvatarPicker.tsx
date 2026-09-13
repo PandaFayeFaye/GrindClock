@@ -23,7 +23,7 @@ export function AvatarPicker({
       <p className="avatar-picker-title">{t("pickAvatarTitle")}</p>
 
       <div className="avatar-preview">
-        <AvatarBadge animal={animal} mbti={mbti} size={84} />
+        <AvatarBadge animal={animal} mbti={mbti} size={112} fit="contain" />
       </div>
 
       <p className="avatar-section-label">{t("pickAnimalLabel")}</p>
@@ -35,7 +35,7 @@ export function AvatarPicker({
             className={`avatar-animal-btn${animal === a.key ? " selected" : ""}`}
             onClick={() => setAnimal(a.key)}
           >
-            <AvatarBadge animal={a.key} size={40} />
+            <AvatarBadge animal={a.key} size={44} />
             <span>{a.label}</span>
           </button>
         ))}

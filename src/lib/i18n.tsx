@@ -129,7 +129,7 @@ const dict = {
 
   // ---- Avatar picker ----
   pickAvatarTitle: { zh: "选一个专属形象", en: "Pick your character" },
-  pickAnimalLabel: { zh: "选择动物", en: "Choose an animal" },
+  pickAnimalLabel: { zh: "选择角色", en: "Choose a character" },
   pickMbtiLabel: { zh: "选择MBTI人格类型（可选）", en: "Choose your MBTI type (optional)" },
   skipMbti: { zh: "不选/不知道", en: "Skip / not sure" },
   changeAvatar: { zh: "更换形象", en: "Change character" },
