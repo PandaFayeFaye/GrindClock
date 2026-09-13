@@ -9,6 +9,7 @@ import {
   orderBy,
   query,
   updateDoc,
+  writeBatch,
 } from "firebase/firestore";
 import { db } from "./firebase";
 import type { Adjustment, Employer, Mood, TimeEntry, Worker } from "./types";
@@ -116,4 +117,12 @@ export function watchWorkers(uid: string, cb: (list: Worker[]) => void) {
 
 export function addWorker(uid: string, data: Omit<Worker, "id">) {
   return addDoc(workersCol(uid), data);
+}
+
+export async function addManualEntries(uid: string, entries: Omit<TimeEntry, "id">[]) {
+  const batch = writeBatch(db);
+  for (const data of entries) {
+    batch.set(doc(timeEntriesCol(uid)), data);
+  }
+  await batch.commit();
 }

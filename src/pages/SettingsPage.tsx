@@ -211,13 +211,6 @@ export function SettingsPage({ uid, user }: { uid: string; user: User }) {
       </div>
 
       <div>
-        <p className="group-label">{t("groupAccount")}</p>
-        <div className="group">
-          <p className="uid-line" style={{ paddingBottom: 14 }}>{t("userId", { id: uid.slice(0, 10) })}</p>
-        </div>
-      </div>
-
-      <div>
         <p className="group-label">{t("groupPunch")}</p>
         <div className="group">
           <ToggleRow

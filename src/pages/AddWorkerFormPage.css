@@ -37,15 +37,15 @@
 .worker-form .save-btn {
   flex-shrink: 0;
   white-space: nowrap;
-  padding: 0 16px;
-  min-height: 44px;
-  border-radius: 10px;
-  border: 2.5px solid var(--border-bold);
+  padding: 0 12px;
+  min-height: 34px;
+  border-radius: 9px;
+  border: 2px solid var(--border-bold);
   background: var(--accent-green);
   color: var(--border-bold);
   font-weight: 900;
-  font-size: 13px;
-  box-shadow: var(--shadow-bold-sm);
+  font-size: 12px;
+  box-shadow: 2px 2px 0 var(--border-bold);
 }
 
 .worker-form .save-btn:disabled { opacity: 0.5; }

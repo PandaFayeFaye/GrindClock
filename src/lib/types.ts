@@ -7,6 +7,8 @@ export interface Employer {
   payType: PayType;
   currency?: string; // ISO-ish code, e.g. "CNY" | "USD" | "EUR" -- see lib/currency.ts; defaults to CNY
   industryTag?: string; // free-form or preset industry label, e.g. "Restaurant" -- display/filter only, no calculation impact
+  scheduleMode?: "flexible" | "fixed"; // "flexible" (default) = manual punch in/out; "fixed" = has a weekly schedule, see fixedSchedule
+  fixedSchedule?: Partial<Record<"0" | "1" | "2" | "3" | "4" | "5" | "6", { start: string; end: string }>>; // key = JS Date.getDay(), "0"=Sunday; a missing key means not a working day
   hourlyRate?: number;
   dailyRate?: number;
   baseSalary?: number;

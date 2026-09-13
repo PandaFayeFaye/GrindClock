@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { clockIn, clockOut, watchEmployers, watchTimeEntries } from "../lib/firestore";
+import { addManualEntry, clockIn, clockOut, watchEmployers, watchTimeEntries } from "../lib/firestore";
 import { entryPay, mergedHoursToday } from "../lib/pay";
 import type { Adjustment, Employer, Mood, TimeEntry } from "../lib/types";
 import { Mascot } from "../components/Mascot";
 import { PunchConfirmModal } from "../components/PunchConfirmModal";
 import { RetroClockInModal } from "../components/RetroClockInModal";
+import { ScheduleConfirmModal } from "../components/ScheduleConfirmModal";
 import { SETTINGS_KEYS, useLocalToggle } from "../lib/settings";
 import { getCurrentLocation } from "../lib/geolocation";
 import { useT } from "../lib/i18n";
 import { DEFAULT_CURRENCY, currencySymbol, formatGroupedPay } from "../lib/currency";
+import { combineDateAndTime, todaysSchedule } from "../lib/schedule";
 import "./HomePage.css";
 
 function startOfToday() {
@@ -24,6 +26,7 @@ export function HomePage({ uid }: { uid: string }) {
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [confirmingEntry, setConfirmingEntry] = useState<{ entry: TimeEntry; employer: Employer } | null>(null);
   const [retroEmployer, setRetroEmployer] = useState<Employer | null>(null);
+  const [scheduleConfirmEmployer, setScheduleConfirmEmployer] = useState<Employer | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [simpleMode] = useLocalToggle(SETTINGS_KEYS.simpleMode, false);
   const [locationPunch] = useLocalToggle(SETTINGS_KEYS.locationPunch, false);
@@ -51,6 +54,7 @@ export function HomePage({ uid }: { uid: string }) {
   );
 
   const employerById = useMemo(() => new Map(employers.map((e) => [e.id, e])), [employers]);
+  const employerIdsWithEntryToday = useMemo(() => new Set(todaysEntries.map((e) => e.employerId)), [todaysEntries]);
 
   const todaysIncomeByCurrency = useMemo(() => {
     const map = new Map<string, number>();
@@ -87,6 +91,22 @@ export function HomePage({ uid }: { uid: string }) {
       clockIn(uid, retroEmployer.id, undefined, startTime);
     }
     setRetroEmployer(null);
+  }
+
+  function handleScheduleConfirm(start: string, end: string) {
+    if (!scheduleConfirmEmployer) return;
+    const today = new Date();
+    const startTime = combineDateAndTime(today, start);
+    let endTime = combineDateAndTime(today, end);
+    if (endTime <= startTime) endTime += 24 * 3_600_000; // overnight shift
+    addManualEntry(uid, {
+      employerId: scheduleConfirmEmployer.id,
+      startTime,
+      endTime,
+      status: "confirmed",
+      source: "manual",
+    });
+    setScheduleConfirmEmployer(null);
   }
 
   function handleConfirm(
@@ -145,6 +165,28 @@ export function HomePage({ uid }: { uid: string }) {
           <div className="list">
             {employers.map((emp) => {
               const active = activeByEmployer.get(emp.id);
+              const schedule = todaysSchedule(emp);
+              const showScheduleCard = !!schedule && !active && !employerIdsWithEntryToday.has(emp.id);
+
+              if (showScheduleCard) {
+                return (
+                  <div className="row-wrap schedule-card" key={emp.id}>
+                    <div className="row">
+                      <span className="dot" style={{ background: emp.color }} />
+                      <Link to={`/employers/${emp.id}`} className="row-name">
+                        <div className="row-title-line">
+                          <p className="row-title">{emp.name}</p>
+                          <span className="row-rate">{t("scheduleConfirmTitle", { start: schedule.start, end: schedule.end })}</span>
+                        </div>
+                      </Link>
+                      <button className="punch-btn schedule-btn" onClick={() => setScheduleConfirmEmployer(emp)}>
+                        {t("scheduleConfirmBtn")}
+                      </button>
+                    </div>
+                  </div>
+                );
+              }
+
               return (
                 <div className={`row-wrap${active ? " is-working" : ""}`} key={emp.id}>
                 <div className="row">
@@ -216,6 +258,17 @@ export function HomePage({ uid }: { uid: string }) {
                   </svg>
                 </span>
               </Link>
+              <Link className="fab-menu-item" to="/entries/batch" onClick={() => setMenuOpen(false)}>
+                <span className="fab-menu-label">{t("batchBackfill")}</span>
+                <span className="fab-mini" style={{ background: "#39C97A" }}>
+                  <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
+                    <rect x="4" y="4" width="7" height="7" rx="1.5" fill="#fff" />
+                    <rect x="13" y="4" width="7" height="7" rx="1.5" fill="#fff" />
+                    <rect x="4" y="13" width="7" height="7" rx="1.5" fill="#fff" />
+                    <rect x="13" y="13" width="7" height="7" rx="1.5" fill="#fff" />
+                  </svg>
+                </span>
+              </Link>
               <Link className="fab-menu-item" to="/employers/new" onClick={() => setMenuOpen(false)}>
                 <span className="fab-menu-label">{t("addEmployer")}</span>
                 <span className="fab-mini" style={{ background: "#5AC8FA" }}>
@@ -250,6 +303,19 @@ export function HomePage({ uid }: { uid: string }) {
           onConfirm={handleRetroConfirm}
         />
       )}
+
+      {scheduleConfirmEmployer && (() => {
+        const schedule = todaysSchedule(scheduleConfirmEmployer);
+        if (!schedule) return null;
+        return (
+          <ScheduleConfirmModal
+            employer={scheduleConfirmEmployer}
+            scheduled={schedule}
+            onCancel={() => setScheduleConfirmEmployer(null)}
+            onConfirm={handleScheduleConfirm}
+          />
+        );
+      })()}
     </div>
   );
 }

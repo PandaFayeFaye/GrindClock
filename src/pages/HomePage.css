@@ -101,6 +101,15 @@
   color: var(--text-muted);
 }
 
+.row-wrap.schedule-card {
+  border-color: var(--accent-blue);
+  background: #EEF1FD;
+}
+
+.schedule-btn {
+  background: var(--accent-blue);
+}
+
 .retro-btn.long-shift {
   background: #FFF3F1;
   border-top: 1.3px dashed var(--accent-coral);

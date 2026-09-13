@@ -40,15 +40,15 @@
 }
 
 .save-btn {
-  padding: 0 16px;
-  min-height: 44px;
-  border-radius: 10px;
-  border: 2.5px solid var(--border-bold);
+  padding: 0 12px;
+  min-height: 34px;
+  border-radius: 9px;
+  border: 2px solid var(--border-bold);
   background: var(--accent-green);
   color: var(--border-bold);
   font-weight: 900;
-  font-size: 13px;
-  box-shadow: var(--shadow-bold-sm);
+  font-size: 12px;
+  box-shadow: 2px 2px 0 var(--border-bold);
 }
 
 .save-btn:disabled {
@@ -206,6 +206,94 @@
   min-height: 60px;
   resize: none;
   font-family: var(--font-body);
+}
+
+.schedule-mode-row {
+  display: flex;
+  gap: 8px;
+}
+
+.schedule-mode-card {
+  flex: 1;
+  text-align: left;
+  padding: 10px 12px;
+  border: 2px solid var(--border-quiet);
+  border-radius: 12px;
+  background: var(--bg-surface);
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.schedule-mode-card.selected {
+  border-color: var(--border-bold);
+  background: var(--accent-yellow);
+  box-shadow: var(--shadow-bold-sm);
+}
+
+.smc-title { font-size: 12.5px; font-weight: 900; }
+.smc-sub { font-size: 9.5px; color: var(--text-muted); line-height: 1.3; }
+.schedule-mode-card.selected .smc-sub { color: rgba(26, 26, 26, 0.65); }
+
+.weekly-schedule {
+  margin-top: 10px;
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-quiet);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.ws-hint {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  margin: 0 0 8px;
+}
+
+.ws-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+}
+
+.ws-daybtn {
+  width: 40px;
+  flex-shrink: 0;
+  padding: 6px 0;
+  border-radius: 8px;
+  border: 1.8px solid var(--border-quiet);
+  background: var(--bg-base);
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-muted);
+}
+
+.ws-daybtn.on {
+  border-color: var(--border-bold);
+  background: var(--accent-blue);
+  color: #fff;
+}
+
+.ws-times {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.ws-times input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1.5px solid var(--border-quiet);
+  border-radius: 8px;
+  font-size: 12px;
+  background: var(--bg-base);
+}
+
+.ws-times span {
+  font-size: 11px;
+  color: var(--text-muted);
 }
 
 .select-field {

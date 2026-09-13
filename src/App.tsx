@@ -15,6 +15,7 @@ import { AddWorkerFormPage } from "./pages/AddWorkerFormPage";
 import { MonthlyRecapPage } from "./pages/MonthlyRecapPage";
 import { BadgeWallPage } from "./pages/BadgeWallPage";
 import { AICapturePage } from "./pages/AICapturePage";
+import { BatchBackfillPage } from "./pages/BatchBackfillPage";
 import { LanguageProvider, useT } from "./lib/i18n";
 import { OnboardingScreen, hasOnboarded } from "./components/OnboardingScreen";
 import "./App.css";
@@ -65,6 +66,7 @@ function App() {
               <Route path="/employers/new" element={<EmployerFormPage uid={user.uid} />} />
               <Route path="/employers/:employerId" element={<EmployerFormPage uid={user.uid} />} />
               <Route path="/entries/new" element={<BackfillEntryPage uid={user.uid} />} />
+              <Route path="/entries/batch" element={<BatchBackfillPage uid={user.uid} />} />
               <Route path="/stats" element={<StatsPage uid={user.uid} />} />
               <Route path="/settings" element={<SettingsPage uid={user.uid} user={user} />} />
               <Route path="/net-pay" element={<NetPayComparePage uid={user.uid} />} />

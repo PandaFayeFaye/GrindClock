@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
 import { addEmployer, employersCol, updateEmployer, watchEmployers } from "../lib/firestore";
 import type { Adjustment, Employer, PayType } from "../lib/types";
+import { WEEKDAYS } from "../lib/schedule";
 import { Mascot } from "../components/Mascot";
 import { CURRENCIES, DEFAULT_CURRENCY } from "../lib/currency";
 import { useT, type DictKey } from "../lib/i18n";
@@ -87,6 +88,8 @@ export function EmployerFormPage({ uid }: { uid: string }) {
   const [name, setName] = useState("");
   const [industryTag, setIndustryTag] = useState("");
   const [industryOther, setIndustryOther] = useState(false);
+  const [scheduleMode, setScheduleMode] = useState<"flexible" | "fixed">("flexible");
+  const [fixedSchedule, setFixedSchedule] = useState<Employer["fixedSchedule"]>({});
   const [colorIdx, setColorIdx] = useState(0);
   const [payType, setPayType] = useState<PayType>("hourly");
   const [rate, setRate] = useState("");
@@ -124,6 +127,8 @@ export function EmployerFormPage({ uid }: { uid: string }) {
             setIndustryOther(true);
           }
         }
+        setScheduleMode(data.scheduleMode ?? "flexible");
+        setFixedSchedule(data.fixedSchedule ?? {});
         setColorIdx(Math.max(0, PALETTE.indexOf(data.color)));
         setPayType(data.payType);
         setCurrency(data.currency ?? DEFAULT_CURRENCY);
@@ -168,6 +173,8 @@ export function EmployerFormPage({ uid }: { uid: string }) {
       payType,
       currency,
       ...(industryTag.trim() ? { industryTag: industryTag.trim() } : {}),
+      scheduleMode,
+      ...(scheduleMode === "fixed" ? { fixedSchedule: fixedSchedule ?? {} } : {}),
       ...(payType === "hourly" || payType === "comprehensive" || payType === "base+overtime"
         ? { hourlyRate: rateNum }
         : {}),
@@ -275,6 +282,69 @@ export function EmployerFormPage({ uid }: { uid: string }) {
               onChange={(e) => setIndustryTag(e.target.value)}
               style={{ marginTop: 8 }}
             />
+          )}
+        </div>
+
+        <div>
+          <p className="field-label">{t("scheduleModeLabel")}</p>
+          <div className="schedule-mode-row">
+            <button
+              type="button"
+              className={`schedule-mode-card${scheduleMode === "flexible" ? " selected" : ""}`}
+              onClick={() => setScheduleMode("flexible")}
+            >
+              <span className="smc-title">{t("scheduleModeFlexible")}</span>
+              <span className="smc-sub">{t("scheduleModeFlexibleSub")}</span>
+            </button>
+            <button
+              type="button"
+              className={`schedule-mode-card${scheduleMode === "fixed" ? " selected" : ""}`}
+              onClick={() => setScheduleMode("fixed")}
+            >
+              <span className="smc-title">{t("scheduleModeFixed")}</span>
+              <span className="smc-sub">{t("scheduleModeFixedSub")}</span>
+            </button>
+          </div>
+
+          {scheduleMode === "fixed" && (
+            <div className="weekly-schedule">
+              <p className="ws-hint">{t("weeklyScheduleSub")}</p>
+              {WEEKDAYS.map((d) => {
+                const day = fixedSchedule?.[d.key];
+                const on = !!day;
+                return (
+                  <div className="ws-row" key={d.key}>
+                    <button
+                      type="button"
+                      className={`ws-daybtn${on ? " on" : ""}`}
+                      onClick={() => setFixedSchedule((prev) => {
+                        const next = { ...prev };
+                        if (on) delete next[d.key];
+                        else next[d.key] = { start: "09:00", end: "18:00" };
+                        return next;
+                      })}
+                    >
+                      {t(d.labelKey)}
+                    </button>
+                    {on && (
+                      <div className="ws-times">
+                        <input
+                          type="time"
+                          value={day.start}
+                          onChange={(e) => setFixedSchedule((prev) => ({ ...prev, [d.key]: { start: e.target.value, end: day.end } }))}
+                        />
+                        <span>-</span>
+                        <input
+                          type="time"
+                          value={day.end}
+                          onChange={(e) => setFixedSchedule((prev) => ({ ...prev, [d.key]: { start: day.start, end: e.target.value } }))}
+                        />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
 
