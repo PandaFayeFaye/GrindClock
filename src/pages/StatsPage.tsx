@@ -6,6 +6,7 @@ import { DEFAULT_CURRENCY, currencySymbol, formatGroupedPay } from "../lib/curre
 import { currentStreak, dateKey, leaderboard, moodByDay, payByDay, startOfMonth, startOfWeek } from "../lib/stats";
 import { useWeeklyGoal } from "../lib/settings";
 import { exportEntriesCsv } from "../lib/exportCsv";
+import { useT } from "../lib/i18n";
 import type { Employer, Mood, TimeEntry } from "../lib/types";
 import "./StatsPage.css";
 
@@ -18,11 +19,11 @@ const MOOD_COLORS: Record<Mood, string> = {
 
 type Viz = "trend" | "calendar" | "rank";
 type RangeKey = "today" | "week" | "month" | "all";
-const RANGES: { key: RangeKey; label: string }[] = [
-  { key: "today", label: "今日" },
-  { key: "week", label: "本周" },
-  { key: "month", label: "本月" },
-  { key: "all", label: "全部" },
+const RANGES: { key: RangeKey; labelKey: "rangeToday" | "rangeWeek" | "rangeMonth" | "rangeAll" }[] = [
+  { key: "today", labelKey: "rangeToday" },
+  { key: "week", labelKey: "rangeWeek" },
+  { key: "month", labelKey: "rangeMonth" },
+  { key: "all", labelKey: "rangeAll" },
 ];
 
 function startOfToday() {
@@ -32,6 +33,7 @@ function startOfToday() {
 }
 
 export function StatsPage({ uid }: { uid: string }) {
+  const t = useT();
   const navigate = useNavigate();
   const [employers, setEmployers] = useState<Employer[]>([]);
   const [entries, setEntries] = useState<TimeEntry[]>([]);
@@ -174,12 +176,12 @@ export function StatsPage({ uid }: { uid: string }) {
 
   return (
     <div className="stats-page">
-      <h1>统计</h1>
+      <h1>{t("statsTitle")}</h1>
 
       <div className="range-row">
         {RANGES.map((r) => (
           <button key={r.key} className={`range-chip${range === r.key ? " active" : ""}`} onClick={() => setRange(r.key)}>
-            {r.label}
+            {t(r.labelKey)}
           </button>
         ))}
       </div>
@@ -204,12 +206,12 @@ export function StatsPage({ uid }: { uid: string }) {
       )}
 
       <div className="summary-card">
-        <div className="stat"><p className="num">{totalHours.toFixed(1)}h</p><p className="lb">{range === "all" ? "累计总工时" : "本时段工时"}</p></div>
-        <div className="stat"><p className="num">{formatGroupedPay(totalPayByCurrency)}</p><p className="lb">{range === "all" ? "累计总收入" : "本时段收入"}</p></div>
+        <div className="stat"><p className="num">{totalHours.toFixed(1)}h</p><p className="lb">{t(range === "all" ? "cumulativeHours" : "periodHours")}</p></div>
+        <div className="stat"><p className="num">{formatGroupedPay(totalPayByCurrency)}</p><p className="lb">{t(range === "all" ? "cumulativePay" : "periodPay")}</p></div>
       </div>
 
       <div className="chart-card">
-        <p className="title">本周心情曲线（仅自己可见）</p>
+        <p className="title">{t("moodStripTitle")}</p>
         <div className="mood-strip">
           {last7Days.map((d) => (
             <div className="mood-cell" key={d.key}>
@@ -221,14 +223,14 @@ export function StatsPage({ uid }: { uid: string }) {
       </div>
 
       <div className="viz-tabs">
-        <button className={`viz-tab${viz === "trend" ? " active" : ""}`} onClick={() => setViz("trend")}>趋势</button>
-        <button className={`viz-tab${viz === "calendar" ? " active" : ""}`} onClick={() => setViz("calendar")}>日历</button>
-        <button className={`viz-tab${viz === "rank" ? " active" : ""}`} onClick={() => setViz("rank")}>排行</button>
+        <button className={`viz-tab${viz === "trend" ? " active" : ""}`} onClick={() => setViz("trend")}>{t("vizTrend")}</button>
+        <button className={`viz-tab${viz === "calendar" ? " active" : ""}`} onClick={() => setViz("calendar")}>{t("vizCalendar")}</button>
+        <button className={`viz-tab${viz === "rank" ? " active" : ""}`} onClick={() => setViz("rank")}>{t("vizRank")}</button>
       </div>
 
       {viz === "trend" && (
         <div className="chart-card">
-          <p className="title">近7天收入趋势</p>
+          <p className="title">{t("trendTitle")}</p>
           <div className="bars">
             {last7Days.map((d) => {
               const pay = dailyPay.get(d.key) ?? 0;
@@ -249,9 +251,9 @@ export function StatsPage({ uid }: { uid: string }) {
             <svg viewBox="0 0 24 24" fill="none" width="13" height="13">
               <path d="M12 2.5c-1.2 2.3-4.5 3.6-4.5 8a4.5 4.5 0 009 0c0-1.4-.5-2.3-1.1-3 .1 1.2-.5 2-1.3 2.3.6-2.4-1-3.6-2.1-7.3z" fill="#FF6B6B" stroke="#1A1A1A" strokeWidth="1" />
             </svg>
-            连续打卡 {streak} 天
+            {t("streakDays", { n: streak })}
           </span>
-          <p className="title">本月活跃度日历（颜色越深赚得越多）</p>
+          <p className="title">{t("payCalendarTitle")}</p>
           <div className="weekday-header">
             {["日", "一", "二", "三", "四", "五", "六"].map((d) => <span key={d}>{d}</span>)}
           </div>
@@ -269,7 +271,7 @@ export function StatsPage({ uid }: { uid: string }) {
             <span>多</span>
           </div>
 
-          <p className="title" style={{ marginTop: 16 }}>连续打卡日历（有没有打卡，不看赚多少）</p>
+          <p className="title" style={{ marginTop: 16 }}>{t("streakCalendarTitle")}</p>
           <div className="weekday-header">
             {["日", "一", "二", "三", "四", "五", "六"].map((d) => <span key={d}>{d}</span>)}
           </div>
@@ -292,7 +294,7 @@ export function StatsPage({ uid }: { uid: string }) {
 
       {viz === "rank" && (
         <div className="chart-card">
-          <p className="title">本周目标进度</p>
+          <p className="title">{t("weeklyGoalTitle")}</p>
           <div className="ring-wrap">
             <div className="ring-center">
               <svg viewBox="0 0 104 104" width="104" height="104">
@@ -303,7 +305,7 @@ export function StatsPage({ uid }: { uid: string }) {
                   transform="rotate(-90 52 52)"
                 />
               </svg>
-              <div className="num"><b>{goalPct}%</b><span>本周目标</span></div>
+              <div className="num"><b>{goalPct}%</b><span>{t("weeklyGoalPct")}</span></div>
             </div>
             {editingGoal ? (
               <div className="ring-note">
@@ -318,13 +320,13 @@ export function StatsPage({ uid }: { uid: string }) {
               </div>
             ) : (
               <p className="ring-note" onClick={() => setEditingGoal(true)}>
-                目标 <b>{currencySymbol(DEFAULT_CURRENCY)}{weeklyGoal}</b>，已赚 <b>{formatGroupedPay(weekPayByCurrency)}</b>（点击改目标）
+                {t("goalLabel")} <b>{currencySymbol(DEFAULT_CURRENCY)}{weeklyGoal}</b>，{t("earnedLabel")} <b>{formatGroupedPay(weekPayByCurrency)}</b>{t("tapToEditGoal")}
               </p>
             )}
           </div>
 
-          <p className="title" style={{ marginTop: 18 }}>本周雇主排行榜</p>
-          {board.length === 0 && <p className="empty-hint">这周还没有工时记录</p>}
+          <p className="title" style={{ marginTop: 18 }}>{t("leaderboardTitle")}</p>
+          {board.length === 0 && <p className="empty-hint">{t("leaderboardEmpty")}</p>}
           <div className="leaderboard">
             {board.map((row, i) => (
               <div className="lb-row" key={row.employer.id}>
@@ -341,22 +343,22 @@ export function StatsPage({ uid }: { uid: string }) {
       )}
 
       <Link className="recap-teaser" to="/recap">
-        <span className="t1">查看本月打工战绩</span>
-        <span className="t2">点击生成本月总结 →</span>
+        <span className="t1">{t("recapTeaserT1")}</span>
+        <span className="t2">{t("recapTeaserT2")}</span>
       </Link>
 
       <div className="list-title-row">
-        <p className="list-title">明细{range !== "all" ? `（${RANGES.find((r) => r.key === range)?.label}）` : ""}</p>
+        <p className="list-title">{t("detailListTitle")}{range !== "all" ? `（${t(RANGES.find((r) => r.key === range)!.labelKey)}）` : ""}</p>
         <button
           className="export-btn"
           disabled={filteredEntries.length === 0}
           onClick={() => exportEntriesCsv(filteredEntries, employerById, `gigtime-明细-${range}.csv`)}
         >
-          导出CSV
+          {t("exportCsv")}
         </button>
       </div>
       <div className="entry-list">
-        {filteredEntries.length === 0 && <p className="empty-hint">打完第一次卡，这里就会出现你的战绩</p>}
+        {filteredEntries.length === 0 && <p className="empty-hint">{t("detailEmpty")}</p>}
         {filteredEntries
           .slice()
           .sort((a, b) => b.startTime - a.startTime)

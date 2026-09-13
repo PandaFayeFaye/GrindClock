@@ -5,8 +5,12 @@ import { entryHours } from "../lib/pay";
 import { consecutiveWeeksMeetingGoal, currentStreak, dateKey } from "../lib/stats";
 import { useWeeklyGoal } from "../lib/settings";
 import { DEFAULT_CURRENCY, currencySymbol } from "../lib/currency";
+import { Mascot } from "../components/Mascot";
 import type { Employer, TimeEntry } from "../lib/types";
 import "./BadgeWallPage.css";
+
+// Zigzag x-position (% of track width) for each path node, Duolingo-style.
+const PATH_X = [50, 22, 78, 22, 78, 50];
 
 const TIERS = [
   { name: "萌新打工人", threshold: 0 },
@@ -104,25 +108,48 @@ export function BadgeWallPage({ uid }: { uid: string }) {
 
         <div>
           <p className="section-label">称号进阶</p>
-          <div className="badge-grid">
-            {tierBadges.map((b) => (
-              <div className={`badge${b.unlocked ? " unlocked" : " locked"}`} key={b.name} onClick={() => setSelected(b)}>
-                <div className="badge-ic">
-                  {b.unlocked ? (
-                    <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
-                      <path d="M12 3l1.8 4.4L18 9l-4.2 1.6L12 15l-1.8-4.4L6 9l4.2-1.6z" fill="#1A1A1A" />
-                    </svg>
-                  ) : (
-                    <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
-                      <rect x="6" y="10" width="12" height="9" rx="1.5" stroke="#B9AC9C" strokeWidth="1.8" />
-                      <path d="M8.5 10V7a3.5 3.5 0 017 0v3" stroke="#B9AC9C" strokeWidth="1.8" />
-                    </svg>
+          <div className="tier-path" style={{ height: `${TIERS.length * 108 + 40}px` }}>
+            <svg className="tier-path-line" viewBox={`0 0 100 ${TIERS.length * 108 + 40}`} preserveAspectRatio="none">
+              <polyline
+                points={TIERS.map((_, i) => `${PATH_X[i % PATH_X.length]},${i * 108 + 40}`).join(" ")}
+                fill="none"
+                stroke="#DDD6C2"
+                strokeWidth="3"
+                strokeDasharray="1 7"
+                strokeLinecap="round"
+              />
+            </svg>
+            {TIERS.map((tier, i) => {
+              const b = tierBadges[i];
+              const isCurrent = i === currentTierIdx;
+              return (
+                <div
+                  key={tier.name}
+                  className={`tier-node${b.unlocked ? " unlocked" : " locked"}${isCurrent ? " current" : ""}`}
+                  style={{ left: `${PATH_X[i % PATH_X.length]}%`, top: `${i * 108 + 40}px` }}
+                  onClick={() => setSelected(b)}
+                >
+                  {isCurrent && (
+                    <div className="tier-mascot">
+                      <Mascot size={40} />
+                    </div>
                   )}
+                  <div className="tier-node-circle">
+                    {b.unlocked ? (
+                      <svg viewBox="0 0 24 24" fill="none" width="24" height="24">
+                        <path d="M12 3l1.8 4.4L18 9l-4.2 1.6L12 15l-1.8-4.4L6 9l4.2-1.6z" fill="#fff" />
+                      </svg>
+                    ) : (
+                      <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
+                        <rect x="6" y="10" width="12" height="9" rx="1.5" stroke="#B9AC9C" strokeWidth="1.8" />
+                        <path d="M8.5 10V7a3.5 3.5 0 017 0v3" stroke="#B9AC9C" strokeWidth="1.8" />
+                      </svg>
+                    )}
+                  </div>
+                  <span className="tier-node-label">{tier.name}</span>
                 </div>
-                <span className="badge-name">{b.name}</span>
-                <span className="badge-cond">{b.cond}</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
