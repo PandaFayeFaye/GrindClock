@@ -228,11 +228,11 @@ export function BackfillEntryPage({ uid }: { uid: string }) {
           </div>
         )}
 
-        <div className="toggle-row" onClick={() => setIsOvertime(!isOvertime)}>
+        <div className="ot-toggle-row" onClick={() => setIsOvertime(!isOvertime)}>
           <span>{t("overtimeRateToggle")}</span>
           <div className={`switch${isOvertime ? " on" : ""}`}><div className="knob" /></div>
         </div>
-        <div className="toggle-row" onClick={() => setIsHoliday(!isHoliday)}>
+        <div className="ot-toggle-row" onClick={() => setIsHoliday(!isHoliday)}>
           <span>{t("holidayRateToggle")}</span>
           <div className={`switch${isHoliday ? " on" : ""}`}><div className="knob" /></div>
         </div>

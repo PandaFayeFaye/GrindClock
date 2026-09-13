@@ -72,8 +72,8 @@
   font-size: 11px;
 }
 
-.select-field,
-.date-field {
+.backfill-form .select-field,
+.backfill-form .date-field {
   width: 100%;
   padding: 13px 14px;
   border: 2.5px solid var(--border-bold);
@@ -83,7 +83,7 @@
   background: var(--bg-surface);
 }
 
-.mode-tabs {
+.backfill-form .mode-tabs {
   display: flex;
   gap: 8px;
   background: var(--bg-surface);
@@ -92,7 +92,7 @@
   padding: 4px;
 }
 
-.mode-tab {
+.backfill-form .mode-tab {
   flex: 1;
   min-height: 44px;
   border: none;
@@ -103,7 +103,7 @@
   color: var(--text-muted);
 }
 
-.mode-tab.active {
+.backfill-form .mode-tab.active {
   background: var(--border-bold);
   color: var(--accent-yellow);
 }
@@ -130,7 +130,7 @@
   font-weight: 800;
 }
 
-.toggle-row {
+.ot-toggle-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -141,12 +141,12 @@
   border-radius: 12px;
 }
 
-.toggle-row span {
+.ot-toggle-row span {
   font-size: 13px;
   font-weight: 700;
 }
 
-.switch {
+.backfill-form .switch {
   width: 44px;
   height: 26px;
   border-radius: 999px;
@@ -156,11 +156,11 @@
   flex-shrink: 0;
 }
 
-.switch.on {
+.backfill-form .switch.on {
   background: var(--accent-blue);
 }
 
-.switch .knob {
+.backfill-form .switch .knob {
   position: absolute;
   top: 1px;
   left: 1px;
@@ -171,17 +171,17 @@
   transition: transform 0.15s ease;
 }
 
-.switch.on .knob {
+.backfill-form .switch.on .knob {
   transform: translateX(18px);
   background: #fff;
 }
 
-.mood-tags {
+.backfill-form .mood-tags {
   display: flex;
   gap: 8px;
 }
 
-.mood-tag {
+.backfill-form .mood-tag {
   flex: 1;
   min-height: 44px;
   border-radius: 12px;
@@ -191,12 +191,12 @@
   font-size: 12.5px;
 }
 
-.mood-tag.selected {
+.backfill-form .mood-tag.selected {
   background: var(--accent-blue);
   color: #fff;
 }
 
-.note-input {
+.backfill-form .note-input {
   width: 100%;
   padding: 12px 14px;
   border: 1.5px solid var(--border-quiet);
@@ -208,7 +208,7 @@
   font-family: var(--font-body);
 }
 
-.select-field {
+.backfill-form .select-field {
   border: 1.5px solid var(--border-quiet);
   border-radius: 10px;
   background: var(--bg-surface);
@@ -241,7 +241,7 @@
   justify-content: center;
 }
 
-.add-adj-btn {
+.backfill-form .add-adj-btn {
   padding: 8px 14px;
   border-radius: 10px;
   border: 1.8px dashed var(--border-quiet);

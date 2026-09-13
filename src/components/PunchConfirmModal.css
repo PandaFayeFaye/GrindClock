@@ -84,23 +84,23 @@
   margin: 4px 0 0;
 }
 
-.section-label {
+.punch-modal-sheet .section-label {
   font-size: 12px;
   font-weight: 900;
   margin: 0 0 10px;
 }
 
-.section-label .opt {
+.punch-modal-sheet .section-label .opt {
   font-weight: 500;
   color: var(--text-muted);
 }
 
-.mood-tags {
+.punch-modal-sheet .mood-tags {
   display: flex;
   gap: 8px;
 }
 
-.mood-tag {
+.punch-modal-sheet .mood-tag {
   flex: 1;
   min-height: 44px;
   border-radius: 12px;
@@ -111,7 +111,7 @@
   color: var(--text-primary);
 }
 
-.mood-tag.selected {
+.punch-modal-sheet .mood-tag.selected {
   background: var(--accent-blue);
   color: #fff;
   box-shadow: 3px 3px 0 var(--border-bold);
@@ -150,7 +150,7 @@
   background: var(--bg-surface);
 }
 
-.note-input {
+.punch-modal-sheet .note-input {
   width: 100%;
   padding: 12px 14px;
   border: 1.5px solid var(--border-quiet);

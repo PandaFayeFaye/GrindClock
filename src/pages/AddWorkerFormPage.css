@@ -72,10 +72,10 @@
   font-size: 26px;
 }
 
-.field-label { font-size: 12px; font-weight: 900; margin: 0 0 8px; }
-.field-label .opt { font-weight: 500; color: var(--text-muted); font-size: 11px; }
+.worker-form .field-label { font-size: 12px; font-weight: 900; margin: 0 0 8px; }
+.worker-form .field-label .opt { font-weight: 500; color: var(--text-muted); font-size: 11px; }
 
-.name-input {
+.worker-form .name-input {
   width: 100%;
   padding: 14px 16px;
   border: 2.5px solid var(--border-bold);
@@ -86,7 +86,7 @@
   font-family: var(--font-display);
 }
 
-.rate-input {
+.worker-form .rate-input {
   width: 100%;
   padding: 12px 14px;
   border: 2.5px solid var(--border-bold);

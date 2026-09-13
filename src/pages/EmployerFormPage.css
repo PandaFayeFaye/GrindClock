@@ -37,9 +37,6 @@
 .employer-form .save-btn {
   flex-shrink: 0;
   white-space: nowrap;
-}
-
-.save-btn {
   padding: 0 12px;
   min-height: 34px;
   border-radius: 9px;
@@ -51,7 +48,7 @@
   box-shadow: 2px 2px 0 var(--border-bold);
 }
 
-.save-btn:disabled {
+.employer-form .save-btn:disabled {
   opacity: 0.5;
 }
 
@@ -63,14 +60,14 @@
   gap: 20px;
 }
 
-.field-label {
+.employer-form .field-label {
   font-size: 12px;
   font-weight: 900;
   margin: 0 0 8px;
 }
 
-.name-input,
-.rate-input {
+.employer-form .name-input,
+.employer-form .rate-input {
   width: 100%;
   padding: 14px 16px;
   border: 2.5px solid var(--border-bold);
@@ -80,7 +77,7 @@
   background: var(--bg-surface);
 }
 
-.name-input {
+.employer-form .name-input {
   font-family: var(--font-display);
 }
 
@@ -143,7 +140,7 @@
   text-align: center;
 }
 
-.field-label .opt {
+.employer-form .field-label .opt {
   font-weight: 500;
   color: var(--text-muted);
   font-size: 11px;
@@ -196,7 +193,7 @@
   gap: 12px;
 }
 
-.note-input {
+.employer-form .note-input {
   width: 100%;
   padding: 12px 14px;
   border: 1.5px solid var(--border-quiet);
@@ -296,7 +293,7 @@
   color: var(--text-muted);
 }
 
-.select-field {
+.employer-form .select-field {
   border: 1.5px solid var(--border-quiet);
   border-radius: 10px;
   background: var(--bg-surface);
@@ -330,7 +327,7 @@
   font-size: 12px;
 }
 
-.remove-adj-btn {
+.employer-form .remove-adj-btn {
   width: 32px;
   height: 32px;
   border-radius: 8px;
@@ -341,7 +338,7 @@
   justify-content: center;
 }
 
-.add-adj-btn {
+.employer-form .add-adj-btn {
   padding: 8px 14px;
   border-radius: 10px;
   border: 1.8px dashed var(--border-quiet);

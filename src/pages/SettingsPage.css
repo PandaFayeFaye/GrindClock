@@ -225,7 +225,7 @@
   line-height: 1.4;
 }
 
-.switch {
+.settings-page .switch {
   width: 42px;
   height: 25px;
   border-radius: 999px;
@@ -235,11 +235,11 @@
   flex-shrink: 0;
 }
 
-.switch.on {
+.settings-page .switch.on {
   background: var(--accent-blue);
 }
 
-.switch .knob {
+.settings-page .switch .knob {
   position: absolute;
   top: 1.5px;
   left: 1.5px;
@@ -250,7 +250,7 @@
   transition: transform 0.15s ease;
 }
 
-.switch.on .knob {
+.settings-page .switch.on .knob {
   transform: translateX(17px);
   background: #fff;
 }

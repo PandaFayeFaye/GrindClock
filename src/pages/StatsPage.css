@@ -106,7 +106,7 @@
 .entry .loc-ic { flex-shrink: 0; }
 .entry .pay { font-size: 12.5px; font-weight: 800; font-variant-numeric: tabular-nums; flex-shrink: 0; }
 
-.empty-hint { font-size: 13px; color: var(--text-muted); text-align: center; padding: 24px 0; }
+.stats-page .empty-hint { font-size: 13px; color: var(--text-muted); text-align: center; padding: 24px 0; }
 
 .chart-card {
   background: var(--bg-surface);
@@ -242,8 +242,8 @@
 .weekday-header span { text-align: center; font-size: 9.5px; font-weight: 800; color: var(--text-muted); }
 
 .heatmap { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
-.heat-cell { aspect-ratio: 1; border-radius: 5px; border: 1.3px solid rgba(26, 26, 26, 0.15); position: relative; }
-.heat-cell.blank, .streak-cell.blank { border: none; background: none; }
+.stats-page .heat-cell { aspect-ratio: 1; border-radius: 5px; border: 1.3px solid rgba(26, 26, 26, 0.15); position: relative; }
+.stats-page .heat-cell.blank, .streak-cell.blank { border: none; background: none; }
 .cell-day {
   position: absolute;
   bottom: 2px;

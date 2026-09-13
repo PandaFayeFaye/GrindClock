@@ -136,7 +136,7 @@
   line-height: 1.6;
 }
 
-.field-label { font-size: 12px; font-weight: 900; margin: 0 0 8px; }
+.ai-capture .field-label { font-size: 12px; font-weight: 900; margin: 0 0 8px; }
 .select-field, .field-input {
   width: 100%;
   padding: 13px 14px;
@@ -150,7 +150,7 @@
 .field-row { display: flex; gap: 10px; }
 .field-row > div { flex: 1; }
 
-.actions { display: flex; gap: 10px; margin-top: 8px; }
+.ai-capture .actions { display: flex; gap: 10px; margin-top: 8px; }
 .retry-btn {
   flex: 1;
   padding: 0 12px;
@@ -162,7 +162,7 @@
   font-weight: 900;
   font-size: 13.5px;
 }
-.save-btn {
+.ai-capture .save-btn {
   flex: 2;
   padding: 0 12px;
   min-height: 50px;
@@ -174,4 +174,4 @@
   font-size: 14.5px;
   box-shadow: var(--shadow-bold);
 }
-.save-btn:disabled { opacity: 0.5; }
+.ai-capture .save-btn:disabled { opacity: 0.5; }

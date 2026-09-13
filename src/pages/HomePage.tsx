@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { addManualEntry, clockIn, clockOut, watchEmployers, watchTimeEntries, watchUserProfile } from "../lib/firestore";
-import { entryPay, mergedHoursToday } from "../lib/pay";
+import { entryHours, entryPay, mergedHoursToday } from "../lib/pay";
+import { TIERS, currentTierIndex } from "../lib/tiers";
 import type { Adjustment, Employer, Mood, TimeEntry } from "../lib/types";
 import { Mascot } from "../components/Mascot";
 import { AvatarBadge, type AnimalKey } from "../lib/avatar";
@@ -77,6 +78,17 @@ export function HomePage({ uid }: { uid: string }) {
   }, [todaysEntries, employerById]);
 
   const todaysHours = useMemo(() => mergedHoursToday(personalEntries), [personalEntries]);
+
+  const totalHours = useMemo(
+    () => personalEntries.filter((e) => e.status === "confirmed" && e.endTime).reduce((s, e) => s + entryHours(e), 0),
+    [personalEntries],
+  );
+  const currentTierIdx = currentTierIndex(totalHours);
+  const currentTier = TIERS[currentTierIdx];
+  const nextTier = TIERS[currentTierIdx + 1];
+  const tierProgressPct = nextTier
+    ? Math.min(100, Math.round(((totalHours - currentTier.threshold) / (nextTier.threshold - currentTier.threshold)) * 100))
+    : 100;
   const workingCount = activeByEmployer.size;
 
   async function handlePunch(employer: Employer) {
@@ -152,6 +164,13 @@ export function HomePage({ uid }: { uid: string }) {
             <p className="banner-title">
               {nickname ? t("homeBannerNamed", { name: nickname }) : t("homeBanner")}
             </p>
+            <Link to="/badges" className="home-tier-chip">
+              <span className="home-tier-name">{t(currentTier.nameKey)}</span>
+              <span className="home-tier-track">
+                <span className="home-tier-fill" style={{ width: `${tierProgressPct}%` }} />
+              </span>
+              {nextTier && <span className="home-tier-next">{t(nextTier.nameKey)}</span>}
+            </Link>
           </div>
         </div>
       )}
