@@ -10,6 +10,7 @@ const dict = {
   settings: { zh: "我的", en: "Me" },
 
   homeBanner: { zh: "今天也要加油搬砖", en: "Let's earn today" },
+  homeBannerNamed: { zh: "{name}，今天也要加油搬砖", en: "{name}, let's earn today" },
   comboBadge: { zh: "双开中！{n}份工作同时计时", en: "{n} jobs running at once!" },
   todayEarned: { zh: "今日已赚", en: "Earned today" },
   todayWorked: { zh: "今日已工作 {h} 小时", en: "Worked {h}h today" },

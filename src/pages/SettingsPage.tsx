@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
-import type { User } from "firebase/auth";
 import { Link } from "react-router-dom";
-import { logout, setNickname } from "../lib/auth";
+import { logout } from "../lib/auth";
 import { setUserProfile, watchEmployers, watchTimeEntries, watchUserProfile } from "../lib/firestore";
 import { ExportPanel } from "../components/ExportPanel";
 import { AvatarPicker } from "../components/AvatarPicker";
@@ -110,7 +109,7 @@ const ICONS = {
   ),
 };
 
-export function SettingsPage({ uid, user }: { uid: string; user: User }) {
+export function SettingsPage({ uid }: { uid: string }) {
   const t = useT();
   const { lang, setLang } = useLang();
   const [simpleMode, setSimpleMode] = useLocalToggle(SETTINGS_KEYS.simpleMode, false);
@@ -121,7 +120,7 @@ export function SettingsPage({ uid, user }: { uid: string; user: User }) {
   const [employers, setEmployers] = useState<Employer[]>([]);
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [exportOpen, setExportOpen] = useState(false);
-  const [nickname, setNicknameState] = useState(user.displayName ?? "");
+  const [nickname, setNicknameState] = useState("");
   const [editingNickname, setEditingNickname] = useState(false);
   const [nicknameDraft, setNicknameDraft] = useState(nickname);
   const [animal, setAnimal] = useState<AnimalKey>("cow");
@@ -134,6 +133,7 @@ export function SettingsPage({ uid, user }: { uid: string; user: User }) {
     const unsubProfile = watchUserProfile(uid, (profile) => {
       if (profile.animal) setAnimal(profile.animal as AnimalKey);
       setMbti(profile.mbti);
+      setNicknameState(profile.nickname ?? "");
     });
     return () => { unsubEmployers(); unsubEntries(); unsubProfile(); };
   }, [uid]);
@@ -154,11 +154,11 @@ export function SettingsPage({ uid, user }: { uid: string; user: User }) {
   const streak = currentStreak(personalConfirmed);
 
   function saveNickname() {
-    const trimmed = nicknameDraft.trim();
+    const trimmed = nicknameDraft.trim().slice(0, 20);
     setEditingNickname(false);
     if (!trimmed || trimmed === nickname) return;
     setNicknameState(trimmed);
-    setNickname(user, trimmed).catch((err) => console.error("Failed to save nickname", err));
+    setUserProfile(uid, { nickname: trimmed }).catch((err) => console.error("Failed to save nickname", err));
   }
 
   const employerById = useMemo(() => new Map(employers.map((e) => [e.id, e])), [employers]);

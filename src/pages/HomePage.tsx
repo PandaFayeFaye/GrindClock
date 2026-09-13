@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { addManualEntry, clockIn, clockOut, watchEmployers, watchTimeEntries } from "../lib/firestore";
+import { addManualEntry, clockIn, clockOut, watchEmployers, watchTimeEntries, watchUserProfile } from "../lib/firestore";
 import { entryPay, mergedHoursToday } from "../lib/pay";
 import type { Adjustment, Employer, Mood, TimeEntry } from "../lib/types";
 import { Mascot } from "../components/Mascot";
+import { AvatarBadge, type AnimalKey } from "../lib/avatar";
 import { PunchConfirmModal } from "../components/PunchConfirmModal";
 import { RetroClockInModal } from "../components/RetroClockInModal";
 import { ScheduleConfirmModal } from "../components/ScheduleConfirmModal";
@@ -24,6 +25,9 @@ export function HomePage({ uid }: { uid: string }) {
   const t = useT();
   const [employers, setEmployers] = useState<Employer[]>([]);
   const [entries, setEntries] = useState<TimeEntry[]>([]);
+  const [animal, setAnimal] = useState<AnimalKey | undefined>(undefined);
+  const [mbti, setMbti] = useState<string | undefined>(undefined);
+  const [nickname, setNickname] = useState("");
   const [confirmingEntry, setConfirmingEntry] = useState<{ entry: TimeEntry; employer: Employer } | null>(null);
   const [retroEmployer, setRetroEmployer] = useState<Employer | null>(null);
   const [scheduleConfirmEmployer, setScheduleConfirmEmployer] = useState<Employer | null>(null);
@@ -36,7 +40,12 @@ export function HomePage({ uid }: { uid: string }) {
   useEffect(() => {
     const unsubEmployers = watchEmployers(uid, setEmployers);
     const unsubEntries = watchTimeEntries(uid, setEntries);
-    return () => { unsubEmployers(); unsubEntries(); };
+    const unsubProfile = watchUserProfile(uid, (profile) => {
+      setAnimal(profile.animal as AnimalKey | undefined);
+      setMbti(profile.mbti || undefined);
+      setNickname(profile.nickname ?? "");
+    });
+    return () => { unsubEmployers(); unsubEntries(); unsubProfile(); };
   }, [uid]);
 
   // Personal entries only -- team-logged (workerId set) entries never mix into this view.
@@ -138,9 +147,11 @@ export function HomePage({ uid }: { uid: string }) {
     <div className="home-page">
       {!simpleMode && (
         <div className="banner">
-          <Mascot size={44} />
+          {animal ? <AvatarBadge animal={animal} mbti={mbti} size={44} /> : <Mascot size={44} />}
           <div className="banner-text">
-            <p className="banner-title">{t("homeBanner")}</p>
+            <p className="banner-title">
+              {nickname ? t("homeBannerNamed", { name: nickname }) : t("homeBanner")}
+            </p>
           </div>
         </div>
       )}

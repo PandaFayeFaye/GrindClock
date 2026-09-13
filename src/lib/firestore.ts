@@ -139,6 +139,7 @@ export async function deleteTimeEntries(uid: string, entryIds: string[]) {
 export interface UserProfile {
   animal?: string;
   mbti?: string;
+  nickname?: string;
 }
 
 function profileDoc(uid: string) {
