@@ -4,6 +4,7 @@ import { addManualEntry, watchEmployers } from "../lib/firestore";
 import { recognizeImageText } from "../lib/ocr";
 import { parseSpeechToDraft } from "../lib/parseSpeechToDraft";
 import { SETTINGS_KEYS, useLocalToggle } from "../lib/settings";
+import { useT } from "../lib/i18n";
 import type { Employer } from "../lib/types";
 import "./AICapturePage.css";
 
@@ -27,6 +28,7 @@ function getSpeechRecognition(): (new () => SpeechRecognitionLike) | undefined {
 }
 
 export function AICapturePage({ uid }: { uid: string }) {
+  const t = useT();
   const navigate = useNavigate();
   const [employers, setEmployers] = useState<Employer[]>([]);
   useEffect(() => watchEmployers(uid, setEmployers), [uid]);
@@ -61,7 +63,7 @@ export function AICapturePage({ uid }: { uid: string }) {
   function startRecording() {
     const SpeechRecognition = getSpeechRecognition();
     if (!SpeechRecognition) {
-      setError("这个浏览器不支持语音识别（建议用Chrome），可以改用拍照识别或手动补录");
+      setError(t("voiceNotSupportedShort"));
       return;
     }
     setError(null);
@@ -73,7 +75,7 @@ export function AICapturePage({ uid }: { uid: string }) {
       const transcript = event.results[0]?.[0]?.transcript ?? "";
       applyDraft(transcript);
     };
-    recognition.onerror = () => setError("没听清，再试一次？");
+    recognition.onerror = () => setError(t("didntCatchThat"));
     recognition.onend = () => setRecording(false);
     recognitionRef.current = recognition;
     recognition.start();
@@ -95,7 +97,7 @@ export function AICapturePage({ uid }: { uid: string }) {
       const text = await recognizeImageText(file, setProgress);
       applyDraft(text);
     } catch {
-      setError("识别失败，可以手动填写或换一张更清晰的照片");
+      setError(t("ocrFailed"));
     } finally {
       setBusy(false);
     }
@@ -128,31 +130,29 @@ export function AICapturePage({ uid }: { uid: string }) {
         <button className="close" onClick={() => navigate(-1)}>
           <svg viewBox="0 0 24 24" fill="none" width="18" height="18"><path d="M6 6l12 12M18 6L6 18" stroke="#1A1A1A" strokeWidth="2.3" strokeLinecap="round" /></svg>
         </button>
-        <h1>AI 记工</h1>
+        <h1>{t("aiCaptureTitle")}</h1>
         <div className="src-toggle">
-          {aiVoiceOn && <button className={`src-btn${source === "voice" ? " active" : ""}`} onClick={() => { setSource("voice"); setRawText(""); }}>语音</button>}
-          {aiPhotoOn && <button className={`src-btn${source === "ocr" ? " active" : ""}`} onClick={() => { setSource("ocr"); setRawText(""); }}>拍照</button>}
+          {aiVoiceOn && <button className={`src-btn${source === "voice" ? " active" : ""}`} onClick={() => { setSource("voice"); setRawText(""); }}>{t("voiceTab")}</button>}
+          {aiPhotoOn && <button className={`src-btn${source === "ocr" ? " active" : ""}`} onClick={() => { setSource("ocr"); setRawText(""); }}>{t("photoTab")}</button>}
         </div>
       </div>
 
       <div className="body">
         {!aiVoiceOn && !aiPhotoOn && (
-          <p className="warn">拍照识别和语音记工都在设置页关闭了，去设置页打开一个吧</p>
+          <p className="warn">{t("aiBothOffWarn")}</p>
         )}
-        <div className="disclaimer">
-          识别用的是免费的浏览器语音识别和OCR文字识别，不是真正理解语义的AI模型，只能抓一些"6小时""XX店"这样的简单信息——保存前一定要检查一下下面的字段对不对。
-        </div>
+        <div className="disclaimer">{t("aiDisclaimer")}</div>
 
         {source === "voice" && aiVoiceOn && !showDraftForm && (
           <div className="capture-panel">
-            {!speechSupported && <p className="warn">这个浏览器不支持语音识别，建议用Chrome，或者切到拍照/手动补录</p>}
+            {!speechSupported && <p className="warn">{t("voiceNotSupported")}</p>}
             <button className={`mic-btn${recording ? " recording" : ""}`} onClick={recording ? stopRecording : startRecording} disabled={!speechSupported}>
               <svg viewBox="0 0 24 24" fill="none" width="30" height="30">
                 <rect x="9" y="3" width="6" height="11" rx="3" fill="#fff" />
                 <path d="M6 11a6 6 0 0012 0M12 17v3M9 20h6" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
               </svg>
             </button>
-            <p className="mic-label">{recording ? "正在听...点击结束" : "点击开始说话"}</p>
+            <p className="mic-label">{recording ? t("listening") : t("tapToSpeak")}</p>
           </div>
         )}
 
@@ -165,7 +165,7 @@ export function AICapturePage({ uid }: { uid: string }) {
                 <circle cx="12" cy="13" r="3.2" fill="#5AC8FA" />
               </svg>
             </label>
-            <p className="mic-label">{busy ? `识别中 ${progress}%...` : "点击拍照或选择相册"}</p>
+            <p className="mic-label">{busy ? t("recognizing", { pct: progress }) : t("tapToPhoto")}</p>
           </div>
         )}
 
@@ -173,31 +173,31 @@ export function AICapturePage({ uid }: { uid: string }) {
 
         {showDraftForm && (
           <div className="draft-form">
-            <span className="draft-badge">草稿 · 待确认</span>
-            <p className="raw-text-preview">识别原文："{rawText}"</p>
+            <span className="draft-badge">{t("draftBadge")}</span>
+            <p className="raw-text-preview">{t("rawTextPreview", { text: rawText })}</p>
 
             <div>
-              <p className="field-label">雇主</p>
+              <p className="field-label">{t("employerLabel")}</p>
               <select className="select-field" value={employerId} onChange={(e) => setEmployerId(e.target.value)}>
-                <option value="">请选择</option>
+                <option value="">{t("pleaseSelect")}</option>
                 {employers.map((emp) => <option key={emp.id} value={emp.id}>{emp.name}</option>)}
               </select>
             </div>
 
             <div className="field-row">
               <div>
-                <p className="field-label">小时</p>
+                <p className="field-label">{t("hoursLabel")}</p>
                 <input className="field-input" type="number" value={hours} onChange={(e) => setHours(e.target.value)} />
               </div>
               <div>
-                <p className="field-label">分钟</p>
+                <p className="field-label">{t("minutesLabel")}</p>
                 <input className="field-input" type="number" value={minutes} onChange={(e) => setMinutes(e.target.value)} />
               </div>
             </div>
 
             <div className="actions">
-              <button className="retry-btn" onClick={() => setRawText("")}>重新识别</button>
-              <button className="save-btn" onClick={handleSave} disabled={saving || !employerId}>确认保存</button>
+              <button className="retry-btn" onClick={() => setRawText("")}>{t("retryRecognition")}</button>
+              <button className="save-btn" onClick={handleSave} disabled={saving || !employerId}>{t("confirmSave")}</button>
             </div>
           </div>
         )}

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Mascot } from "./Mascot";
+import { useT } from "../lib/i18n";
 import "./OnboardingScreen.css";
 
 const ONBOARDED_KEY = "gigtime_onboarded";
@@ -21,6 +22,7 @@ function markOnboarded() {
 }
 
 export function OnboardingScreen({ onDone }: { onDone: (goToAddEmployer: boolean) => void }) {
+  const t = useT();
   const [step, setStep] = useState(0);
 
   function finish(goToAddEmployer: boolean) {
@@ -30,18 +32,15 @@ export function OnboardingScreen({ onDone }: { onDone: (goToAddEmployer: boolean
 
   return (
     <div className="onboarding-screen">
-      <button className="onboarding-skip" onClick={() => finish(false)}>跳过</button>
+      <button className="onboarding-skip" onClick={() => finish(false)}>{t("skip")}</button>
 
       {step === 0 && (
         <div className="onboarding-card">
           <Mascot size={96} />
           <h1>GigTime</h1>
-          <p className="onboarding-lead">一个App，管住你所有的兼职</p>
-          <p className="onboarding-body">
-            送外卖、跑网约车、drive Uber、发传单、代课……不管同时打几份工，
-            这里都能一起记工时、算收入，不用来回切几个App。
-          </p>
-          <button className="onboarding-next" onClick={() => setStep(1)}>下一步</button>
+          <p className="onboarding-lead">{t("onboard1Lead")}</p>
+          <p className="onboarding-body">{t("onboard1Body")}</p>
+          <button className="onboarding-next" onClick={() => setStep(1)}>{t("nextStep")}</button>
         </div>
       )}
 
@@ -50,11 +49,9 @@ export function OnboardingScreen({ onDone }: { onDone: (goToAddEmployer: boolean
           <div className="onboarding-dots">
             <span /><span className="active" />
           </div>
-          <h1>先添加第一份工作</h1>
-          <p className="onboarding-body">
-            填一下雇主名字、结算方式（时薪/日结/按单……），马上就能开始打卡记工时了。
-          </p>
-          <button className="onboarding-next" onClick={() => finish(true)}>添加第一个雇主 →</button>
+          <h1>{t("onboard2Title")}</h1>
+          <p className="onboarding-body">{t("onboard2Body")}</p>
+          <button className="onboarding-next" onClick={() => finish(true)}>{t("addFirstEmployerArrow")}</button>
         </div>
       )}
     </div>

@@ -6,18 +6,19 @@ import { consecutiveWeeksMeetingGoal, currentStreak, dateKey } from "../lib/stat
 import { useWeeklyGoal } from "../lib/settings";
 import { DEFAULT_CURRENCY, currencySymbol } from "../lib/currency";
 import { Mascot } from "../components/Mascot";
+import { useT, type DictKey } from "../lib/i18n";
 import type { Employer, TimeEntry } from "../lib/types";
 import "./BadgeWallPage.css";
 
 // Zigzag x-position (% of track width) for each path node, Duolingo-style.
 const PATH_X = [50, 22, 78, 22, 78, 50];
 
-const TIERS = [
-  { name: "萌新打工人", threshold: 0 },
-  { name: "摸鱼练习生", threshold: 10 },
-  { name: "搬砖能手", threshold: 50 },
-  { name: "卷王候选人", threshold: 200 },
-  { name: "牛马之王", threshold: 500 },
+const TIERS: { nameKey: DictKey; threshold: number }[] = [
+  { nameKey: "tierNewbie", threshold: 0 },
+  { nameKey: "tierSlacker", threshold: 10 },
+  { nameKey: "tierGrinder", threshold: 50 },
+  { nameKey: "tierGrindCandidate", threshold: 200 },
+  { nameKey: "tierKing", threshold: 500 },
 ];
 
 interface Badge {
@@ -27,6 +28,7 @@ interface Badge {
 }
 
 export function BadgeWallPage({ uid }: { uid: string }) {
+  const t = useT();
   const navigate = useNavigate();
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [employers, setEmployers] = useState<Employer[]>([]);
@@ -44,17 +46,17 @@ export function BadgeWallPage({ uid }: { uid: string }) {
   );
   const totalHours = personalConfirmed.reduce((s, e) => s + entryHours(e), 0);
 
-  const currentTierIdx = TIERS.reduce((idx, t, i) => (totalHours >= t.threshold ? i : idx), 0);
+  const currentTierIdx = TIERS.reduce((idx, tier, i) => (totalHours >= tier.threshold ? i : idx), 0);
   const currentTier = TIERS[currentTierIdx];
   const nextTier = TIERS[currentTierIdx + 1];
   const progressPct = nextTier
     ? Math.min(100, Math.round(((totalHours - currentTier.threshold) / (nextTier.threshold - currentTier.threshold)) * 100))
     : 100;
 
-  const tierBadges: Badge[] = TIERS.map((t) => ({
-    name: t.name,
-    cond: t.threshold === 0 ? "0小时" : `满${t.threshold}小时`,
-    unlocked: totalHours >= t.threshold,
+  const tierBadges: Badge[] = TIERS.map((tier) => ({
+    name: t(tier.nameKey),
+    cond: tier.threshold === 0 ? t("zeroHours") : t("fullHours", { n: tier.threshold }),
+    unlocked: totalHours >= tier.threshold,
   }));
 
   const hasComboDay = useMemo(() => {
@@ -76,12 +78,12 @@ export function BadgeWallPage({ uid }: { uid: string }) {
   );
 
   const funBadges: Badge[] = [
-    { name: "双开达人", cond: "同一天内为2个及以上雇主打卡", unlocked: hasComboDay },
-    { name: "不灭火苗", cond: "连续打卡满30天", unlocked: streak >= 30 },
-    { name: "深夜战士", cond: "完成10次22点后打卡", unlocked: nightShiftCount >= 10 },
+    { name: t("badgeComboName"), cond: t("badgeComboCond"), unlocked: hasComboDay },
+    { name: t("badgeStreakName"), cond: t("badgeStreakCond"), unlocked: streak >= 30 },
+    { name: t("badgeNightName"), cond: t("badgeNightCond"), unlocked: nightShiftCount >= 10 },
     {
-      name: "省钱达人",
-      cond: `连续3周收入达到${currencySymbol(DEFAULT_CURRENCY)}${weeklyGoal}目标（目标可在统计页修改，当前已连续${goalStreak}周）`,
+      name: t("badgeSaverName"),
+      cond: t("badgeSaverCond", { sym: currencySymbol(DEFAULT_CURRENCY), goal: weeklyGoal, n: goalStreak }),
       unlocked: goalStreak >= 3,
     },
   ];
@@ -94,20 +96,20 @@ export function BadgeWallPage({ uid }: { uid: string }) {
         <button className="back" onClick={() => navigate(-1)}>
           <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M15 5l-7 7 7 7" stroke="#1A1A1A" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
         </button>
-        <h1>成就徽章墙</h1>
+        <h1>{t("badgeWallTitle")}</h1>
       </div>
 
       <div className="body">
         <div className="hero">
-          <p className="hero-title">{currentTier.name}</p>
+          <p className="hero-title">{t(currentTier.nameKey)}</p>
           <div className="hero-track"><div className="hero-fill" style={{ width: `${progressPct}%` }} /></div>
           <p className="hero-note">
-            {nextTier ? `距离「${nextTier.name}」还差${(nextTier.threshold - totalHours).toFixed(0)}小时` : "已经是最高称号啦"}
+            {nextTier ? t("distanceToNext", { name: t(nextTier.nameKey), h: (nextTier.threshold - totalHours).toFixed(0) }) : t("topTierReached")}
           </p>
         </div>
 
         <div>
-          <p className="section-label">称号进阶</p>
+          <p className="section-label">{t("tierProgressLabel")}</p>
           <div className="tier-path" style={{ height: `${TIERS.length * 108 + 40}px` }}>
             <svg className="tier-path-line" viewBox={`0 0 100 ${TIERS.length * 108 + 40}`} preserveAspectRatio="none">
               <polyline
@@ -124,7 +126,7 @@ export function BadgeWallPage({ uid }: { uid: string }) {
               const isCurrent = i === currentTierIdx;
               return (
                 <div
-                  key={tier.name}
+                  key={tier.nameKey}
                   className={`tier-node${b.unlocked ? " unlocked" : " locked"}${isCurrent ? " current" : ""}`}
                   style={{ left: `${PATH_X[i % PATH_X.length]}%`, top: `${i * 108 + 40}px` }}
                   onClick={() => setSelected(b)}
@@ -146,7 +148,7 @@ export function BadgeWallPage({ uid }: { uid: string }) {
                       </svg>
                     )}
                   </div>
-                  <span className="tier-node-label">{tier.name}</span>
+                  <span className="tier-node-label">{t(tier.nameKey)}</span>
                 </div>
               );
             })}
@@ -154,7 +156,7 @@ export function BadgeWallPage({ uid }: { uid: string }) {
         </div>
 
         <div>
-          <p className="section-label">隐藏成就</p>
+          <p className="section-label">{t("hiddenAchievements")}</p>
           <div className="badge-grid">
             {funBadges.map((b) => (
               <div className={`badge${b.unlocked ? " unlocked" : " locked"}`} key={b.name} onClick={() => setSelected(b)}>
@@ -183,10 +185,10 @@ export function BadgeWallPage({ uid }: { uid: string }) {
           <div className="detail-card" onClick={(e) => e.stopPropagation()}>
             <p className="detail-name">{selected.name}</p>
             <span className={`detail-status ${selected.unlocked ? "on" : "off"}`}>
-              {selected.unlocked ? "已解锁" : "未解锁"}
+              {selected.unlocked ? t("unlocked") : t("locked")}
             </span>
-            <p className="detail-cond">解锁条件：{selected.cond}</p>
-            <button className="detail-close" onClick={() => setSelected(null)}>知道了</button>
+            <p className="detail-cond">{t("unlockCondition", { cond: selected.cond })}</p>
+            <button className="detail-close" onClick={() => setSelected(null)}>{t("gotIt")}</button>
           </div>
         </div>
       )}

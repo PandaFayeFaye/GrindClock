@@ -1,12 +1,14 @@
 import { useState, type FormEvent } from "react";
 import type { ConfirmationResult } from "firebase/auth";
 import { confirmPhoneOtp, sendEmailLoginLink, sendPhoneOtp } from "../lib/auth";
+import { useT } from "../lib/i18n";
 
 const RECAPTCHA_CONTAINER_ID = "recaptcha-container";
 
 type Tab = "phone" | "email";
 
-export function LoginScreen({ emailLinkError }: { emailLinkError?: string | null }) {
+export function LoginScreen({ emailLinkError }: { emailLinkError?: "noPendingEmail" | "linkExpired" | null }) {
+  const t = useT();
   const [tab, setTab] = useState<Tab>("phone");
 
   // Phone flow state
@@ -29,7 +31,7 @@ export function LoginScreen({ emailLinkError }: { emailLinkError?: string | null
       const result = await sendPhoneOtp(phone, RECAPTCHA_CONTAINER_ID);
       setConfirmation(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "发送验证码失败，请检查手机号格式（需带国家区号，如+8613800000000）");
+      setError(err instanceof Error ? err.message : t("otpSendFailed"));
     } finally {
       setBusy(false);
     }
@@ -43,7 +45,7 @@ export function LoginScreen({ emailLinkError }: { emailLinkError?: string | null
     try {
       await confirmPhoneOtp(confirmation, otp);
     } catch {
-      setError("验证码不正确，请重新输入");
+      setError(t("otpWrong"));
     } finally {
       setBusy(false);
     }
@@ -57,7 +59,7 @@ export function LoginScreen({ emailLinkError }: { emailLinkError?: string | null
       await sendEmailLoginLink(email);
       setLinkSent(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "发送登录链接失败，请检查邮箱格式");
+      setError(err instanceof Error ? err.message : t("emailLinkSendFailed"));
     } finally {
       setBusy(false);
     }
@@ -66,11 +68,11 @@ export function LoginScreen({ emailLinkError }: { emailLinkError?: string | null
   return (
     <div className="login-screen">
       <h1>GigTime</h1>
-      <p>多雇主工时与收入记录</p>
+      <p>{t("appTagline")}</p>
 
       <div className="login-tabs">
-        <button className={tab === "phone" ? "active" : ""} onClick={() => setTab("phone")}>手机号</button>
-        <button className={tab === "email" ? "active" : ""} onClick={() => setTab("email")}>邮箱</button>
+        <button className={tab === "phone" ? "active" : ""} onClick={() => setTab("phone")}>{t("tabPhone")}</button>
+        <button className={tab === "email" ? "active" : ""} onClick={() => setTab("email")}>{t("tabEmail")}</button>
       </div>
 
       {tab === "phone" && (
@@ -78,20 +80,20 @@ export function LoginScreen({ emailLinkError }: { emailLinkError?: string | null
           {!confirmation ? (
             <form onSubmit={handleSendOtp} className="login-form">
               <input
-                placeholder="手机号（含国家区号，如+8613800000000）"
+                placeholder={t("phonePlaceholder")}
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
               />
-              <button type="submit" disabled={busy}>发送验证码</button>
+              <button type="submit" disabled={busy}>{t("sendOtp")}</button>
             </form>
           ) : (
             <form onSubmit={handleConfirmOtp} className="login-form">
               <input
-                placeholder="6位验证码"
+                placeholder={t("otpPlaceholder")}
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
               />
-              <button type="submit" disabled={busy}>登录</button>
+              <button type="submit" disabled={busy}>{t("loginBtn")}</button>
             </form>
           )}
         </>
@@ -107,16 +109,18 @@ export function LoginScreen({ emailLinkError }: { emailLinkError?: string | null
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
-              <button type="submit" disabled={busy}>发送登录链接</button>
+              <button type="submit" disabled={busy}>{t("sendEmailLink")}</button>
             </form>
           ) : (
-            <p className="login-hint">已发送登录链接到 {email}，去邮箱点一下吧</p>
+            <p className="login-hint">{t("emailLinkSentHint", { email })}</p>
           )}
         </>
       )}
 
       {error && <p className="login-error">{error}</p>}
-      {!error && emailLinkError && <p className="login-error">{emailLinkError}</p>}
+      {!error && emailLinkError && (
+        <p className="login-error">{t(emailLinkError === "noPendingEmail" ? "noPendingEmailError" : "linkExpiredError")}</p>
+      )}
 
       {/* Invisible reCAPTCHA host required by Firebase Phone Auth */}
       <div id={RECAPTCHA_CONTAINER_ID} />
