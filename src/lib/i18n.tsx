@@ -22,7 +22,7 @@ const dict = {
   backfill: { zh: "补录工时", en: "Backfill hours" },
   addEmployer: { zh: "添加雇主", en: "Add employer" },
   retroClockIn: { zh: "忘记打卡了？补录开始时间", en: "Forgot to clock in? Backfill the start time" },
-  doneToday: { zh: "今日已打卡 {h} 小时", en: "{h}h logged today" },
+  doneToday: { zh: "今日{h}h", en: "{h}h today" },
   retroTitle: { zh: "补打「{name}」的上班卡", en: "Backfill clock-in for \"{name}\"" },
   retroSub: { zh: "实际是什么时候开始上班的？打卡会从这个时间点开始计时", en: "When did you actually start? The timer will count from this time" },
   cancel: { zh: "取消", en: "Cancel" },

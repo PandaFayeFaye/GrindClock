@@ -13,6 +13,17 @@ export function currentTierIndex(totalHours: number): number {
   return TIERS.reduce((idx, tier, i) => (totalHours >= tier.threshold ? i : idx), 0);
 }
 
+// Each tier gets its own signature color so titles read as distinct stages,
+// not five copies of the same badge -- escalating green -> sky -> yellow ->
+// coral -> purple as the "prestige" ramps up.
+export const TIER_COLORS: string[] = [
+  "var(--accent-green)",
+  "var(--accent-skyblue)",
+  "var(--accent-yellow)",
+  "var(--accent-coral)",
+  "var(--accent-purple)",
+];
+
 // One hand-drawn icon per tier (sprout -> hatchling -> dumbbell -> flame -> crown),
 // filled white so they sit on the tier node's colored circle background.
 export const TIER_ICONS: (() => ReactElement)[] = [

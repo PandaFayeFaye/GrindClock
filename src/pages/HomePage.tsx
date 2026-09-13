@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { addManualEntry, clockIn, clockOut, watchEmployers, watchTimeEntries, watchUserProfile } from "../lib/firestore";
 import { entryHours, entryPay, mergedHoursToday } from "../lib/pay";
-import { TIERS, currentTierIndex } from "../lib/tiers";
+import { TIERS, TIER_COLORS, currentTierIndex } from "../lib/tiers";
 import type { Adjustment, Employer, Mood, TimeEntry } from "../lib/types";
 import { Mascot } from "../components/Mascot";
 import { AvatarBadge, type AnimalKey } from "../lib/avatar";
@@ -184,9 +184,9 @@ export function HomePage({ uid }: { uid: string }) {
               {nickname ? t("homeBannerNamed", { name: nickname }) : t("homeBanner")}
             </p>
             <Link to="/badges" className="home-tier-chip">
-              <span className="home-tier-name">{t(currentTier.nameKey)}</span>
+              <span className="home-tier-name" style={{ color: TIER_COLORS[currentTierIdx] }}>{t(currentTier.nameKey)}</span>
               <span className="home-tier-track">
-                <span className="home-tier-fill" style={{ width: `${tierProgressPct}%` }} />
+                <span className="home-tier-fill" style={{ width: `${tierProgressPct}%`, background: TIER_COLORS[currentTierIdx] }} />
               </span>
               {nextTier && <span className="home-tier-next">{t(nextTier.nameKey)}</span>}
             </Link>
@@ -249,6 +249,14 @@ export function HomePage({ uid }: { uid: string }) {
                           ? `${currencySymbol(emp.currency)}${emp.hourlyRate ?? 0}/h`
                           : emp.payType}
                       </span>
+                      {!active && employerIdsWithEntryToday.has(emp.id) && (
+                        <span className="done-today-chip">
+                          <svg viewBox="0 0 24 24" fill="none" width="9" height="9">
+                            <path d="M4.5 12.5l4.5 4.5L19.5 6" stroke="#fff" strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          {t("doneToday", { h: (todaysHoursByEmployer.get(emp.id) ?? 0).toFixed(1) })}
+                        </span>
+                      )}
                     </div>
                   </Link>
                   <button
@@ -258,18 +266,6 @@ export function HomePage({ uid }: { uid: string }) {
                     {active ? t("clockOut") : t("clockIn")}
                   </button>
                 </div>
-                {!active && employerIdsWithEntryToday.has(emp.id) && (
-                  <div className="done-today-wrap">
-                    <span className="done-today-badge">
-                      <span className="done-today-check">
-                        <svg viewBox="0 0 24 24" fill="none" width="11" height="11">
-                          <path d="M4.5 12.5l4.5 4.5L19.5 6" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </span>
-                      {t("doneToday", { h: (todaysHoursByEmployer.get(emp.id) ?? 0).toFixed(1) })}
-                    </span>
-                  </div>
-                )}
                 {!active && !employerIdsWithEntryToday.has(emp.id) && (
                   <button type="button" className="retro-btn" onClick={() => setRetroEmployer(emp)}>
                     <svg viewBox="0 0 24 24" fill="none" width="13" height="13">

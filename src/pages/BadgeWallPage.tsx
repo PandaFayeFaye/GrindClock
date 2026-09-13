@@ -8,7 +8,7 @@ import { DEFAULT_CURRENCY, currencySymbol } from "../lib/currency";
 import { Mascot } from "../components/Mascot";
 import { characterImageSrc, type AnimalKey } from "../lib/avatar";
 import { useT } from "../lib/i18n";
-import { TIER_ICONS, TIERS, currentTierIndex } from "../lib/tiers";
+import { TIER_COLORS, TIER_ICONS, TIERS, currentTierIndex } from "../lib/tiers";
 import type { Employer, TimeEntry } from "../lib/types";
 import "./BadgeWallPage.css";
 
@@ -47,6 +47,7 @@ interface Badge {
   cond: string;
   icon: ReactNode;
   unlocked: boolean;
+  color: string;
 }
 
 export function BadgeWallPage({ uid }: { uid: string }) {
@@ -86,6 +87,7 @@ export function BadgeWallPage({ uid }: { uid: string }) {
     cond: tier.threshold === 0 ? t("zeroHours") : t("fullHours", { n: tier.threshold }),
     icon: TIER_ICONS[i](),
     unlocked: totalHours >= tier.threshold,
+    color: TIER_COLORS[i],
   }));
 
   const hasComboDay = useMemo(() => {
@@ -107,14 +109,15 @@ export function BadgeWallPage({ uid }: { uid: string }) {
   );
 
   const funBadges: Badge[] = [
-    { name: t("badgeComboName"), cond: t("badgeComboCond"), icon: <LightningIcon />, unlocked: hasComboDay },
-    { name: t("badgeStreakName"), cond: t("badgeStreakCond"), icon: <FlameIcon />, unlocked: streak >= 30 },
-    { name: t("badgeNightName"), cond: t("badgeNightCond"), icon: <MoonIcon />, unlocked: nightShiftCount >= 10 },
+    { name: t("badgeComboName"), cond: t("badgeComboCond"), icon: <LightningIcon />, unlocked: hasComboDay, color: "var(--accent-yellow)" },
+    { name: t("badgeStreakName"), cond: t("badgeStreakCond"), icon: <FlameIcon />, unlocked: streak >= 30, color: "var(--accent-coral)" },
+    { name: t("badgeNightName"), cond: t("badgeNightCond"), icon: <MoonIcon />, unlocked: nightShiftCount >= 10, color: "var(--accent-blue)" },
     {
       name: t("badgeSaverName"),
       cond: t("badgeSaverCond", { sym: currencySymbol(DEFAULT_CURRENCY), goal: weeklyGoal, n: goalStreak }),
       icon: <MoneyBagIcon />,
       unlocked: goalStreak >= 3,
+      color: "var(--accent-green)",
     },
   ];
 
@@ -140,50 +143,35 @@ export function BadgeWallPage({ uid }: { uid: string }) {
               <Mascot size={72} />
             )}
           </div>
-          <p className="hero-title">{t(currentTier.nameKey)}</p>
-          <div className="hero-track"><div className="hero-fill" style={{ width: `${progressPct}%` }} /></div>
-          <p className="hero-note">
-            {nextTier ? t("distanceToNext", { name: t(nextTier.nameKey), h: (nextTier.threshold - totalHours).toFixed(0) }) : t("topTierReached")}
-          </p>
+          <div className="hero-body">
+            <p className="hero-title">{t(currentTier.nameKey)}</p>
+            <div className="hero-track"><div className="hero-fill" style={{ width: `${progressPct}%`, background: TIER_COLORS[currentTierIdx] }} /></div>
+            <p className="hero-note">
+              {nextTier ? t("distanceToNext", { name: t(nextTier.nameKey), h: (nextTier.threshold - totalHours).toFixed(0) }) : t("topTierReached")}
+            </p>
+          </div>
         </div>
 
         <div>
           <p className="section-label">{t("tierProgressLabel")}</p>
           <div className="tier-path" style={{ height: `${pathHeight}px` }}>
-            <div className="tier-terrain t1" />
-            <div className="tier-terrain t2" />
-            <div className="tier-terrain t3" />
-            <div className="tier-terrain t4" />
             <svg className="tier-path-line" viewBox={`0 0 100 ${pathHeight}`} preserveAspectRatio="none">
               <polyline
-                className="road-shadow"
+                className="road-track"
                 points={TIERS.map((_, i) => `${PATH_X[i % PATH_X.length]},${i * 108 + 40}`).join(" ")}
                 fill="none"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
               <polyline
-                className="road-bed"
-                points={TIERS.map((_, i) => `${PATH_X[i % PATH_X.length]},${i * 108 + 40}`).join(" ")}
+                className="road-progress tier-path-draw"
+                points={TIERS.map((_, i) => `${PATH_X[i % PATH_X.length]},${i * 108 + 40}`).slice(0, currentTierIdx + 1).join(" ")}
                 fill="none"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <polyline
-                className="road-center tier-path-draw"
-                points={TIERS.map((_, i) => `${PATH_X[i % PATH_X.length]},${i * 108 + 40}`).join(" ")}
-                fill="none"
+                stroke={TIER_COLORS[currentTierIdx]}
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
             </svg>
-
-            <div className="start-flag" style={{ left: `${PATH_X[0]}%`, top: `${pathHeight - 6}px` }}>
-              <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-                <path d="M6 20V4" stroke="#1A1A1A" strokeWidth="2" strokeLinecap="round" />
-                <path d="M6 5l11 3-11 3z" fill="var(--accent-coral)" stroke="#1A1A1A" strokeWidth="1.6" strokeLinejoin="round" />
-              </svg>
-            </div>
 
             {TIERS.map((tier, i) => {
               const b = tierBadges[i];
@@ -200,7 +188,7 @@ export function BadgeWallPage({ uid }: { uid: string }) {
                       {animal ? <img className="tier-mascot-img" src={characterImageSrc(animal, mbti)} alt="" /> : <Mascot size={40} />}
                     </div>
                   )}
-                  <div className="tier-node-circle">
+                  <div className="tier-node-circle" style={b.unlocked ? { background: TIER_COLORS[i] } : undefined}>
                     {b.unlocked ? b.icon : <LockIcon />}
                   </div>
                   <span className="tier-node-label">{t(tier.nameKey)}</span>
@@ -220,7 +208,7 @@ export function BadgeWallPage({ uid }: { uid: string }) {
                 style={{ animationDelay: `${i * 80}ms` }}
                 onClick={() => setSelected(b)}
               >
-                <div className="badge-ic">{b.unlocked ? b.icon : <LockIcon />}</div>
+                <div className="badge-ic" style={b.unlocked ? { background: b.color } : undefined}>{b.unlocked ? b.icon : <LockIcon />}</div>
                 <span className="badge-name">{b.name}</span>
                 <span className="badge-cond">{b.cond}</span>
               </div>
@@ -232,7 +220,7 @@ export function BadgeWallPage({ uid }: { uid: string }) {
       {selected && (
         <div className="backdrop" onClick={() => setSelected(null)}>
           <div className="detail-card" onClick={(e) => e.stopPropagation()}>
-            <div className="detail-icon-wrap">{selected.icon}</div>
+            <div className="detail-icon-wrap" style={{ background: selected.unlocked ? selected.color : undefined }}>{selected.icon}</div>
             <p className="detail-name">{selected.name}</p>
             <span className={`detail-status ${selected.unlocked ? "on" : "off"}`}>
               {selected.unlocked ? t("unlocked") : t("locked")}
