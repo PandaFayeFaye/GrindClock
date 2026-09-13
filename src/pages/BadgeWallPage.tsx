@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { watchEmployers, watchTimeEntries } from "../lib/firestore";
+import { watchEmployers, watchTimeEntries, watchUserProfile } from "../lib/firestore";
 import { entryHours } from "../lib/pay";
 import { consecutiveWeeksMeetingGoal, currentStreak, dateKey } from "../lib/stats";
 import { useWeeklyGoal } from "../lib/settings";
 import { DEFAULT_CURRENCY, currencySymbol } from "../lib/currency";
 import { Mascot } from "../components/Mascot";
+import { characterImageSrc, type AnimalKey } from "../lib/avatar";
 import { useT } from "../lib/i18n";
 import { TIERS, currentTierIndex } from "../lib/tiers";
 import type { Employer, TimeEntry } from "../lib/types";
@@ -17,6 +18,7 @@ const PATH_X = [50, 22, 78, 22, 78, 50];
 interface Badge {
   name: string;
   cond: string;
+  icon: string;
   unlocked: boolean;
 }
 
@@ -25,11 +27,17 @@ export function BadgeWallPage({ uid }: { uid: string }) {
   const navigate = useNavigate();
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [employers, setEmployers] = useState<Employer[]>([]);
+  const [animal, setAnimal] = useState<AnimalKey | undefined>(undefined);
+  const [mbti, setMbti] = useState<string | undefined>(undefined);
   const [weeklyGoal] = useWeeklyGoal();
   useEffect(() => {
     const unsubEntries = watchTimeEntries(uid, setEntries);
     const unsubEmployers = watchEmployers(uid, setEmployers);
-    return () => { unsubEntries(); unsubEmployers(); };
+    const unsubProfile = watchUserProfile(uid, (profile) => {
+      setAnimal(profile.animal as AnimalKey | undefined);
+      setMbti(profile.mbti || undefined);
+    });
+    return () => { unsubEntries(); unsubEmployers(); unsubProfile(); };
   }, [uid]);
   const employerById = useMemo(() => new Map(employers.map((e) => [e.id, e])), [employers]);
 
@@ -49,6 +57,7 @@ export function BadgeWallPage({ uid }: { uid: string }) {
   const tierBadges: Badge[] = TIERS.map((tier) => ({
     name: t(tier.nameKey),
     cond: tier.threshold === 0 ? t("zeroHours") : t("fullHours", { n: tier.threshold }),
+    icon: tier.icon,
     unlocked: totalHours >= tier.threshold,
   }));
 
@@ -71,12 +80,13 @@ export function BadgeWallPage({ uid }: { uid: string }) {
   );
 
   const funBadges: Badge[] = [
-    { name: t("badgeComboName"), cond: t("badgeComboCond"), unlocked: hasComboDay },
-    { name: t("badgeStreakName"), cond: t("badgeStreakCond"), unlocked: streak >= 30 },
-    { name: t("badgeNightName"), cond: t("badgeNightCond"), unlocked: nightShiftCount >= 10 },
+    { name: t("badgeComboName"), cond: t("badgeComboCond"), icon: "⚡", unlocked: hasComboDay },
+    { name: t("badgeStreakName"), cond: t("badgeStreakCond"), icon: "🔥", unlocked: streak >= 30 },
+    { name: t("badgeNightName"), cond: t("badgeNightCond"), icon: "🌙", unlocked: nightShiftCount >= 10 },
     {
       name: t("badgeSaverName"),
       cond: t("badgeSaverCond", { sym: currencySymbol(DEFAULT_CURRENCY), goal: weeklyGoal, n: goalStreak }),
+      icon: "💰",
       unlocked: goalStreak >= 3,
     },
   ];
@@ -94,6 +104,13 @@ export function BadgeWallPage({ uid }: { uid: string }) {
 
       <div className="body">
         <div className="hero">
+          <div className="hero-companion-wrap">
+            {animal ? (
+              <img className="hero-companion" src={characterImageSrc(animal, mbti)} alt="" />
+            ) : (
+              <Mascot size={72} />
+            )}
+          </div>
           <p className="hero-title">{t(currentTier.nameKey)}</p>
           <div className="hero-track"><div className="hero-fill" style={{ width: `${progressPct}%` }} /></div>
           <p className="hero-note">
@@ -106,6 +123,7 @@ export function BadgeWallPage({ uid }: { uid: string }) {
           <div className="tier-path" style={{ height: `${TIERS.length * 108 + 40}px` }}>
             <svg className="tier-path-line" viewBox={`0 0 100 ${TIERS.length * 108 + 40}`} preserveAspectRatio="none">
               <polyline
+                className="tier-path-draw"
                 points={TIERS.map((_, i) => `${PATH_X[i % PATH_X.length]},${i * 108 + 40}`).join(" ")}
                 fill="none"
                 stroke="#DDD6C2"
@@ -121,19 +139,17 @@ export function BadgeWallPage({ uid }: { uid: string }) {
                 <div
                   key={tier.nameKey}
                   className={`tier-node${b.unlocked ? " unlocked" : " locked"}${isCurrent ? " current" : ""}`}
-                  style={{ left: `${PATH_X[i % PATH_X.length]}%`, top: `${i * 108 + 40}px` }}
+                  style={{ left: `${PATH_X[i % PATH_X.length]}%`, top: `${i * 108 + 40}px`, animationDelay: `${i * 90}ms` }}
                   onClick={() => setSelected(b)}
                 >
                   {isCurrent && (
                     <div className="tier-mascot">
-                      <Mascot size={40} />
+                      {animal ? <img className="tier-mascot-img" src={characterImageSrc(animal, mbti)} alt="" /> : <Mascot size={40} />}
                     </div>
                   )}
                   <div className="tier-node-circle">
                     {b.unlocked ? (
-                      <svg viewBox="0 0 24 24" fill="none" width="24" height="24">
-                        <path d="M12 3l1.8 4.4L18 9l-4.2 1.6L12 15l-1.8-4.4L6 9l4.2-1.6z" fill="#fff" />
-                      </svg>
+                      <span className="tier-node-emoji">{b.icon}</span>
                     ) : (
                       <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
                         <rect x="6" y="10" width="12" height="9" rx="1.5" stroke="#B9AC9C" strokeWidth="1.8" />
@@ -151,14 +167,15 @@ export function BadgeWallPage({ uid }: { uid: string }) {
         <div>
           <p className="section-label">{t("hiddenAchievements")}</p>
           <div className="badge-grid">
-            {funBadges.map((b) => (
-              <div className={`badge${b.unlocked ? " unlocked" : " locked"}`} key={b.name} onClick={() => setSelected(b)}>
+            {funBadges.map((b, i) => (
+              <div
+                className={`badge${b.unlocked ? " unlocked" : " locked"}`}
+                key={b.name}
+                style={{ animationDelay: `${i * 80}ms` }}
+                onClick={() => setSelected(b)}
+              >
                 <div className="badge-ic">
-                  {b.unlocked ? (
-                    <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
-                      <path d="M12 3l1.8 4.4L18 9l-4.2 1.6L12 15l-1.8-4.4L6 9l4.2-1.6z" fill="#1A1A1A" />
-                    </svg>
-                  ) : (
+                  {b.unlocked ? <span className="badge-emoji">{b.icon}</span> : (
                     <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
                       <rect x="6" y="10" width="12" height="9" rx="1.5" stroke="#B9AC9C" strokeWidth="1.8" />
                       <path d="M8.5 10V7a3.5 3.5 0 017 0v3" stroke="#B9AC9C" strokeWidth="1.8" />
@@ -176,6 +193,7 @@ export function BadgeWallPage({ uid }: { uid: string }) {
       {selected && (
         <div className="backdrop" onClick={() => setSelected(null)}>
           <div className="detail-card" onClick={(e) => e.stopPropagation()}>
+            <span className="detail-icon">{selected.icon}</span>
             <p className="detail-name">{selected.name}</p>
             <span className={`detail-status ${selected.unlocked ? "on" : "off"}`}>
               {selected.unlocked ? t("unlocked") : t("locked")}

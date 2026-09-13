@@ -212,14 +212,15 @@ export function HomePage({ uid }: { uid: string }) {
           </div>
 
           <div className="list">
-            {employers.map((emp) => {
+            {employers.map((emp, i) => {
               const active = activeByEmployer.get(emp.id);
               const schedule = todaysSchedule(emp);
               const showScheduleCard = !!schedule && !active && !employerIdsWithEntryToday.has(emp.id);
+              const rowDelay = { animationDelay: `${i * 55}ms` };
 
               if (showScheduleCard) {
                 return (
-                  <div className="row-wrap schedule-card" key={emp.id}>
+                  <div className="row-wrap schedule-card" key={emp.id} style={rowDelay}>
                     <div className="row">
                       <span className="dot" style={{ background: emp.color }} />
                       <Link to={`/employers/${emp.id}`} className="row-name">
@@ -237,7 +238,7 @@ export function HomePage({ uid }: { uid: string }) {
               }
 
               return (
-                <div className={`row-wrap${active ? " is-working" : ""}`} key={emp.id}>
+                <div className={`row-wrap${active ? " is-working" : ""}`} key={emp.id} style={rowDelay}>
                 <div className="row">
                   <span className="dot" style={{ background: emp.color }} />
                   <Link to={`/employers/${emp.id}`} className="row-name">
@@ -258,11 +259,11 @@ export function HomePage({ uid }: { uid: string }) {
                   </button>
                 </div>
                 {!active && employerIdsWithEntryToday.has(emp.id) && (
-                  <div className="retro-btn done-today">
-                    <svg viewBox="0 0 24 24" fill="none" width="13" height="13">
-                      <path d="M5 13l4 4 10-10" stroke="#39C97A" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    {t("doneToday", { h: (todaysHoursByEmployer.get(emp.id) ?? 0).toFixed(1) })}
+                  <div className="done-today-wrap">
+                    <span className="done-today-badge">
+                      <span className="done-today-icon">✅</span>
+                      {t("doneToday", { h: (todaysHoursByEmployer.get(emp.id) ?? 0).toFixed(1) })}
+                    </span>
                   </div>
                 )}
                 {!active && !employerIdsWithEntryToday.has(emp.id) && (
