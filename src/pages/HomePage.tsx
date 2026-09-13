@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { addManualEntry, clockIn, clockOut, watchEmployers, watchTimeEntries, watchUserProfile } from "../lib/firestore";
 import { entryHours, entryPay, mergedHoursToday } from "../lib/pay";
+import { startOfMonth, startOfWeek } from "../lib/stats";
 import { TIERS, TIER_COLORS, currentTierIndex } from "../lib/tiers";
 import type { Adjustment, Employer, Mood, TimeEntry } from "../lib/types";
 import { Mascot } from "../components/Mascot";
@@ -39,6 +40,7 @@ export function HomePage({ uid }: { uid: string }) {
   const [locationPunch] = useLocalToggle(SETTINGS_KEYS.locationPunch, false);
   const [aiPhotoOn] = useLocalToggle(SETTINGS_KEYS.aiPhoto, true);
   const [aiVoiceOn] = useLocalToggle(SETTINGS_KEYS.aiVoice, true);
+  const [incomeRange, setIncomeRange] = useState<"today" | "week" | "month">("today");
 
   useEffect(() => {
     const unsubEmployers = watchEmployers(uid, setEmployers);
@@ -73,18 +75,33 @@ export function HomePage({ uid }: { uid: string }) {
     return map;
   }, [todaysEntries]);
 
-  const todaysIncomeByCurrency = useMemo(() => {
+  const todaysHours = useMemo(() => mergedHoursToday(personalEntries), [personalEntries]);
+
+  const rangeStart = useMemo(() => {
+    if (incomeRange === "week") return startOfWeek();
+    if (incomeRange === "month") return startOfMonth();
+    return startOfToday();
+  }, [incomeRange]);
+  const rangeEntries = useMemo(
+    () => personalEntries.filter((e) => e.status === "confirmed" && e.startTime >= rangeStart),
+    [personalEntries, rangeStart],
+  );
+  const rangeHours = useMemo(
+    () => (incomeRange === "today" ? todaysHours : rangeEntries.reduce((s, e) => s + entryHours(e), 0)),
+    [incomeRange, todaysHours, rangeEntries],
+  );
+  const rangeIncomeByCurrency = useMemo(() => {
     const map = new Map<string, number>();
-    for (const e of todaysEntries) {
+    for (const e of rangeEntries) {
       const emp = employerById.get(e.employerId);
       if (!emp) continue;
       const cur = emp.currency ?? DEFAULT_CURRENCY;
       map.set(cur, (map.get(cur) ?? 0) + entryPay(emp, e));
     }
     return map;
-  }, [todaysEntries, employerById]);
-
-  const todaysHours = useMemo(() => mergedHoursToday(personalEntries), [personalEntries]);
+  }, [rangeEntries, employerById]);
+  const incomeLabelKey = incomeRange === "week" ? "weekEarned" : incomeRange === "month" ? "monthEarned" : "todayEarned";
+  const workedLabelKey = incomeRange === "week" ? "weekWorked" : incomeRange === "month" ? "monthWorked" : "todayWorked";
 
   const totalHours = useMemo(
     () => personalEntries.filter((e) => e.status === "confirmed" && e.endTime).reduce((s, e) => s + entryHours(e), 0),
@@ -206,9 +223,20 @@ export function HomePage({ uid }: { uid: string }) {
           )}
 
           <div className="income-card">
-            <p className="income-label">{t("todayEarned")}</p>
-            <p className="income-value">{formatGroupedPay(todaysIncomeByCurrency, 1)}</p>
-            <p className="income-note">{t("todayWorked", { h: todaysHours.toFixed(1) })}</p>
+            <div className="income-range-tabs">
+              {(["today", "week", "month"] as const).map((r) => (
+                <button
+                  key={r}
+                  className={`income-range-tab${incomeRange === r ? " active" : ""}`}
+                  onClick={() => setIncomeRange(r)}
+                >
+                  {t(r === "today" ? "incomeRangeToday" : r === "week" ? "incomeRangeWeek" : "incomeRangeMonth")}
+                </button>
+              ))}
+            </div>
+            <p className="income-label">{t(incomeLabelKey)}</p>
+            <p className="income-value">{formatGroupedPay(rangeIncomeByCurrency, 1)}</p>
+            <p className="income-note">{t(workedLabelKey, { h: rangeHours.toFixed(1) })}</p>
           </div>
 
           <div className="list">

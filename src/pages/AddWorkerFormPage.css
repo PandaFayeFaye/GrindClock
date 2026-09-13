@@ -6,6 +6,10 @@
 
 .worker-form .topbar {
   flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg-base);
   display: flex;
   align-items: center;
   gap: 10px;

@@ -8,7 +8,12 @@
 .stats-page h1 {
   font-family: var(--font-display);
   font-size: 20px;
-  margin: 0;
+  margin: -20px -20px 0;
+  padding: 20px 20px 12px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--bg-base);
 }
 
 .summary-card {

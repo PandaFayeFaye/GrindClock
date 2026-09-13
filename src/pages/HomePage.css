@@ -94,6 +94,28 @@
   animation: card-rise 0.4s ease 0.05s both;
 }
 
+.income-range-tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.income-range-tab {
+  padding: 3px 10px;
+  border: 1.5px solid rgba(26, 26, 26, 0.3);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.4);
+  font-size: 10.5px;
+  font-weight: 800;
+  color: rgba(26, 26, 26, 0.6);
+}
+
+.income-range-tab.active {
+  background: var(--border-bold);
+  color: var(--accent-yellow);
+  border-color: var(--border-bold);
+}
+
 .income-label {
   font-size: 12px;
   font-weight: 700;

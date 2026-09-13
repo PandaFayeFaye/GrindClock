@@ -8,14 +8,19 @@ import { useT } from "../lib/i18n";
 import type { Employer } from "../lib/types";
 import "./AICapturePage.css";
 
+type SpeechResultEvent = {
+  resultIndex: number;
+  results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal: boolean }>;
+};
+
 type SpeechRecognitionLike = {
   lang: string;
   continuous: boolean;
   interimResults: boolean;
   start: () => void;
   stop: () => void;
-  onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
-  onerror: (() => void) | null;
+  onresult: ((event: SpeechResultEvent) => void) | null;
+  onerror: ((event: { error: string }) => void) | null;
   onend: (() => void) | null;
 };
 
@@ -25,6 +30,59 @@ function getSpeechRecognition(): (new () => SpeechRecognitionLike) | undefined {
     webkitSpeechRecognition?: new () => SpeechRecognitionLike;
   };
   return w.SpeechRecognition ?? w.webkitSpeechRecognition;
+}
+
+// Live mic-level visualizer, independent of SpeechRecognition (which doesn't
+// expose audio levels) -- purely cosmetic, so any failure here is swallowed
+// and never blocks recognition itself.
+function useMicLevel(active: boolean): number {
+  const [level, setLevel] = useState(0);
+
+  useEffect(() => {
+    if (!active) {
+      setLevel(0);
+      return;
+    }
+    let stopped = false;
+    let raf = 0;
+    let stream: MediaStream | undefined;
+    let ctx: AudioContext | undefined;
+
+    (async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        if (stopped) { stream.getTracks().forEach((tr) => tr.stop()); return; }
+        ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+        const analyser = ctx.createAnalyser();
+        analyser.fftSize = 256;
+        ctx.createMediaStreamSource(stream).connect(analyser);
+        const data = new Uint8Array(analyser.frequencyBinCount);
+        const tick = () => {
+          if (stopped) return;
+          analyser.getByteTimeDomainData(data);
+          let sum = 0;
+          for (let i = 0; i < data.length; i++) {
+            const v = (data[i] - 128) / 128;
+            sum += v * v;
+          }
+          setLevel(Math.min(1, Math.sqrt(sum / data.length) * 4));
+          raf = requestAnimationFrame(tick);
+        };
+        tick();
+      } catch {
+        // Mic permission denied/unsupported -- no visualizer, recognition still works.
+      }
+    })();
+
+    return () => {
+      stopped = true;
+      if (raf) cancelAnimationFrame(raf);
+      stream?.getTracks().forEach((tr) => tr.stop());
+      ctx?.close();
+    };
+  }, [active]);
+
+  return level;
 }
 
 export function AICapturePage({ uid }: { uid: string }) {
@@ -40,8 +98,12 @@ export function AICapturePage({ uid }: { uid: string }) {
   const [busy, setBusy] = useState(false);
   const [progress, setProgress] = useState(0);
   const [recording, setRecording] = useState(false);
+  const [processingVoice, setProcessingVoice] = useState(false);
+  const [liveText, setLiveText] = useState("");
   const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const finalTranscriptRef = useRef("");
+  const micLevel = useMicLevel(recording);
 
   const [employerId, setEmployerId] = useState("");
   const [hours, setHours] = useState("");
@@ -67,24 +129,51 @@ export function AICapturePage({ uid }: { uid: string }) {
       return;
     }
     setError(null);
+    finalTranscriptRef.current = "";
+    setLiveText("");
     const recognition = new SpeechRecognition();
     recognition.lang = "zh-CN";
-    recognition.continuous = false;
-    recognition.interimResults = false;
+    // continuous + interimResults: without `continuous`, the browser stops
+    // listening after the first short pause (a few seconds), cutting the user
+    // off mid-sentence -- this was the reported "auto-disconnects" bug.
+    recognition.continuous = true;
+    recognition.interimResults = true;
     recognition.onresult = (event) => {
-      const transcript = event.results[0]?.[0]?.transcript ?? "";
-      applyDraft(transcript);
+      let interim = "";
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        const transcript = result[0]?.transcript ?? "";
+        if (result.isFinal) finalTranscriptRef.current += transcript;
+        else interim += transcript;
+      }
+      setLiveText(finalTranscriptRef.current + interim);
     };
-    recognition.onerror = () => setError(t("didntCatchThat"));
-    recognition.onend = () => setRecording(false);
+    recognition.onerror = (event) => {
+      // "no-speech"/"aborted" fire routinely (e.g. a brief pause, or our own
+      // stop() call) and don't mean the session failed -- only surface an
+      // error for something the user needs to act on.
+      if (event.error !== "no-speech" && event.error !== "aborted") {
+        setError(t("didntCatchThat"));
+      }
+    };
+    recognition.onend = () => {
+      setRecording(false);
+      setProcessingVoice(false);
+      const transcript = (finalTranscriptRef.current || liveText).trim();
+      if (transcript) {
+        applyDraft(transcript);
+      } else {
+        setError(t("noSpeechCaptured"));
+      }
+    };
     recognitionRef.current = recognition;
     recognition.start();
     setRecording(true);
   }
 
   function stopRecording() {
+    setProcessingVoice(true);
     recognitionRef.current?.stop();
-    setRecording(false);
   }
 
   async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -146,13 +235,40 @@ export function AICapturePage({ uid }: { uid: string }) {
         {source === "voice" && aiVoiceOn && !showDraftForm && (
           <div className="capture-panel">
             {!speechSupported && <p className="warn">{t("voiceNotSupported")}</p>}
-            <button className={`mic-btn${recording ? " recording" : ""}`} onClick={recording ? stopRecording : startRecording} disabled={!speechSupported}>
-              <svg viewBox="0 0 24 24" fill="none" width="30" height="30">
-                <rect x="9" y="3" width="6" height="11" rx="3" fill="#fff" />
-                <path d="M6 11a6 6 0 0012 0M12 17v3M9 20h6" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
-              </svg>
+
+            {recording && (
+              <div className="mic-waveform">
+                {Array.from({ length: 5 }, (_, i) => (
+                  <span
+                    key={i}
+                    className="mic-bar"
+                    style={{ transform: `scaleY(${0.25 + micLevel * (0.6 + 0.4 * Math.sin(i * 1.3))})` }}
+                  />
+                ))}
+              </div>
+            )}
+
+            <button
+              className={`mic-btn${recording ? " recording" : ""}`}
+              onClick={recording ? stopRecording : startRecording}
+              disabled={!speechSupported || processingVoice}
+            >
+              {processingVoice ? (
+                <span className="mic-spinner" />
+              ) : (
+                <svg viewBox="0 0 24 24" fill="none" width="30" height="30">
+                  <rect x="9" y="3" width="6" height="11" rx="3" fill="#fff" />
+                  <path d="M6 11a6 6 0 0012 0M12 17v3M9 20h6" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              )}
             </button>
-            <p className="mic-label">{recording ? t("listening") : t("tapToSpeak")}</p>
+            <p className="mic-label">
+              {processingVoice ? t("processingVoice") : recording ? t("listening") : t("tapToSpeak")}
+            </p>
+
+            {recording && (
+              <p className="live-transcript">{liveText || t("liveTranscriptPlaceholder")}</p>
+            )}
           </div>
         )}
 
