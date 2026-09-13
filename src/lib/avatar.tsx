@@ -38,7 +38,7 @@ function mbtiGroupColor(mbti: string): string {
 // Illustrated portraits live in public/characters/, one per animal (default,
 // no MBTI chosen yet) and one per animal+MBTI combo once the user picks both.
 export function characterImageSrc(animal: AnimalKey, mbti?: string): string {
-  return mbti ? `/characters/${animal}-${mbti}.jpg` : `/characters/${animal}-default.jpg`;
+  return mbti ? `/characters/${animal}-${mbti}.png` : `/characters/${animal}-default.png`;
 }
 
 export type PetAccessory = "star" | "crown";
