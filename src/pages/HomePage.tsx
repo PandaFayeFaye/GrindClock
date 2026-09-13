@@ -6,6 +6,7 @@ import { TIERS, currentTierIndex } from "../lib/tiers";
 import type { Adjustment, Employer, Mood, TimeEntry } from "../lib/types";
 import { Mascot } from "../components/Mascot";
 import { AvatarBadge, type AnimalKey } from "../lib/avatar";
+import { PET_STAGES, currentPetStageIndex, hoursSinceFed, isPetHungry } from "../lib/pet";
 import { PunchConfirmModal } from "../components/PunchConfirmModal";
 import { RetroClockInModal } from "../components/RetroClockInModal";
 import { ScheduleConfirmModal } from "../components/ScheduleConfirmModal";
@@ -91,6 +92,18 @@ export function HomePage({ uid }: { uid: string }) {
     : 100;
   const workingCount = activeByEmployer.size;
 
+  const lastFedAt = useMemo(() => {
+    const fedTimes = personalEntries
+      .filter((e) => e.status === "confirmed" && e.endTime)
+      .map((e) => e.endTime as number);
+    return fedTimes.length > 0 ? Math.max(...fedTimes) : null;
+  }, [personalEntries]);
+  const petStageIdx = currentPetStageIndex(totalHours);
+  const petStage = PET_STAGES[petStageIdx];
+  const nextPetStage = PET_STAGES[petStageIdx + 1];
+  const petHungry = isPetHungry(lastFedAt);
+  const hungryHours = Math.floor(hoursSinceFed(lastFedAt));
+
   async function handlePunch(employer: Employer) {
     const active = activeByEmployer.get(employer.id);
     if (active) {
@@ -171,6 +184,38 @@ export function HomePage({ uid }: { uid: string }) {
               </span>
               {nextTier && <span className="home-tier-next">{t(nextTier.nameKey)}</span>}
             </Link>
+          </div>
+        </div>
+      )}
+
+      {!simpleMode && animal && (
+        <div className="pet-card">
+          <div className="pet-card-avatar" style={{ transform: `scale(${petStage.scale})` }}>
+            <AvatarBadge animal={animal} mbti={mbti} size={56} accessory={petStage.accessory} dim={petHungry} />
+          </div>
+          <div className="pet-card-info">
+            <div className="pet-card-headline">
+              <span className="pet-card-title">{t("petCardTitle")}</span>
+              <span className="pet-card-stage">{t(petStage.nameKey)}</span>
+            </div>
+            <div className="pet-card-track">
+              <span
+                className="pet-card-fill"
+                style={{
+                  width: nextPetStage
+                    ? `${Math.min(100, Math.round(((totalHours - petStage.threshold) / (nextPetStage.threshold - petStage.threshold)) * 100))}%`
+                    : "100%",
+                }}
+              />
+            </div>
+            <p className="pet-card-caption">
+              {nextPetStage
+                ? t("petFeedProgress", { h: (nextPetStage.threshold - totalHours).toFixed(0) })
+                : t("petMaxStage")}
+            </p>
+            <p className={petHungry ? "pet-card-mood hungry" : "pet-card-mood"}>
+              {lastFedAt == null ? t("petNeverFedCaption") : petHungry ? t("petHungryCaption", { h: hungryHours }) : t("petFedCaption")}
+            </p>
           </div>
         </div>
       )}

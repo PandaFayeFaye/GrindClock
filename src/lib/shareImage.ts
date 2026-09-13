@@ -89,7 +89,7 @@ export async function renderRecapShareImage(data: RecapShareData): Promise<Blob>
 
   ctx.fillStyle = "rgba(255,255,255,0.35)";
   ctx.font = "500 22px system-ui, -apple-system, sans-serif";
-  ctx.fillText(en ? "GigTime · your multi-job sidekick" : "GigTime · 打工人的记工搭子", 64, H - 60);
+  ctx.fillText(en ? "GrindClock · your multi-job sidekick" : "牛马打卡机 · 打工人的记工搭子", 64, H - 60);
 
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("canvas export failed"))), "image/png");

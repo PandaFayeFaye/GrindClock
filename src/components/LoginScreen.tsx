@@ -67,7 +67,7 @@ export function LoginScreen({ emailLinkError }: { emailLinkError?: "noPendingEma
 
   return (
     <div className="login-screen">
-      <h1>GigTime</h1>
+      <h1>{t("appName")}</h1>
       <p>{t("appTagline")}</p>
 
       <div className="login-tabs">

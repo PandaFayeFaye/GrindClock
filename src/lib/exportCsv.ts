@@ -131,7 +131,7 @@ export async function exportEntriesImage(
 
   ctx.fillStyle = "rgba(26,26,26,0.4)";
   ctx.font = `500 13px ${fontFamily}`;
-  ctx.fillText("GigTime", padX, headerH + rows.length * rowH + 26);
+  ctx.fillText("牛马打卡机 GrindClock", padX, headerH + rows.length * rowH + 26);
 
   const blob: Blob = await new Promise((resolve, reject) => {
     canvas.toBlob((b) => (b ? resolve(b) : reject(new Error("canvas export failed"))), "image/png");

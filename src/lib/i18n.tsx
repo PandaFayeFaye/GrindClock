@@ -437,6 +437,21 @@ const dict = {
   detailListTitle: { zh: "明细", en: "Details" },
   exportCsv: { zh: "导出", en: "Export" },
   detailEmpty: { zh: "打完第一次卡，这里就会出现你的战绩", en: "Punch in once and your record shows up here" },
+
+  appName: { zh: "牛马打卡机", en: "GrindClock" },
+  appNameFull: { zh: "牛马打卡机 GrindClock", en: "GrindClock 牛马打卡机" },
+
+  petCardTitle: { zh: "我的搭子", en: "My companion" },
+  petStageEgg: { zh: "破壳蛋崽", en: "Hatchling" },
+  petStageBaby: { zh: "打工幼崽", en: "Grind Pup" },
+  petStageGrowing: { zh: "拼命练习生", en: "Hustler-in-training" },
+  petStageStrong: { zh: "搬砖战士", en: "Grind Warrior" },
+  petStageLegend: { zh: "传说牛马", en: "Legendary Grinder" },
+  petFeedProgress: { zh: "还差 {h} 小时喂到下一阶段", en: "{h}h more to next stage" },
+  petMaxStage: { zh: "TA已经进化成传说形态啦！", en: "Fully evolved into legendary form!" },
+  petHungryCaption: { zh: "TA已经 {h} 小时没吃饭了，打卡喂养TA吧～", en: "TA hasn't eaten in {h}h — clock in to feed TA!" },
+  petFedCaption: { zh: "TA刚吃饱，很满足地趴着～", en: "TA just ate and is happily resting~" },
+  petNeverFedCaption: { zh: "TA还饿着肚子，打第一次卡喂养TA吧！", en: "TA's still hungry — punch in for the first time to feed TA!" },
 } as const;
 
 export type DictKey = keyof typeof dict;

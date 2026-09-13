@@ -119,22 +119,34 @@ function AnimalFace({ animal }: { animal: AnimalKey }): ReactElement {
   }
 }
 
+export type PetAccessory = "star" | "crown";
+
 export function AvatarBadge({
   animal,
   mbti,
   size = 52,
+  accessory,
+  dim,
 }: {
   animal: AnimalKey;
   mbti?: string;
   size?: number;
+  accessory?: PetAccessory;
+  dim?: boolean;
 }) {
   const bg = mbti ? mbtiGroupColor(mbti) : "#DDD6C2";
   return (
-    <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
+    <div style={{ position: "relative", width: size, height: size, flexShrink: 0, opacity: dim ? 0.6 : 1 }}>
       <svg viewBox="0 0 48 48" width={size} height={size}>
         <circle cx="24" cy="24" r="23" fill={bg} stroke="#1A1A1A" strokeWidth="2" />
         <AnimalFace animal={animal} />
       </svg>
+      {accessory === "star" && (
+        <span style={{ position: "absolute", top: -6, left: -4, fontSize: Math.max(12, size * 0.32) }}>⭐</span>
+      )}
+      {accessory === "crown" && (
+        <span style={{ position: "absolute", top: -10, left: "50%", transform: "translateX(-50%)", fontSize: Math.max(14, size * 0.38) }}>👑</span>
+      )}
       {mbti && (
         <span
           style={{
