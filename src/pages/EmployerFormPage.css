@@ -199,6 +199,19 @@
   font-family: var(--font-body);
 }
 
+.currency-select {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 14px;
+}
+
+.dup-warning {
+  font-size: 11.5px;
+  color: var(--accent-coral);
+  margin: 6px 0 0;
+  font-weight: 700;
+}
+
 .default-adj-row {
   display: grid;
   grid-template-columns: 72px 72px 1fr 32px;

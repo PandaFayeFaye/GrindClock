@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { watchEmployers, watchTimeEntries } from "../lib/firestore";
 import { entryHours, entryPay } from "../lib/pay";
+import { currencySymbol } from "../lib/currency";
 import type { Employer, TimeEntry } from "../lib/types";
 import "./NetPayComparePage.css";
 
@@ -75,7 +76,7 @@ export function NetPayComparePage({ uid }: { uid: string }) {
 
       <div className="body">
         <div className="note-card">
-          扣除预估通勤时间/费用、加上预估等待摸鱼时间后的「实际到手时薪」，帮你看清哪份工作真正更划算——都是雇主设置里填的一次性预估，仅供参考，没填就按名义时薪显示
+          扣除预估通勤时间/费用、加上预估等待摸鱼时间后的「实际到手时薪」，帮你看清哪份工作真正更划算——都是雇主设置里填的一次性预估，仅供参考，没填就按名义时薪显示。排名按数字大小直接比较，不同币种之间没有做汇率换算，混合币种时排名仅供参考
         </div>
 
         {rows.map((row, i) => (
@@ -84,9 +85,9 @@ export function NetPayComparePage({ uid }: { uid: string }) {
             <div className="rank-info">
               <p className="rank-name">{row.employer.name}</p>
               <p className="rank-detail">
-                名义 <b>¥{row.nominal.toFixed(1)}</b>
+                名义 <b>{currencySymbol(row.employer.currency)}{row.nominal.toFixed(1)}</b>
                 {(row.employer.commuteMinutes || row.employer.commuteCost) && (
-                  <> · 通勤 <b>{row.employer.commuteMinutes ?? 0}分钟/¥{row.employer.commuteCost ?? 0}</b></>
+                  <> · 通勤 <b>{row.employer.commuteMinutes ?? 0}分钟/{currencySymbol(row.employer.currency)}{row.employer.commuteCost ?? 0}</b></>
                 )}
                 {!!row.employer.idleTimePct && (
                   <> · 摸鱼 <b>{row.employer.idleTimePct}%</b></>
@@ -94,7 +95,7 @@ export function NetPayComparePage({ uid }: { uid: string }) {
               </p>
             </div>
             <div className="rank-actual">
-              <p className="n">¥{row.actual.toFixed(1)}</p>
+              <p className="n">{currencySymbol(row.employer.currency)}{row.actual.toFixed(1)}</p>
               <p className="l">实际时薪</p>
             </div>
           </div>

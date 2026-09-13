@@ -1,0 +1,80 @@
+.retro-clockin-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 26, 26, 0.45);
+  display: flex;
+  align-items: flex-end;
+  z-index: 20;
+}
+
+.retro-clockin-sheet {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  background: var(--bg-base);
+  border-radius: 28px 28px 0 0;
+  border: 3px solid var(--border-bold);
+  border-bottom: none;
+  padding: 24px 22px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.25);
+}
+
+.retro-title {
+  font-family: var(--font-display);
+  font-size: 17px;
+  margin: 0;
+}
+
+.retro-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin: -6px 0 0;
+  line-height: 1.5;
+}
+
+.retro-fields {
+  display: flex;
+  gap: 10px;
+}
+
+.retro-input {
+  flex: 1;
+  padding: 12px 14px;
+  border: 2px solid var(--border-bold);
+  border-radius: 12px;
+  font-size: 14px;
+  background: var(--bg-surface);
+}
+
+.retro-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.retro-cancel {
+  flex: 1;
+  padding: 0;
+  min-height: 48px;
+  border-radius: 12px;
+  border: 2px solid var(--border-bold);
+  background: var(--bg-surface);
+  font-weight: 800;
+  font-size: 13.5px;
+}
+
+.retro-confirm {
+  flex: 2;
+  padding: 0;
+  min-height: 48px;
+  border-radius: 12px;
+  border: 2px solid var(--border-bold);
+  background: var(--accent-blue);
+  color: #fff;
+  font-weight: 900;
+  font-size: 13.5px;
+  box-shadow: 3px 3px 0 var(--border-bold);
+}

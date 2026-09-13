@@ -1,9 +1,10 @@
 import { useEffect, useState, type ReactElement } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
-import { addEmployer, employersCol, updateEmployer } from "../lib/firestore";
+import { addEmployer, employersCol, updateEmployer, watchEmployers } from "../lib/firestore";
 import type { Adjustment, Employer, PayType } from "../lib/types";
 import { Mascot } from "../components/Mascot";
+import { CURRENCIES, DEFAULT_CURRENCY } from "../lib/currency";
 import "./EmployerFormPage.css";
 
 const PALETTE = ["#FFD93D", "#4361EE", "#FF6B6B", "#39C97A", "#B084F5", "#5AC8FA"];
@@ -75,6 +76,7 @@ export function EmployerFormPage({ uid }: { uid: string }) {
   const [colorIdx, setColorIdx] = useState(0);
   const [payType, setPayType] = useState<PayType>("hourly");
   const [rate, setRate] = useState("");
+  const [currency, setCurrency] = useState(DEFAULT_CURRENCY);
   const [baseSalary, setBaseSalary] = useState("");
   const [overtimeMultiplier, setOvertimeMultiplier] = useState<number | undefined>(undefined);
   const [holidayMultiplier, setHolidayMultiplier] = useState<number | undefined>(undefined);
@@ -89,6 +91,10 @@ export function EmployerFormPage({ uid }: { uid: string }) {
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(!isEdit);
   const [justSaved, setJustSaved] = useState(false);
+  const [existingEmployers, setExistingEmployers] = useState<Employer[]>([]);
+  const [duplicateConfirm, setDuplicateConfirm] = useState(false);
+
+  useEffect(() => watchEmployers(uid, setExistingEmployers), [uid]);
 
   useEffect(() => {
     if (!employerId) return;
@@ -98,6 +104,7 @@ export function EmployerFormPage({ uid }: { uid: string }) {
         setName(data.name);
         setColorIdx(Math.max(0, PALETTE.indexOf(data.color)));
         setPayType(data.payType);
+        setCurrency(data.currency ?? DEFAULT_CURRENCY);
         setRate(String(data.hourlyRate ?? data.dailyRate ?? data.monthlySalary ?? data.pricePerOrder ?? ""));
         setBaseSalary(data.baseSalary ? String(data.baseSalary) : "");
         setOvertimeMultiplier(data.overtimeMultiplier);
@@ -115,6 +122,20 @@ export function EmployerFormPage({ uid }: { uid: string }) {
     });
   }, [uid, employerId]);
 
+  function findDuplicate() {
+    const trimmed = name.trim().toLowerCase();
+    return existingEmployers.find((e) => e.id !== employerId && e.name.trim().toLowerCase() === trimmed);
+  }
+
+  function handleSaveClick() {
+    if (!name.trim()) return;
+    if (findDuplicate() && !duplicateConfirm) {
+      setDuplicateConfirm(true);
+      return;
+    }
+    handleSave();
+  }
+
   async function handleSave() {
     if (!name.trim()) return;
     setSaving(true);
@@ -123,6 +144,7 @@ export function EmployerFormPage({ uid }: { uid: string }) {
       name: name.trim(),
       color: PALETTE[colorIdx],
       payType,
+      currency,
       ...(payType === "hourly" || payType === "comprehensive" || payType === "base+overtime"
         ? { hourlyRate: rateNum }
         : {}),
@@ -182,7 +204,7 @@ export function EmployerFormPage({ uid }: { uid: string }) {
           </svg>
         </button>
         <h1>{isEdit ? "编辑雇主" : "添加雇主"}</h1>
-        <button className="save-btn" onClick={handleSave} disabled={saving || !name.trim()}>
+        <button className="save-btn" onClick={handleSaveClick} disabled={saving || !name.trim()}>
           保存
         </button>
       </div>
@@ -194,8 +216,11 @@ export function EmployerFormPage({ uid }: { uid: string }) {
             className="name-input"
             placeholder="比如：楼下奶茶店"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            onChange={(e) => { setName(e.target.value); setDuplicateConfirm(false); }}
           />
+          {findDuplicate() && (
+            <p className="dup-warning">已有同名雇主「{findDuplicate()!.name}」，再次点击保存即确认要重复添加</p>
+          )}
         </div>
 
         <div>
@@ -234,13 +259,22 @@ export function EmployerFormPage({ uid }: { uid: string }) {
           </div>
         </div>
 
+        <div>
+          <p className="field-label">币种</p>
+          <select className="select-field currency-select" value={currency} onChange={(e) => setCurrency(e.target.value)}>
+            {CURRENCIES.map((c) => (
+              <option key={c.code} value={c.code}>{c.symbol} {c.label}（{c.code}）</option>
+            ))}
+          </select>
+        </div>
+
         {payType === "base+overtime" && (
           <div>
             <p className="field-label">底薪（月）</p>
             <input
               className="rate-input"
               type="number"
-              placeholder="¥ 每月固定拿到手的底薪"
+              placeholder={`${CURRENCIES.find((c) => c.code === currency)?.symbol ?? "¥"} 每月固定拿到手的底薪`}
               value={baseSalary}
               onChange={(e) => setBaseSalary(e.target.value)}
             />
@@ -252,7 +286,7 @@ export function EmployerFormPage({ uid }: { uid: string }) {
           <input
             className="rate-input"
             type="number"
-            placeholder="¥"
+            placeholder={CURRENCIES.find((c) => c.code === currency)?.symbol ?? "¥"}
             value={rate}
             onChange={(e) => setRate(e.target.value)}
           />

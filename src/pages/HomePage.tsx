@@ -5,9 +5,11 @@ import { entryPay, mergedHoursToday } from "../lib/pay";
 import type { Adjustment, Employer, Mood, TimeEntry } from "../lib/types";
 import { Mascot } from "../components/Mascot";
 import { PunchConfirmModal } from "../components/PunchConfirmModal";
+import { RetroClockInModal } from "../components/RetroClockInModal";
 import { SETTINGS_KEYS, useLocalToggle } from "../lib/settings";
 import { getCurrentLocation } from "../lib/geolocation";
 import { useT } from "../lib/i18n";
+import { DEFAULT_CURRENCY, currencySymbol, formatGroupedPay } from "../lib/currency";
 import "./HomePage.css";
 
 function startOfToday() {
@@ -21,6 +23,7 @@ export function HomePage({ uid }: { uid: string }) {
   const [employers, setEmployers] = useState<Employer[]>([]);
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [confirmingEntry, setConfirmingEntry] = useState<{ entry: TimeEntry; employer: Employer } | null>(null);
+  const [retroEmployer, setRetroEmployer] = useState<Employer | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [simpleMode] = useLocalToggle(SETTINGS_KEYS.simpleMode, false);
   const [locationPunch] = useLocalToggle(SETTINGS_KEYS.locationPunch, false);
@@ -49,13 +52,16 @@ export function HomePage({ uid }: { uid: string }) {
 
   const employerById = useMemo(() => new Map(employers.map((e) => [e.id, e])), [employers]);
 
-  const todaysIncome = useMemo(
-    () => todaysEntries.reduce((sum, e) => {
+  const todaysIncomeByCurrency = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const e of todaysEntries) {
       const emp = employerById.get(e.employerId);
-      return emp ? sum + entryPay(emp, e) : sum;
-    }, 0),
-    [todaysEntries, employerById],
-  );
+      if (!emp) continue;
+      const cur = emp.currency ?? DEFAULT_CURRENCY;
+      map.set(cur, (map.get(cur) ?? 0) + entryPay(emp, e));
+    }
+    return map;
+  }, [todaysEntries, employerById]);
 
   const todaysHours = useMemo(() => mergedHoursToday(personalEntries), [personalEntries]);
   const workingCount = activeByEmployer.size;
@@ -70,6 +76,12 @@ export function HomePage({ uid }: { uid: string }) {
     } else {
       clockIn(uid, employer.id);
     }
+  }
+
+  function handleRetroConfirm(startTime: number) {
+    if (!retroEmployer) return;
+    clockIn(uid, retroEmployer.id, undefined, startTime);
+    setRetroEmployer(null);
   }
 
   function handleConfirm(
@@ -120,7 +132,7 @@ export function HomePage({ uid }: { uid: string }) {
 
           <div className="income-card">
             <p className="income-label">{t("todayEarned")}</p>
-            <p className="income-value">¥{todaysIncome.toFixed(1)}</p>
+            <p className="income-value">{formatGroupedPay(todaysIncomeByCurrency, 1)}</p>
             <p className="income-note">{t("todayWorked", { h: todaysHours.toFixed(1) })}</p>
           </div>
 
@@ -135,10 +147,19 @@ export function HomePage({ uid }: { uid: string }) {
                       <p className="row-title">{emp.name}</p>
                       <span className="row-rate">
                         {emp.payType === "hourly" || emp.payType === "comprehensive"
-                          ? `¥${emp.hourlyRate ?? 0}/h`
+                          ? `${currencySymbol(emp.currency)}${emp.hourlyRate ?? 0}/h`
                           : emp.payType}
                       </span>
                     </div>
+                    {!active && (
+                      <button
+                        type="button"
+                        className="retro-link"
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setRetroEmployer(emp); }}
+                      >
+                        忘记打卡了？补录开始时间
+                      </button>
+                    )}
                   </Link>
                   <button
                     className={`punch-btn${active ? " working" : ""}`}
@@ -205,6 +226,14 @@ export function HomePage({ uid }: { uid: string }) {
           entry={confirmingEntry.entry}
           onCancel={() => setConfirmingEntry(null)}
           onConfirm={handleConfirm}
+        />
+      )}
+
+      {retroEmployer && (
+        <RetroClockInModal
+          employer={retroEmployer}
+          onCancel={() => setRetroEmployer(null)}
+          onConfirm={handleRetroConfirm}
         />
       )}
     </div>

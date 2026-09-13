@@ -56,10 +56,11 @@ export function clockIn(
   uid: string,
   employerId: string,
   clockInLocation?: { lat: number; lng: number; accuracy: number },
+  startTime = Date.now(),
 ) {
   return addDoc(timeEntriesCol(uid), {
     employerId,
-    startTime: Date.now(),
+    startTime,
     endTime: null,
     status: "confirmed",
     source: "manual",

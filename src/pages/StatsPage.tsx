@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { watchEmployers, watchTimeEntries } from "../lib/firestore";
 import { entryHours, entryPay, lumpSumAllTime, lumpSumForPeriod } from "../lib/pay";
+import { DEFAULT_CURRENCY, currencySymbol, formatGroupedPay } from "../lib/currency";
 import { currentStreak, dateKey, leaderboard, moodByDay, payByDay, startOfMonth, startOfWeek } from "../lib/stats";
 import { useWeeklyGoal } from "../lib/settings";
 import { exportEntriesCsv } from "../lib/exportCsv";
@@ -73,19 +74,26 @@ export function StatsPage({ uid }: { uid: string }) {
   );
 
   const totalHours = filteredEntries.reduce((sum, e) => sum + entryHours(e), 0);
-  const totalPay = filteredEntries.reduce((sum, e) => {
-    const emp = employerById.get(e.employerId);
-    return emp ? sum + entryPay(emp, e) : sum;
-  }, 0) + (
+  const totalPayByCurrency = useMemo(() => {
+    const map = new Map<string, number>();
+    const add = (emp: Employer, amount: number) => {
+      const cur = emp.currency ?? DEFAULT_CURRENCY;
+      map.set(cur, (map.get(cur) ?? 0) + amount);
+    };
+    for (const e of filteredEntries) {
+      const emp = employerById.get(e.employerId);
+      if (emp) add(emp, entryPay(emp, e));
+    }
     // Lump-sum salary: all-time view sums one payout per distinct month worked;
     // a month-bounded view adds it once if any shift fell in that exact month.
     // A week/today view is too short a window for a monthly lump sum to fairly apply.
-    range === "all"
-      ? visibleEmployers.reduce((sum, emp) => sum + lumpSumAllTime(emp, personalConfirmed), 0)
-      : range === "month"
-        ? visibleEmployers.reduce((sum, emp) => sum + lumpSumForPeriod(emp, filteredEntries), 0)
-        : 0
-  );
+    if (range === "all") {
+      for (const emp of visibleEmployers) add(emp, lumpSumAllTime(emp, personalConfirmed));
+    } else if (range === "month") {
+      for (const emp of visibleEmployers) add(emp, lumpSumForPeriod(emp, filteredEntries));
+    }
+    return map;
+  }, [filteredEntries, employerById, range, visibleEmployers, personalConfirmed]);
 
   // ---- Mood strip: last 7 days ----
   const moodMap = useMemo(() => moodByDay(personalConfirmed), [personalConfirmed]);
@@ -106,6 +114,12 @@ export function StatsPage({ uid }: { uid: string }) {
   const maxDailyPay = Math.max(1, ...last7Days.map((d) => dailyPay.get(d.key) ?? 0));
 
   // ---- Calendar: current month heatmap ----
+  // Leading blanks align day 1 under its actual weekday column (grid starts on Sunday).
+  const calendarLeadingBlanks = useMemo(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), 1).getDay();
+  }, []);
+
   const heatCells = useMemo(() => {
     const now = new Date();
     const year = now.getFullYear();
@@ -116,11 +130,10 @@ export function StatsPage({ uid }: { uid: string }) {
       return dailyPay.get(key) ?? 0;
     });
     const max = Math.max(1, ...values);
-    return values.map((v) => {
-      if (v === 0) return 0;
-      const ratio = v / max;
-      return ratio > 0.66 ? 3 : ratio > 0.33 ? 2 : 1;
-    });
+    return values.map((v, i) => ({
+      day: i + 1,
+      level: v === 0 ? 0 : v / max > 0.66 ? 3 : v / max > 0.33 ? 2 : 1,
+    }));
   }, [dailyPay]);
 
   const streak = useMemo(() => currentStreak(personalConfirmed), [personalConfirmed]);
@@ -134,7 +147,7 @@ export function StatsPage({ uid }: { uid: string }) {
     const daysWithEntry = new Set(personalConfirmed.map((e) => dateKey(e.startTime)));
     return Array.from({ length: daysInMonth }, (_, i) => {
       const key = dateKey(new Date(year, month, i + 1).getTime());
-      return daysWithEntry.has(key);
+      return { day: i + 1, punched: daysWithEntry.has(key) };
     });
   }, [personalConfirmed]);
 
@@ -142,6 +155,16 @@ export function StatsPage({ uid }: { uid: string }) {
   const weekStart = startOfWeek();
   const board = useMemo(() => leaderboard(personalConfirmed, employers, weekStart), [personalConfirmed, employers, weekStart]);
   const weekPay = board.reduce((sum, r) => sum + r.pay, 0);
+  const weekPayByCurrency = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const r of board) {
+      const cur = r.employer.currency ?? DEFAULT_CURRENCY;
+      map.set(cur, (map.get(cur) ?? 0) + r.pay);
+    }
+    return map;
+  }, [board]);
+  // Goal comparison assumes a single currency across employers -- weeklyGoal itself
+  // is one plain number with no currency of its own (documented simplification).
   const goalPct = Math.min(100, Math.round((weekPay / weeklyGoal) * 100));
   const ringCircumference = 2 * Math.PI * 44;
   const ringOffset = ringCircumference * (1 - goalPct / 100);
@@ -182,7 +205,7 @@ export function StatsPage({ uid }: { uid: string }) {
 
       <div className="summary-card">
         <div className="stat"><p className="num">{totalHours.toFixed(1)}h</p><p className="lb">{range === "all" ? "累计总工时" : "本时段工时"}</p></div>
-        <div className="stat"><p className="num">¥{totalPay.toFixed(0)}</p><p className="lb">{range === "all" ? "累计总收入" : "本时段收入"}</p></div>
+        <div className="stat"><p className="num">{formatGroupedPay(totalPayByCurrency)}</p><p className="lb">{range === "all" ? "累计总收入" : "本时段收入"}</p></div>
       </div>
 
       <div className="chart-card">
@@ -229,9 +252,15 @@ export function StatsPage({ uid }: { uid: string }) {
             连续打卡 {streak} 天
           </span>
           <p className="title">本月活跃度日历（颜色越深赚得越多）</p>
+          <div className="weekday-header">
+            {["日", "一", "二", "三", "四", "五", "六"].map((d) => <span key={d}>{d}</span>)}
+          </div>
           <div className="heatmap">
-            {heatCells.map((level, i) => (
-              <div className="heat-cell" key={i} style={{ background: heatHex[level] }} />
+            {Array.from({ length: calendarLeadingBlanks }).map((_, i) => <div className="heat-cell blank" key={`b${i}`} />)}
+            {heatCells.map(({ day, level }) => (
+              <div className="heat-cell" key={day} style={{ background: heatHex[level] }}>
+                <span className="cell-day">{day}</span>
+              </div>
             ))}
           </div>
           <div className="heat-legend">
@@ -241,13 +270,19 @@ export function StatsPage({ uid }: { uid: string }) {
           </div>
 
           <p className="title" style={{ marginTop: 16 }}>连续打卡日历（有没有打卡，不看赚多少）</p>
+          <div className="weekday-header">
+            {["日", "一", "二", "三", "四", "五", "六"].map((d) => <span key={d}>{d}</span>)}
+          </div>
           <div className="heatmap streak-grid">
-            {streakCells.map((punched, i) => (
-              <div key={i} className={`streak-cell${punched ? " lit" : ""}`}>
-                {punched && (
+            {Array.from({ length: calendarLeadingBlanks }).map((_, i) => <div className="streak-cell blank" key={`b${i}`} />)}
+            {streakCells.map(({ day, punched }) => (
+              <div key={day} className={`streak-cell${punched ? " lit" : ""}`}>
+                {punched ? (
                   <svg viewBox="0 0 24 24" fill="none" width="11" height="11">
                     <path d="M12 2.5c-1.2 2.3-4.5 3.6-4.5 8a4.5 4.5 0 009 0c0-1.4-.5-2.3-1.1-3 .1 1.2-.5 2-1.3 2.3.6-2.4-1-3.6-2.1-7.3z" fill="#fff" />
                   </svg>
+                ) : (
+                  <span className="cell-day">{day}</span>
                 )}
               </div>
             ))}
@@ -283,7 +318,7 @@ export function StatsPage({ uid }: { uid: string }) {
               </div>
             ) : (
               <p className="ring-note" onClick={() => setEditingGoal(true)}>
-                目标 <b>¥{weeklyGoal}</b>，已赚 <b>¥{weekPay.toFixed(0)}</b>（点击改目标）
+                目标 <b>{currencySymbol(DEFAULT_CURRENCY)}{weeklyGoal}</b>，已赚 <b>{formatGroupedPay(weekPayByCurrency)}</b>（点击改目标）
               </p>
             )}
           </div>
@@ -298,7 +333,7 @@ export function StatsPage({ uid }: { uid: string }) {
                   <div className="lb-bar-fill" style={{ width: `${(row.pay / maxBoardPay) * 100}%`, background: row.employer.color }} />
                   <span className="lb-name">{row.employer.name}</span>
                 </div>
-                <span className="lb-amount">¥{row.pay.toFixed(0)}</span>
+                <span className="lb-amount">{currencySymbol(row.employer.currency)}{row.pay.toFixed(0)}</span>
               </div>
             ))}
           </div>
@@ -343,7 +378,7 @@ export function StatsPage({ uid }: { uid: string }) {
                     )}
                   </p>
                 </div>
-                <span className="pay">¥{entryPay(emp, e).toFixed(1)}</span>
+                <span className="pay">{currencySymbol(emp.currency)}{entryPay(emp, e).toFixed(1)}</span>
               </div>
             );
           })}

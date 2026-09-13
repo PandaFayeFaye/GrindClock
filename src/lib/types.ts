@@ -5,6 +5,7 @@ export interface Employer {
   name: string;
   color: string;
   payType: PayType;
+  currency?: string; // ISO-ish code, e.g. "CNY" | "USD" | "EUR" -- see lib/currency.ts; defaults to CNY
   hourlyRate?: number;
   dailyRate?: number;
   baseSalary?: number;

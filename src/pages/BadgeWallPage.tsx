@@ -4,6 +4,7 @@ import { watchEmployers, watchTimeEntries } from "../lib/firestore";
 import { entryHours } from "../lib/pay";
 import { consecutiveWeeksMeetingGoal, currentStreak, dateKey } from "../lib/stats";
 import { useWeeklyGoal } from "../lib/settings";
+import { DEFAULT_CURRENCY, currencySymbol } from "../lib/currency";
 import type { Employer, TimeEntry } from "../lib/types";
 import "./BadgeWallPage.css";
 
@@ -76,7 +77,7 @@ export function BadgeWallPage({ uid }: { uid: string }) {
     { name: "深夜战士", cond: "完成10次22点后打卡", unlocked: nightShiftCount >= 10 },
     {
       name: "省钱达人",
-      cond: `连续3周收入达到¥${weeklyGoal}目标（目标可在统计页修改，当前已连续${goalStreak}周）`,
+      cond: `连续3周收入达到${currencySymbol(DEFAULT_CURRENCY)}${weeklyGoal}目标（目标可在统计页修改，当前已连续${goalStreak}周）`,
       unlocked: goalStreak >= 3,
     },
   ];

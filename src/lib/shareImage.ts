@@ -1,7 +1,7 @@
 export interface RecapShareData {
   monthLabel: string;
   totalHours: number;
-  totalPay: number;
+  totalPayText: string;
   employerCount: number;
   streak: number;
   topEmployer: string;
@@ -42,7 +42,7 @@ export async function renderRecapShareImage(data: RecapShareData): Promise<Blob>
   wrapText(ctx, `这个月，你搬了${data.totalHours.toFixed(0)}小时的砖`, 64, 230, W - 128, 76);
 
   const tiles = [
-    { n: `¥${data.totalPay.toFixed(0)}`, l: `跨${data.employerCount}个雇主合计` },
+    { n: data.totalPayText, l: `跨${data.employerCount}个雇主合计` },
     { n: `${data.streak}天`, l: "当前打工火苗" },
     { n: data.topEmployer, l: "最赚钱雇主" },
     { n: data.hardestDay, l: "值得记住的一天" },

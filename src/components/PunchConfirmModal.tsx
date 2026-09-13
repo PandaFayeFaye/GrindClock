@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Adjustment, Employer, Mood, TimeEntry } from "../lib/types";
 import { entryHours, entryPay } from "../lib/pay";
+import { currencySymbol } from "../lib/currency";
 import "./PunchConfirmModal.css";
 
 const MOODS: { key: Mood; label: string }[] = [
@@ -67,7 +68,7 @@ export function PunchConfirmModal({
         <div className="punch-modal-summary">
           <p className="emp">{employer.name} · 本次工时</p>
           <p className="dur">{hours.toFixed(1)}小时</p>
-          <p className="pay">预估收入 ¥{pay.toFixed(1)}</p>
+          <p className="pay">预估收入 {currencySymbol(employer.currency)}{pay.toFixed(1)}</p>
           {recurringAdjustment.length > 0 && (
             <p className="recurring-adj-note">已自动套用{recurringAdjustment.length}条该雇主的默认补贴/扣款规则</p>
           )}

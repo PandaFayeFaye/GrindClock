@@ -158,8 +158,21 @@
   margin-bottom: 10px;
 }
 
+.weekday-header { display: grid; grid-template-columns: repeat(7, 1fr); margin-bottom: 4px; }
+.weekday-header span { text-align: center; font-size: 9.5px; font-weight: 800; color: var(--text-muted); }
+
 .heatmap { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
-.heat-cell { aspect-ratio: 1; border-radius: 5px; border: 1.3px solid rgba(26, 26, 26, 0.15); }
+.heat-cell { aspect-ratio: 1; border-radius: 5px; border: 1.3px solid rgba(26, 26, 26, 0.15); position: relative; }
+.heat-cell.blank, .streak-cell.blank { border: none; background: none; }
+.cell-day {
+  position: absolute;
+  bottom: 2px;
+  right: 3px;
+  font-size: 8px;
+  font-weight: 700;
+  color: rgba(26, 26, 26, 0.45);
+}
+.streak-cell .cell-day { position: static; font-size: 9px; }
 .heat-legend { display: flex; align-items: center; gap: 6px; margin-top: 10px; justify-content: flex-end; }
 .heat-legend span { font-size: 9.5px; color: var(--text-muted); }
 .heat-legend i { width: 12px; height: 12px; border-radius: 3px; border: 1px solid rgba(26, 26, 26, 0.15); display: inline-block; }

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { watchEmployers, watchTimeEntries } from "../lib/firestore";
 import { entryHours, entryPay, lumpSumForPeriod } from "../lib/pay";
+import { DEFAULT_CURRENCY, formatGroupedPay } from "../lib/currency";
 import { currentStreak, dateKey, leaderboard, startOfMonth } from "../lib/stats";
 import { downloadBlob, renderRecapShareImage } from "../lib/shareImage";
 import type { Employer, TimeEntry } from "../lib/types";
@@ -32,10 +33,16 @@ export function MonthlyRecapPage({ uid }: { uid: string }) {
 
   const employerById = useMemo(() => new Map(employers.map((e) => [e.id, e])), [employers]);
   const totalHours = monthEntries.reduce((s, e) => s + entryHours(e), 0);
-  const totalPay = monthEntries.reduce((s, e) => {
-    const emp = employerById.get(e.employerId);
-    return emp ? s + entryPay(emp, e) : s;
-  }, 0) + employers.reduce((s, emp) => s + lumpSumForPeriod(emp, monthEntries), 0);
+  const totalPayByCurrency = useMemo(() => {
+    const map = new Map<string, number>();
+    const add = (cur: string, amount: number) => map.set(cur, (map.get(cur) ?? 0) + amount);
+    for (const e of monthEntries) {
+      const emp = employerById.get(e.employerId);
+      if (emp) add(emp.currency ?? DEFAULT_CURRENCY, entryPay(emp, e));
+    }
+    for (const emp of employers) add(emp.currency ?? DEFAULT_CURRENCY, lumpSumForPeriod(emp, monthEntries));
+    return map;
+  }, [monthEntries, employerById, employers]);
 
   const board = useMemo(() => leaderboard(monthEntries, employers, monthStart, true), [monthEntries, employers, monthStart]);
   const topEmployer = board[0]?.employer.name ?? "—";
@@ -90,7 +97,7 @@ export function MonthlyRecapPage({ uid }: { uid: string }) {
       const blob = await renderRecapShareImage({
         monthLabel,
         totalHours,
-        totalPay,
+        totalPayText: formatGroupedPay(totalPayByCurrency),
         employerCount: employers.length,
         streak,
         topEmployer,
@@ -122,7 +129,7 @@ export function MonthlyRecapPage({ uid }: { uid: string }) {
         </div>
 
         <div className="grid">
-          <div className="stat-tile"><p className="n">¥{totalPay.toFixed(0)}</p><p className="l">跨{employers.length}个雇主合计</p></div>
+          <div className="stat-tile"><p className="n">{formatGroupedPay(totalPayByCurrency)}</p><p className="l">跨{employers.length}个雇主合计</p></div>
           <div className="stat-tile"><p className="n">{streak}天</p><p className="l">当前打工火苗</p></div>
           <div className="stat-tile"><p className="n">{topEmployer}</p><p className="l">最赚钱雇主</p></div>
           <div className="stat-tile"><p className="n">{hardestDay}</p><p className="l">值得记住的一天</p></div>
