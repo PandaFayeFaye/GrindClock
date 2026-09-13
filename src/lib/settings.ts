@@ -32,6 +32,7 @@ export const SETTINGS_KEYS = {
   dailyRecapPush: "gigtime_daily_recap_push",
   aiPhoto: "gigtime_ai_photo",
   aiVoice: "gigtime_ai_voice",
+  companionHintSeen: "gigtime_companion_hint_seen",
 } as const;
 
 const WEEKLY_GOAL_KEY = "gigtime_weekly_goal";

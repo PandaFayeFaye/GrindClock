@@ -8,6 +8,7 @@ import { Mascot } from "../components/Mascot";
 import { AvatarBadge, type AnimalKey } from "../lib/avatar";
 import { PET_STAGES, currentPetStageIndex, hoursSinceFed, isPetHungry } from "../lib/pet";
 import { PunchConfirmModal } from "../components/PunchConfirmModal";
+import { CompanionWidget } from "../components/CompanionWidget";
 import { RetroClockInModal } from "../components/RetroClockInModal";
 import { ScheduleConfirmModal } from "../components/ScheduleConfirmModal";
 import { SETTINGS_KEYS, useLocalToggle } from "../lib/settings";
@@ -66,6 +67,11 @@ export function HomePage({ uid }: { uid: string }) {
 
   const employerById = useMemo(() => new Map(employers.map((e) => [e.id, e])), [employers]);
   const employerIdsWithEntryToday = useMemo(() => new Set(todaysEntries.map((e) => e.employerId)), [todaysEntries]);
+  const todaysHoursByEmployer = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const e of todaysEntries) map.set(e.employerId, (map.get(e.employerId) ?? 0) + entryHours(e));
+    return map;
+  }, [todaysEntries]);
 
   const todaysIncomeByCurrency = useMemo(() => {
     const map = new Map<string, number>();
@@ -188,38 +194,6 @@ export function HomePage({ uid }: { uid: string }) {
         </div>
       )}
 
-      {!simpleMode && animal && (
-        <div className="pet-card">
-          <div className="pet-card-avatar" style={{ transform: `scale(${petStage.scale})` }}>
-            <AvatarBadge animal={animal} mbti={mbti} size={56} accessory={petStage.accessory} dim={petHungry} />
-          </div>
-          <div className="pet-card-info">
-            <div className="pet-card-headline">
-              <span className="pet-card-title">{t("petCardTitle")}</span>
-              <span className="pet-card-stage">{t(petStage.nameKey)}</span>
-            </div>
-            <div className="pet-card-track">
-              <span
-                className="pet-card-fill"
-                style={{
-                  width: nextPetStage
-                    ? `${Math.min(100, Math.round(((totalHours - petStage.threshold) / (nextPetStage.threshold - petStage.threshold)) * 100))}%`
-                    : "100%",
-                }}
-              />
-            </div>
-            <p className="pet-card-caption">
-              {nextPetStage
-                ? t("petFeedProgress", { h: (nextPetStage.threshold - totalHours).toFixed(0) })
-                : t("petMaxStage")}
-            </p>
-            <p className={petHungry ? "pet-card-mood hungry" : "pet-card-mood"}>
-              {lastFedAt == null ? t("petNeverFedCaption") : petHungry ? t("petHungryCaption", { h: hungryHours }) : t("petFedCaption")}
-            </p>
-          </div>
-        </div>
-      )}
-
       {employers.length > 0 ? (
         <>
           {!simpleMode && workingCount >= 2 && (
@@ -283,7 +257,15 @@ export function HomePage({ uid }: { uid: string }) {
                     {active ? t("clockOut") : t("clockIn")}
                   </button>
                 </div>
-                {!active && (
+                {!active && employerIdsWithEntryToday.has(emp.id) && (
+                  <div className="retro-btn done-today">
+                    <svg viewBox="0 0 24 24" fill="none" width="13" height="13">
+                      <path d="M5 13l4 4 10-10" stroke="#39C97A" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    {t("doneToday", { h: (todaysHoursByEmployer.get(emp.id) ?? 0).toFixed(1) })}
+                  </div>
+                )}
+                {!active && !employerIdsWithEntryToday.has(emp.id) && (
                   <button type="button" className="retro-btn" onClick={() => setRetroEmployer(emp)}>
                     <svg viewBox="0 0 24 24" fill="none" width="13" height="13">
                       <circle cx="12" cy="13" r="8" stroke="#8A8272" strokeWidth="1.8" />
@@ -309,6 +291,25 @@ export function HomePage({ uid }: { uid: string }) {
           <p>{t("noEmployersHint")}</p>
           <Link className="empty-cta" to="/employers/new">{t("addFirstEmployer")}</Link>
         </div>
+      )}
+
+      {!simpleMode && animal && (
+        <CompanionWidget
+          animal={animal}
+          mbti={mbti}
+          stageNameKey={petStage.nameKey}
+          stageAccessory={petStage.accessory}
+          hungry={petHungry}
+          progressPct={
+            nextPetStage
+              ? Math.min(100, Math.round(((totalHours - petStage.threshold) / (nextPetStage.threshold - petStage.threshold)) * 100))
+              : 100
+          }
+          progressCaptionKey={nextPetStage ? "petFeedProgress" : "petMaxStage"}
+          progressCaptionVars={nextPetStage ? { h: (nextPetStage.threshold - totalHours).toFixed(0) } : undefined}
+          moodCaptionKey={lastFedAt == null ? "petNeverFedCaption" : petHungry ? "petHungryCaption" : "petFedCaption"}
+          moodCaptionVars={petHungry && lastFedAt != null ? { h: hungryHours } : undefined}
+        />
       )}
 
       {employers.length > 0 && (
