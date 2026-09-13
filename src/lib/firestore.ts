@@ -126,3 +126,11 @@ export async function addManualEntries(uid: string, entries: Omit<TimeEntry, "id
   }
   await batch.commit();
 }
+
+export async function deleteTimeEntries(uid: string, entryIds: string[]) {
+  const batch = writeBatch(db);
+  for (const id of entryIds) {
+    batch.delete(doc(timeEntriesCol(uid), id));
+  }
+  await batch.commit();
+}

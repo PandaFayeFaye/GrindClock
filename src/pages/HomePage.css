@@ -216,9 +216,9 @@
   right: 24px;
   bottom: 100px;
   display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse;
   align-items: flex-end;
-  gap: 10px;
+  gap: 12px;
 }
 
 .fab-menu-item {

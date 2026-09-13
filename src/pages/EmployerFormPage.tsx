@@ -192,6 +192,7 @@ export function EmployerFormPage({ uid }: { uid: string }) {
       ...(defaultAdjustments.length > 0 ? { defaultAdjustments } : {}),
       ...(note.trim() ? { note: note.trim() } : {}),
     };
+    try {
     if (isEdit && employerId) {
       await updateEmployer(uid, employerId, data);
       setSaving(false);
@@ -201,6 +202,11 @@ export function EmployerFormPage({ uid }: { uid: string }) {
       setSaving(false);
       setJustSaved(true);
       setTimeout(() => navigate("/"), 1400);
+    }
+    } catch (err) {
+      console.error("Failed to save employer", err);
+      setSaving(false);
+      window.alert(err instanceof Error ? err.message : String(err));
     }
   }
 
@@ -319,8 +325,14 @@ export function EmployerFormPage({ uid }: { uid: string }) {
                       className={`ws-daybtn${on ? " on" : ""}`}
                       onClick={() => setFixedSchedule((prev) => {
                         const next = { ...prev };
-                        if (on) delete next[d.key];
-                        else next[d.key] = { start: "09:00", end: "18:00" };
+                        if (on) {
+                          delete next[d.key];
+                        } else {
+                          // Default a newly-enabled day to whatever time is already set on
+                          // another day, so the user isn't re-picking the same hours every time.
+                          const existing = Object.values(prev ?? {})[0];
+                          next[d.key] = existing ? { ...existing } : { start: "09:00", end: "18:00" };
+                        }
                         return next;
                       })}
                     >

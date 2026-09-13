@@ -113,10 +113,10 @@
   min-height: 44px;
   text-decoration: none;
   color: inherit;
-  border-bottom: 1px solid var(--border-quiet);
+  box-shadow: inset 0 -1px 0 var(--border-quiet);
 }
 
-.nav-row:last-child { border-bottom: none; }
+.nav-row:last-child { box-shadow: none; }
 .nav-row .t { flex: 1; font-size: 13.5px; font-weight: 800; }
 
 .row-icon {
@@ -170,11 +170,11 @@
   gap: 12px;
   padding: 13px 14px;
   min-height: 52px;
-  border-bottom: 1px solid var(--border-quiet);
+  box-shadow: inset 0 -1px 0 var(--border-quiet);
 }
 
 .toggle-row:last-child {
-  border-bottom: none;
+  box-shadow: none;
 }
 
 .toggle-label {
