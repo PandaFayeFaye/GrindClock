@@ -66,7 +66,7 @@ function App() {
               <Route path="/employers/:employerId" element={<EmployerFormPage uid={user.uid} />} />
               <Route path="/entries/new" element={<BackfillEntryPage uid={user.uid} />} />
               <Route path="/stats" element={<StatsPage uid={user.uid} />} />
-              <Route path="/settings" element={<SettingsPage uid={user.uid} />} />
+              <Route path="/settings" element={<SettingsPage uid={user.uid} user={user} />} />
               <Route path="/net-pay" element={<NetPayComparePage uid={user.uid} />} />
               <Route path="/team" element={<TeamRosterPage uid={user.uid} />} />
               <Route path="/workers/new" element={<AddWorkerFormPage uid={user.uid} />} />

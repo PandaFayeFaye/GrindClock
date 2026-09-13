@@ -256,3 +256,8 @@
   font-size: 13.5px;
   margin-top: 4px;
 }
+
+.delete-entry-btn.confirming {
+  background: var(--accent-coral);
+  color: #fff;
+}

@@ -123,6 +123,7 @@ const dict = {
   adjNotePlaceholder: { zh: "备注", en: "Note" },
   addOneRule: { zh: "+ 添加一条", en: "+ Add one" },
   deleteEntry: { zh: "删除这条记录", en: "Delete this entry" },
+  confirmDeleteEntry: { zh: "再点一次，确认删除", en: "Tap again to confirm delete" },
 
   // ---- Employer form ----
   addEmployerTitle: { zh: "添加雇主", en: "Add employer" },
@@ -290,6 +291,53 @@ const dict = {
   idleLabel: { zh: "摸鱼", en: "idle" },
   actualRateLabel: { zh: "实际时薪", en: "Actual rate" },
   notEnoughDataYet: { zh: "还没有工时记录，先去打个卡吧", en: "No hours logged yet -- go clock in first" },
+
+  // ---- Settings profile card ----
+  setNicknamePlaceholder: { zh: "点这里，给自己起个称呼吧", en: "Tap here to set a nickname" },
+  streakDaysShort: { zh: "连续{n}天", en: "{n}-day streak" },
+  viewBadgeWallArrow: { zh: "成就墙 →", en: "Badges →" },
+
+  // ---- Mood curve ----
+  weekdaySun: { zh: "日", en: "Su" },
+  weekdayMon: { zh: "一", en: "Mo" },
+  weekdayTue: { zh: "二", en: "Tu" },
+  weekdayWed: { zh: "三", en: "We" },
+  weekdayThu: { zh: "四", en: "Th" },
+  weekdayFri: { zh: "五", en: "Fr" },
+  weekdaySat: { zh: "六", en: "Sa" },
+  noMoodYet: { zh: "这天还没记心情", en: "No mood logged this day" },
+  moodNoteLabel: { zh: "留言：{note}", en: "Note: {note}" },
+  companionCrash: { zh: "感觉很累的话，记得也要对自己好一点", en: "If you're feeling wiped out, be kind to yourself too" },
+  companionNormal: { zh: "平平淡淡的一天，也是稳稳的幸福", en: "An ordinary day is its own quiet win" },
+  companionGreat: { zh: "状态不错，保持住这股劲儿！", en: "You're on a roll -- keep that energy up!" },
+  companionHeartbeat: { zh: "心动的感觉，值得被好好记住", en: "That spark is worth remembering" },
+  companionEmpty: { zh: "记录一下今天的心情吧，打卡时就能填", en: "Log today's mood next time you punch in" },
+
+  // ---- Team roster ----
+  teamTitle: { zh: "团队", en: "Team" },
+  leadModePill: { zh: "组长模式", en: "Lead mode" },
+  teamIsolationNote: {
+    zh: "这里记录的工时归属于被代记录人，和你自己的个人打工记录完全分开统计，不会混进你的首页数据",
+    en: "Hours logged here belong to the person you're logging for -- fully separate from your own records, never mixed into your Home data",
+  },
+  teamWeekHoursLabel: { zh: "团队本周总工时", en: "Team hours this week" },
+  teamWeekPayLabel: { zh: "团队本周总收入", en: "Team pay this week" },
+  todayWeekHoursFmt: { zh: "今日 {today}h · 本周 {week}h", en: "Today {today}h · Week {week}h" },
+  logOneEntry: { zh: "+ 记一笔", en: "+ Log one" },
+  teamEmptyHint: { zh: "还没有需要代记录的人？点击右下角添加第一位", en: "Nobody to log for yet? Add the first one in the corner" },
+
+  // ---- Add worker form ----
+  addWorkerTitle: { zh: "添加代记录人", en: "Add a worker" },
+  workerNameLabel: { zh: "姓名", en: "Name" },
+  workerNamePlaceholder: { zh: "比如：小王", en: "e.g. Alex" },
+  workerDefaultRateLabel: { zh: "默认时薪（可选）", en: "Default hourly rate (optional)" },
+  workerNoteLabel: { zh: "备注（可选）", en: "Note (optional)" },
+  workerNotePlaceholder: { zh: "工种、联系方式之类都可以写这里", en: "Job type, contact info, whatever's useful" },
+  workerIsolationInfo: {
+    zh: "这个人的工时记录会完全独立统计，不会出现在你自己的首页/统计页数据里",
+    en: "This person's hours are tracked completely separately -- they'll never appear in your own Home/Stats data",
+  },
+  addWorkerSaveBtn: { zh: "保存", en: "Save" },
 
   statsTitle: { zh: "统计", en: "Stats" },
   rangeToday: { zh: "今日", en: "Today" },

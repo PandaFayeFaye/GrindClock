@@ -47,12 +47,19 @@ const MOOD_PRIORITY: Mood[] = ["crash", "heartbeat", "great", "normal"];
 /** One representative mood per day (worst/most-notable wins when several entries share a day). */
 export function moodByDay(entries: TimeEntry[]): Map<string, Mood> {
   const map = new Map<string, Mood>();
+  for (const [key, detail] of moodDetailByDay(entries)) map.set(key, detail.mood);
+  return map;
+}
+
+/** Same picking rule as moodByDay, but also carries that entry's note (if any) for detail views. */
+export function moodDetailByDay(entries: TimeEntry[]): Map<string, { mood: Mood; note?: string }> {
+  const map = new Map<string, { mood: Mood; note?: string }>();
   for (const e of entries) {
     if (!isConfirmedPersonal(e) || !e.mood) continue;
     const key = dateKey(e.startTime);
     const existing = map.get(key);
-    if (!existing || MOOD_PRIORITY.indexOf(e.mood) < MOOD_PRIORITY.indexOf(existing)) {
-      map.set(key, e.mood);
+    if (!existing || MOOD_PRIORITY.indexOf(e.mood) < MOOD_PRIORITY.indexOf(existing.mood)) {
+      map.set(key, { mood: e.mood, note: e.moodNote });
     }
   }
   return map;

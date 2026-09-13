@@ -121,11 +121,91 @@
   margin: 0 0 12px;
 }
 
-.mood-strip { display: flex; gap: 8px; }
-.mood-cell { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; }
-.mood-chip { width: 100%; aspect-ratio: 1; border-radius: 50%; border: 2px solid var(--border-bold); }
-.mood-chip.empty { border: 1.5px dashed var(--border-quiet); }
-.mood-cell .lb { font-size: 9px; color: var(--text-muted); font-weight: 700; }
+.mood-curve {
+  position: relative;
+  height: 110px;
+  margin: 4px 4px 26px;
+}
+
+.mood-curve-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.mood-point {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  margin-left: -13px;
+  margin-top: -13px;
+  border: none;
+  background: var(--bg-surface);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1.5px 0 rgba(26, 26, 26, 0.25);
+  transition: transform 0.15s ease;
+}
+
+.mood-point:active { transform: scale(0.9); }
+
+.mood-point.empty {
+  background: none;
+  box-shadow: none;
+}
+
+.mood-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1.5px dashed var(--border-quiet);
+}
+
+.mood-x-labels {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -18px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.mood-x-labels span {
+  font-size: 9px;
+  color: var(--text-muted);
+  font-weight: 700;
+  width: 26px;
+  text-align: center;
+}
+
+.mood-callout {
+  margin-top: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-base);
+  border: 1.5px dashed var(--border-quiet);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.mood-callout p {
+  font-size: 12px;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.mood-companion {
+  margin: 0;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  text-align: center;
+  font-weight: 700;
+}
 
 .viz-tabs { display: flex; gap: 6px; }
 .viz-tab {

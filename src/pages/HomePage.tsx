@@ -80,7 +80,12 @@ export function HomePage({ uid }: { uid: string }) {
 
   function handleRetroConfirm(startTime: number) {
     if (!retroEmployer) return;
-    clockIn(uid, retroEmployer.id, undefined, startTime);
+    // Re-check against the live active map, not just the state captured when the
+    // button was tapped -- another tab/device could have clocked this employer in
+    // while the modal sat open, and same-employer double clock-ins are disallowed.
+    if (!activeByEmployer.has(retroEmployer.id)) {
+      clockIn(uid, retroEmployer.id, undefined, startTime);
+    }
     setRetroEmployer(null);
   }
 

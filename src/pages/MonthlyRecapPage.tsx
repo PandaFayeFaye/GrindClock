@@ -9,6 +9,8 @@ import { useLang, useT } from "../lib/i18n";
 import type { Employer, TimeEntry } from "../lib/types";
 import "./MonthlyRecapPage.css";
 
+const EN_MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
 export function MonthlyRecapPage({ uid }: { uid: string }) {
   const t = useT();
   const { lang } = useLang();
@@ -46,9 +48,7 @@ export function MonthlyRecapPage({ uid }: { uid: string }) {
   const topEmployer = board[0]?.employer.name ?? "—";
   const streak = useMemo(() => currentStreak(entries), [entries]);
 
-  const monthNames = lang === "en"
-    ? ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
-    : null;
+  const monthNames = lang === "en" ? EN_MONTH_NAMES : null;
 
   const hardestDay = useMemo(() => {
     const crashEntry = monthEntries.find((e) => e.mood === "crash");

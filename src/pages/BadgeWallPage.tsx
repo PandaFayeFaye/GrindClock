@@ -6,20 +6,13 @@ import { consecutiveWeeksMeetingGoal, currentStreak, dateKey } from "../lib/stat
 import { useWeeklyGoal } from "../lib/settings";
 import { DEFAULT_CURRENCY, currencySymbol } from "../lib/currency";
 import { Mascot } from "../components/Mascot";
-import { useT, type DictKey } from "../lib/i18n";
+import { useT } from "../lib/i18n";
+import { TIERS, currentTierIndex } from "../lib/tiers";
 import type { Employer, TimeEntry } from "../lib/types";
 import "./BadgeWallPage.css";
 
 // Zigzag x-position (% of track width) for each path node, Duolingo-style.
 const PATH_X = [50, 22, 78, 22, 78, 50];
-
-const TIERS: { nameKey: DictKey; threshold: number }[] = [
-  { nameKey: "tierNewbie", threshold: 0 },
-  { nameKey: "tierSlacker", threshold: 10 },
-  { nameKey: "tierGrinder", threshold: 50 },
-  { nameKey: "tierGrindCandidate", threshold: 200 },
-  { nameKey: "tierKing", threshold: 500 },
-];
 
 interface Badge {
   name: string;
@@ -46,7 +39,7 @@ export function BadgeWallPage({ uid }: { uid: string }) {
   );
   const totalHours = personalConfirmed.reduce((s, e) => s + entryHours(e), 0);
 
-  const currentTierIdx = TIERS.reduce((idx, tier, i) => (totalHours >= tier.threshold ? i : idx), 0);
+  const currentTierIdx = currentTierIndex(totalHours);
   const currentTier = TIERS[currentTierIdx];
   const nextTier = TIERS[currentTierIdx + 1];
   const progressPct = nextTier

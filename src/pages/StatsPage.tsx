@@ -3,19 +3,56 @@ import { Link, useNavigate } from "react-router-dom";
 import { watchEmployers, watchTimeEntries } from "../lib/firestore";
 import { entryHours, entryPay, lumpSumAllTime, lumpSumForPeriod } from "../lib/pay";
 import { DEFAULT_CURRENCY, currencySymbol, formatGroupedPay } from "../lib/currency";
-import { currentStreak, dateKey, leaderboard, moodByDay, payByDay, startOfMonth, startOfWeek } from "../lib/stats";
+import { currentStreak, dateKey, leaderboard, moodDetailByDay, payByDay, startOfMonth, startOfWeek } from "../lib/stats";
 import { useWeeklyGoal } from "../lib/settings";
 import { exportEntriesCsv } from "../lib/exportCsv";
 import { useLang, useT } from "../lib/i18n";
 import type { Employer, Mood, TimeEntry } from "../lib/types";
 import "./StatsPage.css";
 
-const MOOD_COLORS: Record<Mood, string> = {
-  crash: "#5AC8FA",
-  normal: "#FFFFFF",
-  great: "#FFD93D",
-  heartbeat: "#FF6B6B",
-};
+// Higher mood = higher up the chart (smaller y%, since SVG y grows downward).
+const MOOD_Y: Record<Mood, number> = { crash: 78, normal: 52, great: 28, heartbeat: 10 };
+const MOOD_COLOR: Record<Mood, string> = { crash: "#5AC8FA", normal: "#B9AC9C", great: "#FFD93D", heartbeat: "#FF6B6B" };
+
+function MoodIcon({ mood, size = 18 }: { mood: Mood; size?: number }) {
+  const c = MOOD_COLOR[mood];
+  if (mood === "crash") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" width={size} height={size}>
+        <circle cx="12" cy="12" r="9.5" fill={c} stroke="#1A1A1A" strokeWidth="1.6" />
+        <path d="M8.5 15.5c1-1.3 2.2-2 3.5-2s2.5.7 3.5 2" stroke="#1A1A1A" strokeWidth="1.6" strokeLinecap="round" />
+        <circle cx="9" cy="10" r="1.1" fill="#1A1A1A" />
+        <circle cx="15" cy="10" r="1.1" fill="#1A1A1A" />
+      </svg>
+    );
+  }
+  if (mood === "normal") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" width={size} height={size}>
+        <circle cx="12" cy="12" r="9.5" fill={c} stroke="#1A1A1A" strokeWidth="1.6" />
+        <path d="M8.5 14.5h7" stroke="#1A1A1A" strokeWidth="1.6" strokeLinecap="round" />
+        <circle cx="9" cy="10" r="1.1" fill="#1A1A1A" />
+        <circle cx="15" cy="10" r="1.1" fill="#1A1A1A" />
+      </svg>
+    );
+  }
+  if (mood === "great") {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" width={size} height={size}>
+        <circle cx="12" cy="12" r="9.5" fill={c} stroke="#1A1A1A" strokeWidth="1.6" />
+        <path d="M8.5 13c1 1.3 2.2 2 3.5 2s2.5-.7 3.5-2" stroke="#1A1A1A" strokeWidth="1.6" strokeLinecap="round" />
+        <path d="M8.7 9.5l.9.9M15.3 9.5l-.9.9" stroke="#1A1A1A" strokeWidth="1.6" strokeLinecap="round" />
+      </svg>
+    );
+  }
+  return (
+    <svg viewBox="0 0 24 24" fill="none" width={size} height={size}>
+      <path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0112 6.5a4.3 4.3 0 017.5 3.3C19.5 15.4 12 20 12 20z" fill={c} stroke="#1A1A1A" strokeWidth="1.6" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+const WEEKDAY_KEYS = ["weekdaySun", "weekdayMon", "weekdayTue", "weekdayWed", "weekdayThu", "weekdayFri", "weekdaySat"] as const;
 
 type Viz = "trend" | "calendar" | "rank";
 type RangeKey = "today" | "week" | "month" | "all";
@@ -104,19 +141,31 @@ export function StatsPage({ uid }: { uid: string }) {
     return map;
   }, [filteredEntries, employerById, range, visibleEmployers, personalConfirmed]);
 
-  // ---- Mood strip: last 7 days ----
-  const moodMap = useMemo(() => moodByDay(personalConfirmed), [personalConfirmed]);
+  // ---- Mood curve: last 7 days ----
+  const moodDetailMap = useMemo(() => moodDetailByDay(personalConfirmed), [personalConfirmed]);
   const last7Days = useMemo(() => {
-    const days: { key: string; label: string; mood?: Mood }[] = [];
-    const weekdayLabels = ["日", "一", "二", "三", "四", "五", "六"];
+    const days: { key: string; label: string; mood?: Mood; note?: string }[] = [];
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const key = dateKey(d.getTime());
-      days.push({ key, label: weekdayLabels[d.getDay()], mood: moodMap.get(key) });
+      const detail = moodDetailMap.get(key);
+      days.push({ key, label: t(WEEKDAY_KEYS[d.getDay()]), mood: detail?.mood, note: detail?.note });
     }
     return days;
-  }, [moodMap]);
+  }, [moodDetailMap, t]);
+  const [selectedMoodDay, setSelectedMoodDay] = useState<string | null>(null);
+  const moodPoints = last7Days
+    .map((d, i) => ({ ...d, x: (i / 6) * 100, y: d.mood ? MOOD_Y[d.mood] : null }))
+    .filter((d): d is typeof d & { y: number } => d.y !== null);
+  const moodLinePath = moodPoints.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ");
+  const moodAreaPath = moodPoints.length > 1
+    ? `${moodLinePath} L${moodPoints[moodPoints.length - 1].x},100 L${moodPoints[0].x},100 Z`
+    : "";
+  const latestMoodDay = [...last7Days].reverse().find((d) => d.mood);
+  const companionKey = latestMoodDay
+    ? ({ crash: "companionCrash", normal: "companionNormal", great: "companionGreat", heartbeat: "companionHeartbeat" } as const)[latestMoodDay.mood!]
+    : "companionEmpty";
 
   // ---- Trend: last 7 days bars ----
   const dailyPay = useMemo(() => payByDay(personalConfirmed, employerById), [personalConfirmed, employerById]);
@@ -219,14 +268,52 @@ export function StatsPage({ uid }: { uid: string }) {
 
       <div className="chart-card">
         <p className="title">{t("moodStripTitle")}</p>
-        <div className="mood-strip">
-          {last7Days.map((d) => (
-            <div className="mood-cell" key={d.key}>
-              <div className={`mood-chip${!d.mood ? " empty" : ""}`} style={{ background: d.mood ? MOOD_COLORS[d.mood] : undefined }} />
-              <span className="lb">{d.label}</span>
-            </div>
-          ))}
+        <div className="mood-curve">
+          <svg className="mood-curve-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="moodFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#FF6B6B" stopOpacity="0.28" />
+                <stop offset="100%" stopColor="#FF6B6B" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            {[10, 28, 52, 78].map((y) => (
+              <line key={y} x1="0" y1={y} x2="100" y2={y} stroke="rgba(26,26,26,0.06)" strokeWidth="1" />
+            ))}
+            {moodAreaPath && <path d={moodAreaPath} fill="url(#moodFill)" />}
+            {moodLinePath && <path d={moodLinePath} fill="none" stroke="#1A1A1A" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" opacity="0.55" />}
+          </svg>
+          {last7Days.map((d, i) => {
+            const x = (i / 6) * 100;
+            const y = d.mood ? MOOD_Y[d.mood] : 52;
+            return (
+              <button
+                key={d.key}
+                type="button"
+                className={`mood-point${d.mood ? "" : " empty"}`}
+                style={{ left: `${x}%`, top: `${y}%` }}
+                onClick={() => d.mood && setSelectedMoodDay(selectedMoodDay === d.key ? null : d.key)}
+              >
+                {d.mood ? <MoodIcon mood={d.mood} /> : <span className="mood-dot" />}
+              </button>
+            );
+          })}
+          <div className="mood-x-labels">
+            {last7Days.map((d) => <span key={d.key}>{d.label}</span>)}
+          </div>
         </div>
+
+        {selectedMoodDay && (() => {
+          const day = last7Days.find((d) => d.key === selectedMoodDay);
+          if (!day?.mood) return null;
+          return (
+            <div className="mood-callout">
+              <MoodIcon mood={day.mood} size={22} />
+              {day.note && <p>{t("moodNoteLabel", { note: day.note })}</p>}
+            </div>
+          );
+        })()}
+
+        <p className="mood-companion">{t(companionKey)}</p>
       </div>
 
       <div className="viz-tabs">

@@ -6,6 +6,7 @@ import {
   signInWithEmailLink,
   signInWithPhoneNumber,
   signOut,
+  updateProfile,
   type ConfirmationResult,
   type User,
 } from "firebase/auth";
@@ -19,6 +20,10 @@ export function watchAuth(callback: (user: User | null) => void) {
 
 export function logout() {
   return signOut(auth);
+}
+
+export function setNickname(user: User, nickname: string) {
+  return updateProfile(user, { displayName: nickname.trim().slice(0, 20) });
 }
 
 // ---- Phone number + SMS code (primary path for mainland China users) ----

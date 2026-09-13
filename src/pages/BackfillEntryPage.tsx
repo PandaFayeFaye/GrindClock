@@ -52,6 +52,7 @@ export function BackfillEntryPage({ uid }: { uid: string }) {
   const [adjustments, setAdjustments] = useState<Adjustment[]>([]);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [loadedEdit, setLoadedEdit] = useState(false);
   const [prefilledDefaults, setPrefilledDefaults] = useState(false);
 
@@ -146,6 +147,10 @@ export function BackfillEntryPage({ uid }: { uid: string }) {
 
   async function handleDelete() {
     if (!editId) return;
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
     setDeleting(true);
     await deleteTimeEntry(uid, editId);
     setDeleting(false);
@@ -298,8 +303,8 @@ export function BackfillEntryPage({ uid }: { uid: string }) {
         </div>
 
         {editId && (
-          <button className="delete-entry-btn" onClick={handleDelete} disabled={deleting}>
-            {t("deleteEntry")}
+          <button className={`delete-entry-btn${confirmDelete ? " confirming" : ""}`} onClick={handleDelete} disabled={deleting}>
+            {confirmDelete ? t("confirmDeleteEntry") : t("deleteEntry")}
           </button>
         )}
       </div>
