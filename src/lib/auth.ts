@@ -23,14 +23,33 @@ export function logout() {
 
 // ---- Phone number + SMS code (primary path for mainland China users) ----
 
+// Firebase throws "reCAPTCHA has already been rendered in this element" if a
+// second RecaptchaVerifier is created against the same DOM node -- the widget
+// from a first attempt (even a failed one) is still attached. Reuse one
+// verifier per container instead of creating a fresh one on every call.
+const recaptchaVerifiers = new Map<string, RecaptchaVerifier>();
+
+function getRecaptchaVerifier(containerId: string): RecaptchaVerifier {
+  let verifier = recaptchaVerifiers.get(containerId);
+  if (!verifier) {
+    verifier = new RecaptchaVerifier(auth, containerId, { size: "invisible" });
+    recaptchaVerifiers.set(containerId, verifier);
+  }
+  return verifier;
+}
+
 export function sendPhoneOtp(
   phoneNumber: string,
   recaptchaContainerId: string,
 ): Promise<ConfirmationResult> {
-  const verifier = new RecaptchaVerifier(auth, recaptchaContainerId, {
-    size: "invisible",
+  const verifier = getRecaptchaVerifier(recaptchaContainerId);
+  return signInWithPhoneNumber(auth, phoneNumber, verifier).catch((err) => {
+    // A failed attempt can leave the widget in a bad state -- drop it so the
+    // next click builds a fresh one instead of erroring on "already rendered".
+    verifier.clear();
+    recaptchaVerifiers.delete(recaptchaContainerId);
+    throw err;
   });
-  return signInWithPhoneNumber(auth, phoneNumber, verifier);
 }
 
 export function confirmPhoneOtp(confirmation: ConfirmationResult, code: string) {
