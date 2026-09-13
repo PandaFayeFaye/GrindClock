@@ -6,6 +6,7 @@
 .login-screen {
   text-align: center;
   padding: 76px 28px 40px;
+  width: 100%;
   max-width: 480px;
   margin: 0 auto;
 }
