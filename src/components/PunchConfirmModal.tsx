@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { Adjustment, Employer, Mood, TimeEntry } from "../lib/types";
 import { entryHours, entryPay } from "../lib/pay";
 import { currencySymbol } from "../lib/currency";
+import { scheduleDurationHours, todaysSchedule } from "../lib/schedule";
 import { useT } from "../lib/i18n";
 import "./PunchConfirmModal.css";
 
@@ -30,6 +31,7 @@ export function PunchConfirmModal({
     isHoliday: boolean,
     orderCount: number | undefined,
     endTime: number,
+    overtimeHours: number | undefined,
   ) => void;
 }) {
   const t = useT();
@@ -55,6 +57,16 @@ export function PunchConfirmModal({
   const showRateFlags = employer.overtimeMultiplier !== undefined || employer.holidayMultiplier !== undefined || employer.payType === "base+overtime";
   const isPerOrder = employer.payType === "per-order";
 
+  // Auto-detect overtime for a fixed-schedule salaried employee: hours worked
+  // beyond that day's scheduled duration. Only applies to pay types where the
+  // rate is actually derived from hours (monthly needs a fixed schedule to
+  // even have an hourly rate at all; comprehensive already has one).
+  const schedule = todaysSchedule(employer, new Date(entry.startTime));
+  const scheduledHours = schedule ? scheduleDurationHours(schedule) : 0;
+  const supportsAutoOvertime = schedule !== null && (employer.payType === "monthly" || employer.payType === "comprehensive");
+  const [overtimeHoursStr, setOvertimeHoursStr] = useState("");
+  const [overtimeTouched, setOvertimeTouched] = useState(false);
+
   // Anchor the edited end time to the shift's start date -- if it lands before the
   // start (e.g. shift started at 22:00, "end time" typed as 06:00), it must mean the
   // next day, not a negative-duration shift.
@@ -66,6 +78,13 @@ export function PunchConfirmModal({
     return Math.min(candidate, Date.now());
   })();
 
+  const hours = entryHours({ ...entry, endTime: computedEndTime });
+  const detectedOvertimeHours = supportsAutoOvertime ? Math.max(0, hours - scheduledHours) : 0;
+  const showOvertimeSection = supportsAutoOvertime && detectedOvertimeHours > 0.05;
+  const overtimeHours = showOvertimeSection
+    ? Number(overtimeTouched ? overtimeHoursStr : detectedOvertimeHours.toFixed(1)) || 0
+    : undefined;
+
   const previewEntry: TimeEntry = {
     ...entry,
     endTime: computedEndTime,
@@ -73,8 +92,8 @@ export function PunchConfirmModal({
     isOvertime,
     isHoliday,
     orderCount: isPerOrder ? Number(orderCount) || 0 : entry.orderCount,
+    overtimeHours,
   };
-  const hours = entryHours(previewEntry);
   const pay = entryPay(employer, previewEntry);
 
   return (
@@ -150,6 +169,28 @@ export function PunchConfirmModal({
           </div>
         )}
 
+        {showOvertimeSection && (
+          <div className="overtime-detected">
+            <p className="section-label">{t("overtimeDetectedTitle")}</p>
+            <p className="overtime-detected-note">
+              {t("overtimeDetectedNote", { scheduled: scheduledHours.toFixed(1), worked: hours.toFixed(1) })}
+            </p>
+            <div className="overtime-detected-row">
+              <input
+                className="adj-input"
+                type="number"
+                step="0.1"
+                value={overtimeTouched ? overtimeHoursStr : detectedOvertimeHours.toFixed(1)}
+                onChange={(e) => { setOvertimeTouched(true); setOvertimeHoursStr(e.target.value); }}
+              />
+              <span className="overtime-detected-unit">{t("overtimeHoursUnit")}</span>
+            </div>
+            <p className="overtime-detected-mult">
+              {t("overtimeMultiplierNote", { mult: (employer.overtimeMultiplier ?? 1.5).toFixed(1) })}
+            </p>
+          </div>
+        )}
+
         <div>
           <p className="section-label">
             {t("oneTimeAdjustment")}<span className="opt">{t("optionalOnce")}</span>
@@ -193,6 +234,7 @@ export function PunchConfirmModal({
             isHoliday,
             isPerOrder ? Number(orderCount) || 0 : undefined,
             computedEndTime,
+            overtimeHours,
           )}
         >
           {t("confirmSave")}

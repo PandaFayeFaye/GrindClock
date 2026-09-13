@@ -81,6 +81,7 @@ export function clockOut(
     isOvertime?: boolean;
     isHoliday?: boolean;
     orderCount?: number;
+    overtimeHours?: number;
   },
   endTime = Date.now(),
 ) {

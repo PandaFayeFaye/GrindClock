@@ -122,6 +122,66 @@
   color: #fff;
 }
 
+.bws-hint {
+  font-size: 10.5px;
+  color: var(--text-muted);
+  margin: -4px 0 8px;
+}
+
+.bws-schedule {
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-quiet);
+  border-radius: 12px;
+  padding: 10px 12px;
+}
+
+.bws-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+}
+
+.bws-daybtn {
+  width: 40px;
+  flex-shrink: 0;
+  padding: 6px 0;
+  border-radius: 8px;
+  border: 1.8px solid var(--border-quiet);
+  background: var(--bg-base);
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--text-muted);
+}
+
+.bws-daybtn.on {
+  border-color: var(--border-bold);
+  background: var(--accent-blue);
+  color: #fff;
+}
+
+.bws-times {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+}
+
+.bws-times input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1.5px solid var(--border-quiet);
+  border-radius: 8px;
+  font-size: 12px;
+  background: var(--bg-base);
+}
+
+.bws-times span {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
 .batch-preview {
   text-align: center;
   font-size: 12.5px;

@@ -11,6 +11,8 @@ function toDateInputValue(d: Date) {
   return d.toISOString().slice(0, 10);
 }
 
+type DayTimes = Partial<Record<WeekdayKey, { start: string; end: string }>>;
+
 export function BatchBackfillPage({ uid }: { uid: string }) {
   const t = useT();
   const navigate = useNavigate();
@@ -29,19 +31,40 @@ export function BatchBackfillPage({ uid }: { uid: string }) {
   const today = toDateInputValue(new Date());
   const [rangeStart, setRangeStart] = useState(today);
   const [rangeEnd, setRangeEnd] = useState(today);
-  const [activeDays, setActiveDays] = useState<Set<WeekdayKey>>(new Set(["1", "2", "3", "4", "5"]));
-  const [startTime, setStartTime] = useState("09:00");
-  const [endTime, setEndTime] = useState("18:00");
+  const [dayTimes, setDayTimes] = useState<DayTimes>({
+    "1": { start: "09:00", end: "18:00" },
+    "2": { start: "09:00", end: "18:00" },
+    "3": { start: "09:00", end: "18:00" },
+    "4": { start: "09:00", end: "18:00" },
+    "5": { start: "09:00", end: "18:00" },
+  });
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
+  const activeDays = useMemo(() => new Set(Object.keys(dayTimes) as WeekdayKey[]), [dayTimes]);
+
   function toggleDay(key: WeekdayKey) {
-    setActiveDays((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key); else next.add(key);
+    setDayTimes((prev) => {
+      const next = { ...prev };
+      if (next[key]) {
+        delete next[key];
+      } else {
+        // Default a newly-enabled day to whatever time is already set on
+        // another day, so the user isn't re-picking the same hours every time.
+        const existing = Object.values(prev)[0];
+        next[key] = existing ? { ...existing } : { start: "09:00", end: "18:00" };
+      }
       return next;
     });
     setConfirmDelete(false);
+  }
+
+  function setDayTime(key: WeekdayKey, field: "start" | "end", value: string) {
+    setDayTimes((prev) => {
+      const day = prev[key];
+      if (!day) return prev;
+      return { ...prev, [key]: { ...day, [field]: value } };
+    });
   }
 
   const matchingDateKeys = useMemo(() => {
@@ -75,8 +98,9 @@ export function BatchBackfillPage({ uid }: { uid: string }) {
     if (!employerIdOrFirst || matchingDates.length === 0) return;
     setSaving(true);
     const newEntries: Omit<TimeEntry, "id">[] = matchingDates.map((date) => {
-      const start = combineDateAndTime(date, startTime);
-      let end = combineDateAndTime(date, endTime);
+      const day = dayTimes[String(date.getDay()) as WeekdayKey]!;
+      const start = combineDateAndTime(date, day.start);
+      let end = combineDateAndTime(date, day.end);
       if (end <= start) end += 24 * 3_600_000;
       return {
         employerId: employerIdOrFirst,
@@ -158,30 +182,48 @@ export function BatchBackfillPage({ uid }: { uid: string }) {
           </div>
         </div>
 
-        <div>
-          <p className="field-label">{t("workdaysLabel")}</p>
-          <div className="weekday-chip-row">
-            {WEEKDAYS.map((d) => (
-              <button
-                key={d.key}
-                type="button"
-                className={`weekday-chip${activeDays.has(d.key) ? " selected" : ""}`}
-                onClick={() => toggleDay(d.key)}
-              >
-                {t(d.labelKey)}
-              </button>
-            ))}
+        {mode === "delete" && (
+          <div>
+            <p className="field-label">{t("workdaysLabel")}</p>
+            <div className="weekday-chip-row">
+              {WEEKDAYS.map((d) => (
+                <button
+                  key={d.key}
+                  type="button"
+                  className={`weekday-chip${activeDays.has(d.key) ? " selected" : ""}`}
+                  onClick={() => toggleDay(d.key)}
+                >
+                  {t(d.labelKey)}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
 
         {mode === "create" && (
           <>
             <div>
               <p className="field-label">{t("batchTimeLabel")}</p>
-              <div className="time-range-row">
-                <input className="date-field" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
-                <span>-</span>
-                <input className="date-field" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+              <p className="bws-hint">{t("batchPerDayTimeHint")}</p>
+              <div className="bws-schedule">
+                {WEEKDAYS.map((d) => {
+                  const day = dayTimes[d.key];
+                  const on = !!day;
+                  return (
+                    <div className="bws-row" key={d.key}>
+                      <button type="button" className={`bws-daybtn${on ? " on" : ""}`} onClick={() => toggleDay(d.key)}>
+                        {t(d.labelKey)}
+                      </button>
+                      {on && (
+                        <div className="bws-times">
+                          <input type="time" value={day.start} onChange={(e) => setDayTime(d.key, "start", e.target.value)} />
+                          <span>-</span>
+                          <input type="time" value={day.end} onChange={(e) => setDayTime(d.key, "end", e.target.value)} />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
             <p className="batch-preview">{t("batchPreviewCount", { n: matchingDates.length })}</p>

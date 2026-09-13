@@ -1,4 +1,5 @@
 import type { Adjustment, Employer, TimeEntry } from "./types";
+import { scheduleDurationHours } from "./schedule";
 
 export function entryHours(entry: TimeEntry, now = Date.now()): number {
   const end = entry.endTime ?? now;
@@ -24,10 +25,48 @@ function rateMultiplier(employer: Employer, entry: TimeEntry): number {
   return 1;
 }
 
+/**
+ * Splits an entry's hours into regular + overtime portions when
+ * `entry.overtimeHours` is set (the excess beyond a fixed daily schedule,
+ * detected at clock-out) -- the overtime portion pays at the employer's
+ * overtime multiplier (defaulting to a conventional 1.5x if the employer
+ * never configured one) regardless of the whole-entry `isOvertime` flag,
+ * which is a separate, coarser manual override.
+ */
+function payWithOvertimeSplit(hours: number, hourlyRate: number, employer: Employer, entry: TimeEntry): number {
+  const holidayMult = entry.isHoliday ? (employer.holidayMultiplier ?? 1) : 1;
+  if (entry.overtimeHours && entry.overtimeHours > 0) {
+    const ot = Math.min(entry.overtimeHours, hours);
+    const regular = hours - ot;
+    const otMult = employer.overtimeMultiplier ?? 1.5;
+    return (regular * hourlyRate + ot * hourlyRate * otMult) * holidayMult;
+  }
+  return hours * hourlyRate * rateMultiplier(employer, entry);
+}
+
 /** Hours actually paid for a shift: clocked duration minus the employer's unpaid break. */
 function payableHours(employer: Employer, entry: TimeEntry, now = Date.now()): number {
   const breakHours = (employer.breakMinutes ?? 0) / 60;
   return Math.max(0, entryHours(entry, now) - breakHours);
+}
+
+const AVG_WEEKS_PER_MONTH = 365.25 / 12 / 7; // ~4.348
+
+/**
+ * A monthly-salary employer with a fixed weekly schedule has an implied
+ * hourly rate -- deriving it lets each shift show a real (estimated) amount
+ * earned instead of a flat 0, which otherwise reads as "you earned nothing
+ * today" no matter how much was actually worked. Returns undefined when
+ * there's no schedule to derive weekly hours from (nothing to estimate).
+ */
+export function effectiveHourlyRate(employer: Employer): number | undefined {
+  if (employer.payType !== "monthly" || !employer.monthlySalary || !employer.fixedSchedule) return undefined;
+  const days = Object.values(employer.fixedSchedule);
+  if (days.length === 0) return undefined;
+  const weeklyHours = days.reduce((sum, day) => sum + scheduleDurationHours(day), 0);
+  if (weeklyHours <= 0) return undefined;
+  const monthlyHours = weeklyHours * AVG_WEEKS_PER_MONTH;
+  return employer.monthlySalary / monthlyHours;
 }
 
 export function entryPay(employer: Employer, entry: TimeEntry, now = Date.now()): number {
@@ -36,7 +75,7 @@ export function entryPay(employer: Employer, entry: TimeEntry, now = Date.now())
   switch (employer.payType) {
     case "hourly":
     case "comprehensive":
-      base = hours * (employer.hourlyRate ?? 0) * rateMultiplier(employer, entry);
+      base = payWithOvertimeSplit(hours, employer.hourlyRate ?? 0, employer, entry);
       break;
     case "daily":
       base = employer.dailyRate ?? 0;
@@ -51,9 +90,11 @@ export function entryPay(employer: Employer, entry: TimeEntry, now = Date.now())
         ? hours * (employer.hourlyRate ?? 0) * rateMultiplier(employer, entry)
         : 0;
       break;
-    case "monthly":
-      base = 0;
+    case "monthly": {
+      const rate = effectiveHourlyRate(employer);
+      base = rate !== undefined ? payWithOvertimeSplit(hours, rate, employer, entry) : 0;
       break;
+    }
   }
   return base + adjustmentTotal(entry.adjustment);
 }
@@ -70,6 +111,10 @@ function isConfirmedPersonalFor(employerId: string) {
  * shifts logged = nothing earned, even on a nominal salary).
  */
 export function lumpSumForPeriod(employer: Employer, periodEntries: TimeEntry[]): number {
+  // A monthly employer with a derivable hourly rate already has its salary
+  // spread across each shift via entryPay() -- adding the lump sum here too
+  // would double-count it.
+  if (employer.payType === "monthly" && effectiveHourlyRate(employer) !== undefined) return 0;
   const amount = employer.payType === "monthly" ? employer.monthlySalary ?? 0
     : employer.payType === "base+overtime" ? employer.baseSalary ?? 0
     : 0;
@@ -80,6 +125,7 @@ export function lumpSumForPeriod(employer: Employer, periodEntries: TimeEntry[])
 /** All-time version of lumpSumForPeriod: pays once per distinct calendar month
  * the employee logged at least one shift, since a monthly salary recurs monthly. */
 export function lumpSumAllTime(employer: Employer, entries: TimeEntry[]): number {
+  if (employer.payType === "monthly" && effectiveHourlyRate(employer) !== undefined) return 0;
   const amount = employer.payType === "monthly" ? employer.monthlySalary ?? 0
     : employer.payType === "base+overtime" ? employer.baseSalary ?? 0
     : 0;

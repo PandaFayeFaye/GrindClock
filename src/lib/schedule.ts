@@ -20,6 +20,15 @@ export function todaysSchedule(employer: Employer, now = new Date()): { start: s
   return employer.fixedSchedule?.[key] ?? null;
 }
 
+/** Duration in hours of a {start,end} "HH:MM" schedule entry, handling an overnight wrap. */
+export function scheduleDurationHours(day: { start: string; end: string }): number {
+  const [sh, sm] = day.start.split(":").map(Number);
+  const [eh, em] = day.end.split(":").map(Number);
+  let mins = (eh * 60 + em) - (sh * 60 + sm);
+  if (mins <= 0) mins += 24 * 60;
+  return mins / 60;
+}
+
 /** Combines a date with an "HH:MM" time string into an epoch ms timestamp, anchored to that date. */
 export function combineDateAndTime(date: Date, hhmm: string): number {
   const [h, m] = hhmm.split(":").map(Number);

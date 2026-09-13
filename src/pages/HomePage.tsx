@@ -175,6 +175,7 @@ export function HomePage({ uid }: { uid: string }) {
     isHoliday: boolean,
     orderCount: number | undefined,
     endTime: number,
+    overtimeHours: number | undefined,
   ) {
     if (!confirmingEntry) return;
     const recurring = confirmingEntry.employer.defaultAdjustments ?? [];
@@ -187,6 +188,7 @@ export function HomePage({ uid }: { uid: string }) {
       isOvertime: isOvertime || undefined,
       isHoliday: isHoliday || undefined,
       orderCount,
+      overtimeHours,
     }, endTime);
     setConfirmingEntry(null);
   }

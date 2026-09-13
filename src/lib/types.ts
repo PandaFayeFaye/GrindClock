@@ -45,8 +45,9 @@ export interface TimeEntry {
   moodNote?: string;
   adjustment?: Adjustment[];
   orderCount?: number; // only for per-order payType
-  isOvertime?: boolean; // applies employer.overtimeMultiplier when computing pay
+  isOvertime?: boolean; // manual "count this whole shift as overtime" flag -- applies employer.overtimeMultiplier to all its hours
   isHoliday?: boolean; // applies employer.holidayMultiplier when computing pay
+  overtimeHours?: number; // hours within this entry beyond a fixed daily schedule, paid at employer.overtimeMultiplier while the rest pays the regular rate
   note?: string;
   clockInLocation?: { lat: number; lng: number; accuracy: number };
 }

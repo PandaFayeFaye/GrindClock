@@ -120,6 +120,7 @@ export function StatsPage({ uid }: { uid: string }) {
   );
 
   const totalHours = filteredEntries.reduce((sum, e) => sum + entryHours(e), 0);
+  const totalOvertimeHours = filteredEntries.reduce((sum, e) => sum + (e.overtimeHours ?? 0), 0);
   const totalPayByCurrency = useMemo(() => {
     const map = new Map<string, number>();
     const add = (emp: Employer, amount: number) => {
@@ -265,6 +266,9 @@ export function StatsPage({ uid }: { uid: string }) {
       <div className="summary-card">
         <div className="stat"><p className="num">{totalHours.toFixed(1)}h</p><p className="lb">{t(range === "all" ? "cumulativeHours" : "periodHours")}</p></div>
         <div className="stat"><p className="num">{formatGroupedPay(totalPayByCurrency)}</p><p className="lb">{t(range === "all" ? "cumulativePay" : "periodPay")}</p></div>
+        {totalOvertimeHours > 0 && (
+          <div className="stat"><p className="num">{totalOvertimeHours.toFixed(1)}h</p><p className="lb">{t("overtimeHoursLabel")}</p></div>
+        )}
       </div>
 
       <div className="chart-card">
