@@ -7,6 +7,7 @@ export interface RecapShareData {
   topEmployer: string;
   hardestDay: string;
   heatCells: number[]; // 0-3 intensity, one per day of the month
+  lang: "zh" | "en";
 }
 
 const HEAT_COLORS = ["#2A2A2A", "rgba(255,217,61,.45)", "rgba(255,217,61,.75)", "#FFD93D"];
@@ -33,19 +34,20 @@ export async function renderRecapShareImage(data: RecapShareData): Promise<Blob>
     }
   }
 
+  const en = data.lang === "en";
   ctx.fillStyle = "#FFD93D";
   ctx.font = "700 32px system-ui, -apple-system, sans-serif";
-  ctx.fillText(`${data.monthLabel} · 打工战绩报告`, 64, 140);
+  ctx.fillText(en ? `${data.monthLabel} · Work Recap` : `${data.monthLabel} · 打工战绩报告`, 64, 140);
 
   ctx.fillStyle = "#FFFFFF";
   ctx.font = "800 64px system-ui, -apple-system, sans-serif";
-  wrapText(ctx, `这个月，你搬了${data.totalHours.toFixed(0)}小时的砖`, 64, 230, W - 128, 76);
+  wrapText(ctx, en ? `You put in ${data.totalHours.toFixed(0)} hours this month` : `这个月，你搬了${data.totalHours.toFixed(0)}小时的砖`, 64, 230, W - 128, 76);
 
   const tiles = [
-    { n: data.totalPayText, l: `跨${data.employerCount}个雇主合计` },
-    { n: `${data.streak}天`, l: "当前打工火苗" },
-    { n: data.topEmployer, l: "最赚钱雇主" },
-    { n: data.hardestDay, l: "值得记住的一天" },
+    { n: data.totalPayText, l: en ? `Across ${data.employerCount} employer(s)` : `跨${data.employerCount}个雇主合计` },
+    { n: en ? `${data.streak}d` : `${data.streak}天`, l: en ? "Current streak" : "当前打工火苗" },
+    { n: data.topEmployer, l: en ? "Top earner" : "最赚钱雇主" },
+    { n: data.hardestDay, l: en ? "Notable day" : "值得记住的一天" },
   ];
 
   const gridTop = 470;
@@ -70,7 +72,7 @@ export async function renderRecapShareImage(data: RecapShareData): Promise<Blob>
   const heatTop = gridTop + 2 * (cellH + 24) + 60;
   ctx.fillStyle = "rgba(255,255,255,0.6)";
   ctx.font = "600 24px system-ui, -apple-system, sans-serif";
-  ctx.fillText("本月活跃度", 64, heatTop);
+  ctx.fillText(en ? "This month's activity" : "本月活跃度", 64, heatTop);
 
   const cols = 7;
   const gap = 8;
@@ -87,7 +89,7 @@ export async function renderRecapShareImage(data: RecapShareData): Promise<Blob>
 
   ctx.fillStyle = "rgba(255,255,255,0.35)";
   ctx.font = "500 22px system-ui, -apple-system, sans-serif";
-  ctx.fillText("GigTime · 打工人的记工搭子", 64, H - 60);
+  ctx.fillText(en ? "GigTime · your multi-job sidekick" : "GigTime · 打工人的记工搭子", 64, H - 60);
 
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => (blob ? resolve(blob) : reject(new Error("canvas export failed"))), "image/png");

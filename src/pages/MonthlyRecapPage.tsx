@@ -5,15 +5,13 @@ import { entryHours, entryPay, lumpSumForPeriod } from "../lib/pay";
 import { DEFAULT_CURRENCY, formatGroupedPay } from "../lib/currency";
 import { currentStreak, dateKey, leaderboard, startOfMonth } from "../lib/stats";
 import { downloadBlob, renderRecapShareImage } from "../lib/shareImage";
+import { useLang, useT } from "../lib/i18n";
 import type { Employer, TimeEntry } from "../lib/types";
 import "./MonthlyRecapPage.css";
 
-const MOOD_TEXT: Record<string, string> = {
-  crash: "最累的一天",
-  heartbeat: "最有感觉的一天",
-};
-
 export function MonthlyRecapPage({ uid }: { uid: string }) {
+  const t = useT();
+  const { lang } = useLang();
   const navigate = useNavigate();
   const [employers, setEmployers] = useState<Employer[]>([]);
   const [entries, setEntries] = useState<TimeEntry[]>([]);
@@ -48,13 +46,20 @@ export function MonthlyRecapPage({ uid }: { uid: string }) {
   const topEmployer = board[0]?.employer.name ?? "—";
   const streak = useMemo(() => currentStreak(entries), [entries]);
 
+  const monthNames = lang === "en"
+    ? ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    : null;
+
   const hardestDay = useMemo(() => {
     const crashEntry = monthEntries.find((e) => e.mood === "crash");
     const heartbeatEntry = monthEntries.find((e) => e.mood === "heartbeat");
     const pick = crashEntry ?? heartbeatEntry;
     if (pick) {
-      const label = MOOD_TEXT[pick.mood!] ?? "";
-      return `${new Date(pick.startTime).getMonth() + 1}月${new Date(pick.startTime).getDate()}日 · ${label}`;
+      const label = t(pick.mood === "crash" ? "moodCrashDay" : "moodHeartbeatDay");
+      const d = new Date(pick.startTime);
+      return monthNames
+        ? t("dateLabelFmt", { label, mon: monthNames[d.getMonth()], d: d.getDate() })
+        : t("dateLabelFmt", { label, m: d.getMonth() + 1, d: d.getDate() });
     }
     // Fallback: the day with the most hours, per FEATURE_SPEC 3.9's mood-skip fallback.
     const byDay = new Map<string, number>();
@@ -65,10 +70,12 @@ export function MonthlyRecapPage({ uid }: { uid: string }) {
     let bestKey = "";
     let bestHours = 0;
     for (const [k, h] of byDay) if (h > bestHours) { bestHours = h; bestKey = k; }
-    if (!bestKey) return "还没有数据";
+    if (!bestKey) return t("noDataYet");
     const [, m, d] = bestKey.split("-");
-    return `${Number(m)}月${Number(d)}日 · 这天干得最久`;
-  }, [monthEntries]);
+    return monthNames
+      ? t("longestDayFmt", { mon: monthNames[Number(m) - 1], d: Number(d) })
+      : t("longestDayFmt", { m: Number(m), d: Number(d) });
+  }, [monthEntries, t, monthNames]);
 
   const heatCells = useMemo(() => {
     const now = new Date();
@@ -89,7 +96,10 @@ export function MonthlyRecapPage({ uid }: { uid: string }) {
   }, [monthEntries, employerById]);
 
   const heatHex = ["rgba(255,255,255,.08)", "rgba(255,217,61,.35)", "rgba(255,217,61,.65)", "#FFD93D"];
-  const monthLabel = `${new Date().getFullYear()}年${new Date().getMonth() + 1}月`;
+  const now = new Date();
+  const monthLabel = monthNames
+    ? `${monthNames[now.getMonth()]} ${now.getFullYear()}`
+    : `${now.getFullYear()}年${now.getMonth() + 1}月`;
 
   async function handleShare() {
     setGenerating(true);
@@ -103,6 +113,7 @@ export function MonthlyRecapPage({ uid }: { uid: string }) {
         topEmployer,
         hardestDay,
         heatCells,
+        lang,
       });
       downloadBlob(blob, `gigtime-recap-${monthLabel}.png`);
     } finally {
@@ -124,19 +135,19 @@ export function MonthlyRecapPage({ uid }: { uid: string }) {
 
       <div className="content">
         <div>
-          <p className="eyebrow">{monthLabel} · 打工战绩报告</p>
-          <p className="headline">这个月，你搬了<br />{totalHours.toFixed(0)}小时的砖</p>
+          <p className="eyebrow">{t("recapEyebrow", { month: monthLabel })}</p>
+          <p className="headline">{t("recapHeadline")}<br />{totalHours.toFixed(0)} {t("recapHeadlineSuffix")}</p>
         </div>
 
         <div className="grid">
-          <div className="stat-tile"><p className="n">{formatGroupedPay(totalPayByCurrency)}</p><p className="l">跨{employers.length}个雇主合计</p></div>
-          <div className="stat-tile"><p className="n">{streak}天</p><p className="l">当前打工火苗</p></div>
-          <div className="stat-tile"><p className="n">{topEmployer}</p><p className="l">最赚钱雇主</p></div>
-          <div className="stat-tile"><p className="n">{hardestDay}</p><p className="l">值得记住的一天</p></div>
+          <div className="stat-tile"><p className="n">{formatGroupedPay(totalPayByCurrency)}</p><p className="l">{t("crossEmployerTotal", { n: employers.length })}</p></div>
+          <div className="stat-tile"><p className="n">{t("daysUnit", { n: streak })}</p><p className="l">{t("currentStreakLabel")}</p></div>
+          <div className="stat-tile"><p className="n">{topEmployer}</p><p className="l">{t("topEmployerLabel")}</p></div>
+          <div className="stat-tile"><p className="n">{hardestDay}</p><p className="l">{t("memorableDayLabel")}</p></div>
         </div>
 
         <div className="heat-mini">
-          <p className="title">本月活跃度</p>
+          <p className="title">{t("monthActivity")}</p>
           <div className="heat-grid">
             {heatCells.map((level, i) => (
               <div className="heat-cell" key={i} style={{ background: heatHex[level] }} />
@@ -146,9 +157,9 @@ export function MonthlyRecapPage({ uid }: { uid: string }) {
 
         <div className="actions">
           <button className="share-btn" onClick={handleShare} disabled={generating}>
-            {generating ? "生成中..." : "生成分享长图"}
+            {generating ? t("generatingBtn") : t("generateShareImage")}
           </button>
-          <button className="detail-link" onClick={() => navigate("/stats")}>查看完整明细 →</button>
+          <button className="detail-link" onClick={() => navigate("/stats")}>{t("viewFullDetail")}</button>
         </div>
       </div>
     </div>

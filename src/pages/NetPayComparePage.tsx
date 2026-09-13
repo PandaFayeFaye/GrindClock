@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { watchEmployers, watchTimeEntries } from "../lib/firestore";
 import { entryHours, entryPay } from "../lib/pay";
 import { currencySymbol } from "../lib/currency";
+import { useT } from "../lib/i18n";
 import type { Employer, TimeEntry } from "../lib/types";
 import "./NetPayComparePage.css";
 
@@ -13,6 +14,7 @@ interface Row {
 }
 
 export function NetPayComparePage({ uid }: { uid: string }) {
+  const t = useT();
   const navigate = useNavigate();
   const [employers, setEmployers] = useState<Employer[]>([]);
   const [entries, setEntries] = useState<TimeEntry[]>([]);
@@ -48,6 +50,8 @@ export function NetPayComparePage({ uid }: { uid: string }) {
       .sort((a, b) => b.actual - a.actual);
   }, [employers, entries]);
 
+  const hasAnyEntries = entries.some((e) => !e.workerId && e.status === "confirmed" && e.endTime);
+
   if (employers.length < 2) {
     return (
       <div className="netpay-page">
@@ -55,11 +59,11 @@ export function NetPayComparePage({ uid }: { uid: string }) {
           <button className="back" onClick={() => navigate(-1)}>
             <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M15 5l-7 7 7 7" stroke="#1A1A1A" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
           </button>
-          <h1>净收益对比</h1>
+          <h1>{t("netPayTitle")}</h1>
         </div>
         <div className="empty">
-          <p>至少添加2个雇主才能开始比较，去添加一个？</p>
-          <button className="empty-cta" onClick={() => navigate("/employers/new")}>+ 添加雇主</button>
+          <p>{t("netPayEmptyHint")}</p>
+          <button className="empty-cta" onClick={() => navigate("/employers/new")}>+ {t("addEmployer")}</button>
         </div>
       </div>
     );
@@ -71,13 +75,13 @@ export function NetPayComparePage({ uid }: { uid: string }) {
         <button className="back" onClick={() => navigate(-1)}>
           <svg viewBox="0 0 24 24" fill="none" width="20" height="20"><path d="M15 5l-7 7 7 7" stroke="#1A1A1A" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" /></svg>
         </button>
-        <h1>净收益对比</h1>
+        <h1>{t("netPayTitle")}</h1>
       </div>
 
       <div className="body">
-        <div className="note-card">
-          扣除预估通勤时间/费用、加上预估等待摸鱼时间后的「实际到手时薪」，帮你看清哪份工作真正更划算——都是雇主设置里填的一次性预估，仅供参考，没填就按名义时薪显示。排名按数字大小直接比较，不同币种之间没有做汇率换算，混合币种时排名仅供参考
-        </div>
+        <div className="note-card">{t("netPayNote")}</div>
+
+        {!hasAnyEntries && <p className="empty-hint">{t("notEnoughDataYet")}</p>}
 
         {rows.map((row, i) => (
           <div className={`rank-row${i === 0 ? " top" : ""}`} key={row.employer.id}>
@@ -85,18 +89,18 @@ export function NetPayComparePage({ uid }: { uid: string }) {
             <div className="rank-info">
               <p className="rank-name">{row.employer.name}</p>
               <p className="rank-detail">
-                名义 <b>{currencySymbol(row.employer.currency)}{row.nominal.toFixed(1)}</b>
+                {t("nominalLabel")} <b>{currencySymbol(row.employer.currency)}{row.nominal.toFixed(1)}</b>
                 {(row.employer.commuteMinutes || row.employer.commuteCost) && (
-                  <> · 通勤 <b>{row.employer.commuteMinutes ?? 0}分钟/{currencySymbol(row.employer.currency)}{row.employer.commuteCost ?? 0}</b></>
+                  <> · {t("commuteLabel")} <b>{row.employer.commuteMinutes ?? 0}{t("minutesShort")}/{currencySymbol(row.employer.currency)}{row.employer.commuteCost ?? 0}</b></>
                 )}
                 {!!row.employer.idleTimePct && (
-                  <> · 摸鱼 <b>{row.employer.idleTimePct}%</b></>
+                  <> · {t("idleLabel")} <b>{row.employer.idleTimePct}%</b></>
                 )}
               </p>
             </div>
             <div className="rank-actual">
               <p className="n">{currencySymbol(row.employer.currency)}{row.actual.toFixed(1)}</p>
-              <p className="l">实际时薪</p>
+              <p className="l">{t("actualRateLabel")}</p>
             </div>
           </div>
         ))}
