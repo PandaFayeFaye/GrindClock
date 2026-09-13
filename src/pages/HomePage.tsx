@@ -140,7 +140,8 @@ export function HomePage({ uid }: { uid: string }) {
             {employers.map((emp) => {
               const active = activeByEmployer.get(emp.id);
               return (
-                <div className={`row${active ? " is-working" : ""}`} key={emp.id}>
+                <div className={`row-wrap${active ? " is-working" : ""}`} key={emp.id}>
+                <div className="row">
                   <span className="dot" style={{ background: emp.color }} />
                   <Link to={`/employers/${emp.id}`} className="row-name">
                     <div className="row-title-line">
@@ -151,15 +152,6 @@ export function HomePage({ uid }: { uid: string }) {
                           : emp.payType}
                       </span>
                     </div>
-                    {!active && (
-                      <button
-                        type="button"
-                        className="retro-link"
-                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setRetroEmployer(emp); }}
-                      >
-                        忘记打卡了？补录开始时间
-                      </button>
-                    )}
                   </Link>
                   <button
                     className={`punch-btn${active ? " working" : ""}`}
@@ -167,6 +159,17 @@ export function HomePage({ uid }: { uid: string }) {
                   >
                     {active ? t("clockOut") : t("clockIn")}
                   </button>
+                </div>
+                {!active && (
+                  <button type="button" className="retro-btn" onClick={() => setRetroEmployer(emp)}>
+                    <svg viewBox="0 0 24 24" fill="none" width="13" height="13">
+                      <circle cx="12" cy="13" r="8" stroke="#8A8272" strokeWidth="1.8" />
+                      <path d="M12 9v4l3 1.8" stroke="#8A8272" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M9 3h6" stroke="#8A8272" strokeWidth="1.8" strokeLinecap="round" />
+                    </svg>
+                    {t("retroClockIn")}
+                  </button>
+                )}
                 </div>
               );
             })}

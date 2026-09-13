@@ -6,7 +6,7 @@ import { DEFAULT_CURRENCY, currencySymbol, formatGroupedPay } from "../lib/curre
 import { currentStreak, dateKey, leaderboard, moodByDay, payByDay, startOfMonth, startOfWeek } from "../lib/stats";
 import { useWeeklyGoal } from "../lib/settings";
 import { exportEntriesCsv } from "../lib/exportCsv";
-import { useT } from "../lib/i18n";
+import { useLang, useT } from "../lib/i18n";
 import type { Employer, Mood, TimeEntry } from "../lib/types";
 import "./StatsPage.css";
 
@@ -34,6 +34,13 @@ function startOfToday() {
 
 export function StatsPage({ uid }: { uid: string }) {
   const t = useT();
+  const { lang } = useLang();
+  const monthLabel = useMemo(() => {
+    const now = new Date();
+    return lang === "en"
+      ? now.toLocaleDateString("en-US", { month: "long" })
+      : `${now.getFullYear()}年${now.getMonth() + 1}月`;
+  }, [lang]);
   const navigate = useNavigate();
   const [employers, setEmployers] = useState<Employer[]>([]);
   const [entries, setEntries] = useState<TimeEntry[]>([]);
@@ -253,7 +260,7 @@ export function StatsPage({ uid }: { uid: string }) {
             </svg>
             {t("streakDays", { n: streak })}
           </span>
-          <p className="title">{t("payCalendarTitle")}</p>
+          <p className="title">{t("payCalendarTitle", { month: monthLabel })}</p>
           <div className="weekday-header">
             {["日", "一", "二", "三", "四", "五", "六"].map((d) => <span key={d}>{d}</span>)}
           </div>
@@ -271,7 +278,7 @@ export function StatsPage({ uid }: { uid: string }) {
             <span>多</span>
           </div>
 
-          <p className="title" style={{ marginTop: 16 }}>{t("streakCalendarTitle")}</p>
+          <p className="title" style={{ marginTop: 16 }}>{t("streakCalendarTitle", { month: monthLabel })}</p>
           <div className="weekday-header">
             {["日", "一", "二", "三", "四", "五", "六"].map((d) => <span key={d}>{d}</span>)}
           </div>
