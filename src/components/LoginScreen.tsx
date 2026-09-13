@@ -6,7 +6,7 @@ const RECAPTCHA_CONTAINER_ID = "recaptcha-container";
 
 type Tab = "phone" | "email";
 
-export function LoginScreen() {
+export function LoginScreen({ emailLinkError }: { emailLinkError?: string | null }) {
   const [tab, setTab] = useState<Tab>("phone");
 
   // Phone flow state
@@ -116,6 +116,7 @@ export function LoginScreen() {
       )}
 
       {error && <p className="login-error">{error}</p>}
+      {!error && emailLinkError && <p className="login-error">{emailLinkError}</p>}
 
       {/* Invisible reCAPTCHA host required by Firebase Phone Auth */}
       <div id={RECAPTCHA_CONTAINER_ID} />
