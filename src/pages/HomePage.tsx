@@ -29,6 +29,7 @@ function startOfToday() {
 const COACH_STEPS: CoachStep[] = [
   { target: "tier", titleKey: "coachTierTitle", bodyKey: "coachTierBody" },
   { target: "income", titleKey: "coachIncomeTitle", bodyKey: "coachIncomeBody" },
+  { target: "income-month", titleKey: "coachIncomeMonthTitle", bodyKey: "coachIncomeMonthBody" },
   { target: "punch", titleKey: "coachPunchTitle", bodyKey: "coachPunchBody" },
   { target: "row-detail", titleKey: "coachRowDetailTitle", bodyKey: "coachRowDetailBody" },
   { target: "companion", titleKey: "coachCompanionTitle", bodyKey: "coachCompanionBody" },
@@ -311,7 +312,7 @@ export function HomePage({ uid }: { uid: string }) {
               )}
             </div>
 
-            <div className="income-card income-card-month">
+            <div className="income-card income-card-month" data-tour="income-month">
               <div className="income-range-tabs">
                 <span className="income-range-tab active">{t("incomeRangeMonth")}</span>
               </div>
