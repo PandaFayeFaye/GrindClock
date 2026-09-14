@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { addManualEntries, deleteTimeEntries, watchEmployers, watchTimeEntries } from "../lib/firestore";
+import { currencySymbol } from "../lib/currency";
 import { WEEKDAYS, combineDateAndTime, scheduleDurationHours, type WeekdayKey } from "../lib/schedule";
 import { dateKey } from "../lib/stats";
 import { useT } from "../lib/i18n";
@@ -243,7 +244,28 @@ export function BatchBackfillPage({ uid }: { uid: string }) {
               </div>
             </div>
             <p className="batch-preview">{t("batchPreviewCount", { n: matchingDates.length })}</p>
-            {supportsAutoOvertime && <p className="bws-hint">{t("batchAutoOvertimeHint")}</p>}
+            {supportsAutoOvertime && (
+              <div className="batch-ot-panel">
+                <p className="ot-title">
+                  <svg viewBox="0 0 24 24" fill="none" width="14" height="14">
+                    <path d="M12 2.2c1.7 3.8-2 5-2 8.6a2 2 0 104 0c0-1.1-.6-1.6-.6-1.6.9.9 1.7 2.4 1.7 3.8a5 5 0 11-10 0c0-5.1 4-6.6 3-10.8z" fill="var(--accent-coral)" />
+                  </svg>
+                  {t("overtimeDetectedTitle")}
+                </p>
+                <div className="ot-block">
+                  <p className="ot-block-label">{t("excessHoursLabel")}</p>
+                  <p className="batch-ot-note">{t("batchAutoOvertimeHint")}</p>
+                </div>
+                <div className="ot-block">
+                  <p className="ot-block-label">{t("overtimeRuleLabel")}</p>
+                  <p className="batch-ot-note">
+                    {selectedEmployer?.overtimeRateMode === "fixed" && selectedEmployer.overtimeHourlyRate
+                      ? t("overtimeFixedRateNote", { sym: currencySymbol(selectedEmployer.currency), rate: selectedEmployer.overtimeHourlyRate })
+                      : t("overtimeMultiplierNote", { mult: (selectedEmployer?.overtimeMultiplier ?? 1.5).toFixed(1) })}
+                  </p>
+                </div>
+              </div>
+            )}
           </>
         )}
 

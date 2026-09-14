@@ -263,25 +263,36 @@ export function BackfillEntryPage({ uid }: { uid: string }) {
 
         {showOvertimeSection && (
           <div className="overtime-detected">
-            <p className="field-label">{t("overtimeDetectedTitle")}</p>
+            <p className="field-label ot-title">
+              <svg viewBox="0 0 24 24" fill="none" width="14" height="14">
+                <path d="M12 2.2c1.7 3.8-2 5-2 8.6a2 2 0 104 0c0-1.1-.6-1.6-.6-1.6.9.9 1.7 2.4 1.7 3.8a5 5 0 11-10 0c0-5.1 4-6.6 3-10.8z" fill="var(--accent-coral)" />
+              </svg>
+              {t("overtimeDetectedTitle")}
+            </p>
             <p className="overtime-detected-note">
               {t("overtimeDetectedNote", { scheduled: scheduledHoursForDate.toFixed(1), worked: enteredHours.toFixed(1) })}
             </p>
-            <div className="overtime-detected-row">
-              <input
-                className="time-input"
-                type="number"
-                step="0.1"
-                value={overtimeTouched ? overtimeHoursStr : detectedOvertimeHours.toFixed(1)}
-                onChange={(e) => { setOvertimeTouched(true); setOvertimeHoursStr(e.target.value); }}
-              />
-              <span className="overtime-detected-unit">{t("overtimeHoursUnit")}</span>
+            <div className="ot-block">
+              <p className="ot-block-label">{t("excessHoursLabel")}</p>
+              <div className="overtime-detected-row">
+                <input
+                  className="time-input"
+                  type="number"
+                  step="0.1"
+                  value={overtimeTouched ? overtimeHoursStr : detectedOvertimeHours.toFixed(1)}
+                  onChange={(e) => { setOvertimeTouched(true); setOvertimeHoursStr(e.target.value); }}
+                />
+                <span className="overtime-detected-unit">{t("hoursUnitPlain")}</span>
+              </div>
             </div>
-            <p className="overtime-detected-mult">
-              {employer?.overtimeRateMode === "fixed" && employer.overtimeHourlyRate
-                ? t("overtimeFixedRateNote", { sym: currencySymbol(employer.currency), rate: employer.overtimeHourlyRate })
-                : t("overtimeMultiplierNote", { mult: (employer?.overtimeMultiplier ?? 1.5).toFixed(1) })}
-            </p>
+            <div className="ot-block">
+              <p className="ot-block-label">{t("overtimeRuleLabel")}</p>
+              <p className="overtime-detected-mult">
+                {employer?.overtimeRateMode === "fixed" && employer.overtimeHourlyRate
+                  ? t("overtimeFixedRateNote", { sym: currencySymbol(employer.currency), rate: employer.overtimeHourlyRate })
+                  : t("overtimeMultiplierNote", { mult: (employer?.overtimeMultiplier ?? 1.5).toFixed(1) })}
+              </p>
+            </div>
           </div>
         )}
 

@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { updateTimeEntry, watchEmployers, watchTimeEntries } from "../lib/firestore";
 import { entryHours, entryOvertimePay, entryPay, lumpSumAllTime, lumpSumForPeriod } from "../lib/pay";
 import { DEFAULT_CURRENCY, currencySymbol, formatGroupedPay } from "../lib/currency";
-import { currentStreak, dateKey, leaderboard, moodDetailByDay, payByDay, startOfMonth, startOfWeek } from "../lib/stats";
+import { currentStreak, dateKey, hoursByDay, leaderboard, moodDetailByDay, payByDay, startOfMonth, startOfWeek } from "../lib/stats";
 import { useWeeklyGoal } from "../lib/settings";
 import { ExportPanel } from "../components/ExportPanel";
 import { useLang, useT } from "../lib/i18n";
@@ -220,10 +220,35 @@ export function StatsPage({ uid }: { uid: string }) {
   const companionKey = latestMoodDay
     ? ({ crash: "companionCrash", normal: "companionNormal", great: "companionGreat", heartbeat: "companionHeartbeat" } as const)[latestMoodDay.mood!]
     : "companionEmpty";
+  const moodCounts = useMemo(() => {
+    const counts: Record<Mood, number> = { crash: 0, normal: 0, great: 0, heartbeat: 0 };
+    for (const d of last7Days) if (d.mood) counts[d.mood]++;
+    return MOOD_KEYS.map((m) => ({ key: m.key, n: counts[m.key] })).filter((m) => m.n > 0);
+  }, [last7Days]);
 
   // ---- Trend: last 7 days bars ----
   const dailyPay = useMemo(() => payByDay(personalConfirmed, employerById), [personalConfirmed, employerById]);
+  const dailyHours = useMemo(() => hoursByDay(personalConfirmed), [personalConfirmed]);
   const maxDailyPay = Math.max(1, ...last7Days.map((d) => dailyPay.get(d.key) ?? 0));
+  const last7TotalHours = last7Days.reduce((s, d) => s + (dailyHours.get(d.key) ?? 0), 0);
+  const last7TotalPayByCurrency = useMemo(() => {
+    const map = new Map<string, number>();
+    const last7Keys = new Set(last7Days.map((d) => d.key));
+    for (const e of personalConfirmed) {
+      if (!last7Keys.has(dateKey(e.startTime))) continue;
+      const emp = employerById.get(e.employerId);
+      if (emp) map.set(emp.currency ?? DEFAULT_CURRENCY, (map.get(emp.currency ?? DEFAULT_CURRENCY) ?? 0) + entryPay(emp, e));
+    }
+    return map;
+  }, [personalConfirmed, employerById, last7Days]);
+  const moodPayInsight = useMemo(() => {
+    const withMood = last7Days.filter((d) => d.mood);
+    if (withMood.length === 0) return null;
+    const best = withMood.reduce((a, b) => ((dailyPay.get(b.key) ?? 0) > (dailyPay.get(a.key) ?? 0) ? b : a));
+    const pay = dailyPay.get(best.key) ?? 0;
+    if (pay <= 0) return null;
+    return { day: best };
+  }, [last7Days, dailyPay]);
 
   // ---- Calendar: current month heatmap ----
   // Leading blanks align day 1 under its actual weekday column (grid starts on Sunday).
@@ -248,6 +273,20 @@ export function StatsPage({ uid }: { uid: string }) {
     }));
   }, [dailyPay]);
 
+  const monthTotals = useMemo(() => {
+    const now = new Date();
+    const monthStartMs = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    let hours = 0;
+    const payByCurrency = new Map<string, number>();
+    for (const e of personalConfirmed) {
+      if (e.startTime < monthStartMs) continue;
+      hours += entryHours(e);
+      const emp = employerById.get(e.employerId);
+      if (emp) payByCurrency.set(emp.currency ?? DEFAULT_CURRENCY, (payByCurrency.get(emp.currency ?? DEFAULT_CURRENCY) ?? 0) + entryPay(emp, e));
+    }
+    return { hours, payByCurrency };
+  }, [personalConfirmed, employerById]);
+
   const streak = useMemo(() => currentStreak(personalConfirmed), [personalConfirmed]);
 
   // ---- Streak calendar: same month grid as the pay heatmap, but binary punched/not ----
@@ -267,6 +306,7 @@ export function StatsPage({ uid }: { uid: string }) {
   const weekStart = startOfWeek();
   const board = useMemo(() => leaderboard(personalConfirmed, employers, weekStart), [personalConfirmed, employers, weekStart]);
   const weekPay = board.reduce((sum, r) => sum + r.pay, 0);
+  const weekHours = board.reduce((sum, r) => sum + r.hours, 0);
   const weekPayByCurrency = useMemo(() => {
     const map = new Map<string, number>();
     for (const r of board) {
@@ -343,76 +383,6 @@ export function StatsPage({ uid }: { uid: string }) {
         </div>
       )}
 
-      <div className="chart-card">
-        <p className="title">{t("moodStripTitle")}</p>
-        <div className="mood-curve">
-          <svg className="mood-curve-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="moodFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#FF6B6B" stopOpacity="0.28" />
-                <stop offset="100%" stopColor="#FF6B6B" stopOpacity="0" />
-              </linearGradient>
-            </defs>
-            {[10, 28, 52, 78].map((y) => (
-              <line key={y} x1="0" y1={y} x2="100" y2={y} stroke="rgba(26,26,26,0.06)" strokeWidth="1" />
-            ))}
-            {moodAreaPath && <path d={moodAreaPath} fill="url(#moodFill)" />}
-            {moodLinePath && <path d={moodLinePath} fill="none" stroke="#1A1A1A" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" opacity="0.55" />}
-          </svg>
-          {last7Days.map((d, i) => {
-            const x = (i / 6) * 100;
-            const y = d.mood ? MOOD_Y[d.mood] : 52;
-            return (
-              <button
-                key={d.key}
-                type="button"
-                className={`mood-point${d.mood ? "" : " empty"}${!d.mood && entriesByDayMap.has(d.key) ? " loggable" : ""}`}
-                style={{ left: `${x}%`, top: `${y}%` }}
-                onClick={() => openMoodEditor(d)}
-              >
-                {d.mood ? <MoodIcon mood={d.mood} /> : <span className="mood-dot" />}
-              </button>
-            );
-          })}
-          <div className="mood-x-labels">
-            {last7Days.map((d) => <span key={d.key}>{d.label}</span>)}
-          </div>
-        </div>
-
-        {editingMoodDay && (
-          <div className="mood-editor">
-            <div className="mood-edit-tags">
-              {MOOD_KEYS.map((m) => (
-                <button
-                  key={m.key}
-                  type="button"
-                  className={`mood-edit-tag${draftMood === m.key ? " selected" : ""}`}
-                  onClick={() => setDraftMood(draftMood === m.key ? undefined : m.key)}
-                >
-                  <MoodIcon mood={m.key} size={16} />
-                  {t(m.labelKey)}
-                </button>
-              ))}
-            </div>
-            {draftMood && (
-              <input
-                className="mood-edit-note"
-                maxLength={30}
-                placeholder={t("moodNotePlaceholder")}
-                value={draftMoodNote}
-                onChange={(e) => setDraftMoodNote(e.target.value)}
-              />
-            )}
-            <div className="mood-editor-actions">
-              <button type="button" className="mood-editor-cancel" onClick={() => setEditingMoodDay(null)}>{t("cancel")}</button>
-              <button type="button" className="mood-editor-save" onClick={saveMoodEditor}>{t("confirmSave")}</button>
-            </div>
-          </div>
-        )}
-
-        <p className="mood-companion">{t(companionKey)}</p>
-      </div>
-
       <div className="viz-tabs">
         <button className={`viz-tab${viz === "trend" ? " active" : ""}`} onClick={() => setViz("trend")}>{t("vizTrend")}</button>
         <button className={`viz-tab${viz === "calendar" ? " active" : ""}`} onClick={() => setViz("calendar")}>{t("vizCalendar")}</button>
@@ -422,6 +392,10 @@ export function StatsPage({ uid }: { uid: string }) {
       {viz === "trend" && (
         <div className="chart-card">
           <p className="title">{t("trendTitle")}</p>
+          <div className="chart-summary-row">
+            <span className="chart-summary-item"><b>{last7TotalHours.toFixed(1)}h</b>{t("chartHoursLabel")}</span>
+            <span className="chart-summary-item"><b>{formatGroupedPay(last7TotalPayByCurrency)}</b>{t("chartPayLabel")}</span>
+          </div>
           <div className="bars">
             {last7Days.map((d) => {
               const pay = dailyPay.get(d.key) ?? 0;
@@ -445,6 +419,10 @@ export function StatsPage({ uid }: { uid: string }) {
             {t("streakDays", { n: streak })}
           </span>
           <p className="title">{t("payCalendarTitle", { month: monthLabel })}</p>
+          <div className="chart-summary-row">
+            <span className="chart-summary-item"><b>{monthTotals.hours.toFixed(1)}h</b>{t("chartHoursLabel")}</span>
+            <span className="chart-summary-item"><b>{formatGroupedPay(monthTotals.payByCurrency)}</b>{t("chartPayLabel")}</span>
+          </div>
           <div className="weekday-header">
             {["日", "一", "二", "三", "四", "五", "六"].map((d) => <span key={d}>{d}</span>)}
           </div>
@@ -498,22 +476,25 @@ export function StatsPage({ uid }: { uid: string }) {
               </svg>
               <div className="num"><b>{goalPct}%</b><span>{t("weeklyGoalPct")}</span></div>
             </div>
-            {editingGoal ? (
-              <div className="ring-note">
-                <input
-                  className="goal-input"
-                  type="number"
-                  value={weeklyGoal}
-                  onChange={(e) => setWeeklyGoal(Number(e.target.value) || 0)}
-                  onBlur={() => setEditingGoal(false)}
-                  autoFocus
-                />
-              </div>
-            ) : (
-              <p className="ring-note" onClick={() => setEditingGoal(true)}>
-                {t("goalLabel")} <b>{currencySymbol(DEFAULT_CURRENCY)}{weeklyGoal}</b>，{t("earnedLabel")} <b>{formatGroupedPay(weekPayByCurrency)}</b>{t("tapToEditGoal")}
-              </p>
-            )}
+            <div className="ring-note-col">
+              {editingGoal ? (
+                <div className="ring-note">
+                  <input
+                    className="goal-input"
+                    type="number"
+                    value={weeklyGoal}
+                    onChange={(e) => setWeeklyGoal(Number(e.target.value) || 0)}
+                    onBlur={() => setEditingGoal(false)}
+                    autoFocus
+                  />
+                </div>
+              ) : (
+                <p className="ring-note" onClick={() => setEditingGoal(true)}>
+                  {t("goalLabel")} <b>{currencySymbol(DEFAULT_CURRENCY)}{weeklyGoal}</b>，{t("earnedLabel")} <b>{formatGroupedPay(weekPayByCurrency)}</b>{t("tapToEditGoal")}
+                </p>
+              )}
+              <p className="ring-hours-note">{t("weekHoursNote", { h: weekHours.toFixed(1) })}</p>
+            </div>
           </div>
 
           <p className="title" style={{ marginTop: 18 }}>{t("leaderboardTitle")}</p>
@@ -526,12 +507,98 @@ export function StatsPage({ uid }: { uid: string }) {
                   <div className="lb-bar-fill" style={{ width: `${(row.pay / maxBoardPay) * 100}%`, background: row.employer.color }} />
                   <span className="lb-name">{row.employer.name}</span>
                 </div>
-                <span className="lb-amount">{currencySymbol(row.employer.currency)}{row.pay.toFixed(0)}</span>
+                <div className="lb-amount-col">
+                  <span className="lb-amount">{currencySymbol(row.employer.currency)}{row.pay.toFixed(0)}</span>
+                  <span className="lb-hours">{row.hours.toFixed(1)}h</span>
+                </div>
               </div>
             ))}
           </div>
         </div>
       )}
+
+      <div className="chart-card">
+        <p className="title">{t("moodStripTitle")}</p>
+        <div className="mood-curve">
+          <svg className="mood-curve-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="moodFill" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="#FF6B6B" stopOpacity="0.28" />
+                <stop offset="100%" stopColor="#FF6B6B" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            {[10, 28, 52, 78].map((y) => (
+              <line key={y} x1="0" y1={y} x2="100" y2={y} stroke="rgba(26,26,26,0.06)" strokeWidth="1" />
+            ))}
+            {moodAreaPath && <path d={moodAreaPath} fill="url(#moodFill)" />}
+            {moodLinePath && <path d={moodLinePath} fill="none" stroke="#1A1A1A" strokeWidth="1.6" strokeLinejoin="round" strokeLinecap="round" opacity="0.55" />}
+          </svg>
+          {last7Days.map((d, i) => {
+            const x = (i / 6) * 100;
+            const y = d.mood ? MOOD_Y[d.mood] : 52;
+            return (
+              <button
+                key={d.key}
+                type="button"
+                className={`mood-point${d.mood ? "" : " empty"}${!d.mood && entriesByDayMap.has(d.key) ? " loggable" : ""}`}
+                style={{ left: `${x}%`, top: `${y}%` }}
+                onClick={() => openMoodEditor(d)}
+              >
+                {d.mood ? <MoodIcon mood={d.mood} /> : <span className="mood-dot" />}
+              </button>
+            );
+          })}
+          <div className="mood-x-labels">
+            {last7Days.map((d) => <span key={d.key}>{d.label}</span>)}
+          </div>
+        </div>
+
+        {moodCounts.length > 0 && (
+          <div className="mood-dist-row">
+            {moodCounts.map(({ key, n }) => (
+              <span className="mood-dist-chip" key={key}>
+                <MoodIcon mood={key} size={13} />
+                ×{n}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {editingMoodDay && (
+          <div className="mood-editor">
+            <div className="mood-edit-tags">
+              {MOOD_KEYS.map((m) => (
+                <button
+                  key={m.key}
+                  type="button"
+                  className={`mood-edit-tag${draftMood === m.key ? " selected" : ""}`}
+                  onClick={() => setDraftMood(draftMood === m.key ? undefined : m.key)}
+                >
+                  <MoodIcon mood={m.key} size={16} />
+                  {t(m.labelKey)}
+                </button>
+              ))}
+            </div>
+            {draftMood && (
+              <input
+                className="mood-edit-note"
+                maxLength={30}
+                placeholder={t("moodNotePlaceholder")}
+                value={draftMoodNote}
+                onChange={(e) => setDraftMoodNote(e.target.value)}
+              />
+            )}
+            <div className="mood-editor-actions">
+              <button type="button" className="mood-editor-cancel" onClick={() => setEditingMoodDay(null)}>{t("cancel")}</button>
+              <button type="button" className="mood-editor-save" onClick={saveMoodEditor}>{t("confirmSave")}</button>
+            </div>
+          </div>
+        )}
+
+        <p className="mood-companion">
+          {moodPayInsight ? t("moodPayInsight", { day: moodPayInsight.day.label, mood: t(MOOD_KEYS.find((m) => m.key === moodPayInsight.day.mood)!.labelKey) }) : t(companionKey)}
+        </p>
+      </div>
 
       <Link className="recap-teaser" to="/recap">
         <span className="t1">{t("recapTeaserT1")}</span>

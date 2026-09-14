@@ -130,16 +130,37 @@
 }
 
 .backfill-form .overtime-detected {
-  background: #FFF8E8;
-  border: 1.8px solid var(--accent-yellow);
+  background: var(--bg-surface);
+  border: 2px solid var(--accent-coral);
   border-radius: 12px;
   padding: 12px 14px;
+}
+
+.backfill-form .ot-title {
+  display: flex;
+  align-items: center;
+  gap: 5px;
 }
 
 .backfill-form .overtime-detected-note {
   font-size: 11px;
   color: var(--text-muted);
-  margin: 0 0 8px;
+  margin: 0 0 10px;
+}
+
+.backfill-form .ot-block + .ot-block {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1.3px dashed var(--border-quiet);
+}
+
+.backfill-form .ot-block-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: var(--accent-coral);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin: 0 0 6px;
 }
 
 .backfill-form .overtime-detected-row {
@@ -160,9 +181,10 @@
 }
 
 .backfill-form .overtime-detected-mult {
-  font-size: 10.5px;
-  color: var(--text-muted);
-  margin: 8px 0 0;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
 }
 
 .time-sep {

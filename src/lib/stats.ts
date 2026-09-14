@@ -23,6 +23,17 @@ export function payByDay(entries: TimeEntry[], employerById: Map<string, Employe
   return map;
 }
 
+/** Total hours worked per calendar day. Key is `YYYY-M-D`. */
+export function hoursByDay(entries: TimeEntry[]): Map<string, number> {
+  const map = new Map<string, number>();
+  for (const e of entries) {
+    if (!isConfirmedPersonal(e)) continue;
+    const key = dateKey(e.startTime);
+    map.set(key, (map.get(key) ?? 0) + entryHours(e));
+  }
+  return map;
+}
+
 /** Consecutive days (including today) with at least one confirmed entry. */
 export function currentStreak(entries: TimeEntry[], now = Date.now()): number {
   const daysWithEntries = new Set(
