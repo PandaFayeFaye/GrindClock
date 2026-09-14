@@ -52,6 +52,7 @@ export function BottomNav() {
             end={tab.to === "/"}
             className={({ isActive }) => `tab${isActive ? " active" : ""}`}
             style={{ "--tab-accent": tab.accent } as React.CSSProperties}
+            data-tour={tab.to === "/stats" ? "nav-stats" : tab.to === "/settings" ? "nav-settings" : undefined}
           >
             <span className="tab-icon-badge">
               <svg className="tab-icon" viewBox="0 0 24 24" fill="none">

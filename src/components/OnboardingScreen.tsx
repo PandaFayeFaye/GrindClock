@@ -16,7 +16,7 @@ export function hasOnboarded(): boolean {
   }
 }
 
-function markOnboarded() {
+export function markOnboarded() {
   try {
     window.localStorage.setItem(ONBOARDED_KEY, "true");
   } catch {

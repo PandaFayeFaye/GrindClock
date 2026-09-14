@@ -5,6 +5,8 @@ import {
   deleteField,
   doc,
   getDoc,
+  getDocs,
+  limit,
   onSnapshot,
   orderBy,
   query,
@@ -153,4 +155,18 @@ export function watchUserProfile(uid: string, cb: (profile: UserProfile) => void
 
 export function setUserProfile(uid: string, profile: UserProfile) {
   return setDoc(profileDoc(uid), profile, { merge: true });
+}
+
+/**
+ * One-shot check for whether this account already has real data (a chosen
+ * avatar, or at least one job) -- used to skip onboarding for an existing
+ * user signing in on a device/browser that has no local "onboarded" flag.
+ */
+export async function hasExistingAccountData(uid: string): Promise<boolean> {
+  const [profileSnap, employersSnap] = await Promise.all([
+    getDoc(profileDoc(uid)),
+    getDocs(query(employersCol(uid), limit(1))),
+  ]);
+  const profile = profileSnap.data() as UserProfile | undefined;
+  return !!profile?.animal || !employersSnap.empty;
 }

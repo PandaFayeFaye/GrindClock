@@ -53,7 +53,7 @@ export function currentStreak(entries: TimeEntry[], now = Date.now()): number {
   return streak;
 }
 
-const MOOD_PRIORITY: Mood[] = ["crash", "heartbeat", "great", "normal"];
+const MOOD_PRIORITY: Mood[] = ["crash", "heartbeat", "ox", "grind", "great", "flat", "slack", "normal"];
 
 /** One representative mood per day (worst/most-notable wins when several entries share a day). */
 export function moodByDay(entries: TimeEntry[]): Map<string, Mood> {

@@ -239,18 +239,24 @@
 }
 
 .backfill-form .mood-tags {
-  display: flex;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 7px;
 }
 
 .backfill-form .mood-tag {
-  flex: 1;
-  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 40px;
+  padding: 0 4px;
   border-radius: 12px;
   border: 2px solid var(--border-bold);
   background: var(--bg-surface);
   font-weight: 800;
-  font-size: 12.5px;
+  font-size: 11px;
+  white-space: nowrap;
 }
 
 .backfill-form .mood-tag.selected {

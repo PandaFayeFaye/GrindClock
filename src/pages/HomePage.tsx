@@ -30,8 +30,11 @@ const COACH_STEPS: CoachStep[] = [
   { target: "tier", titleKey: "coachTierTitle", bodyKey: "coachTierBody" },
   { target: "income", titleKey: "coachIncomeTitle", bodyKey: "coachIncomeBody" },
   { target: "punch", titleKey: "coachPunchTitle", bodyKey: "coachPunchBody" },
+  { target: "row-detail", titleKey: "coachRowDetailTitle", bodyKey: "coachRowDetailBody" },
   { target: "companion", titleKey: "coachCompanionTitle", bodyKey: "coachCompanionBody" },
   { target: "fab", titleKey: "coachFabTitle", bodyKey: "coachFabBody" },
+  { target: "nav-stats", titleKey: "coachStatsTitle", bodyKey: "coachStatsBody" },
+  { target: "nav-settings", titleKey: "coachSettingsTitle", bodyKey: "coachSettingsBody" },
 ];
 
 export function HomePage({ uid }: { uid: string }) {
@@ -376,7 +379,7 @@ export function HomePage({ uid }: { uid: string }) {
                   const empOvertime = todaysOvertimeByEmployer.get(emp.id) ?? 0;
                   const empPay = todaysPayByEmployer.get(emp.id) ?? 0;
                   return (
-                    <div className="done-today-footer">
+                    <div className="done-today-footer" data-tour="row-detail">
                       <svg viewBox="0 0 24 24" fill="none" width="12" height="12">
                         <path d="M4.5 12.5l4.5 4.5L19.5 6" stroke="#2A9D5C" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>

@@ -27,7 +27,7 @@ export interface Employer {
   note?: string;
 }
 
-export type Mood = "crash" | "normal" | "great" | "heartbeat";
+export type Mood = "crash" | "normal" | "great" | "heartbeat" | "slack" | "grind" | "ox" | "flat";
 
 export interface Adjustment {
   type: "bonus" | "deduction";

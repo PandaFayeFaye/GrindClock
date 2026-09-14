@@ -3,57 +3,11 @@ import { deleteField } from "firebase/firestore";
 import { updateTimeEntry } from "../lib/firestore";
 import { dateKey, moodDetailByDay, payByDay } from "../lib/stats";
 import { useT } from "../lib/i18n";
+import { MOOD_KEYS, MOOD_Y, MoodIcon } from "../lib/moods";
 import type { Employer, Mood, TimeEntry } from "../lib/types";
 import "./MoodCurveCard.css";
 
-// Higher mood = higher up the chart (smaller y%, since SVG y grows downward).
-const MOOD_Y: Record<Mood, number> = { crash: 78, normal: 52, great: 28, heartbeat: 10 };
-const MOOD_COLOR: Record<Mood, string> = { crash: "#5AC8FA", normal: "#B9AC9C", great: "#FFD93D", heartbeat: "#FF6B6B" };
-const MOOD_KEYS = [
-  { key: "crash" as Mood, labelKey: "moodCrash" as const },
-  { key: "normal" as Mood, labelKey: "moodNormal" as const },
-  { key: "great" as Mood, labelKey: "moodGreat" as const },
-  { key: "heartbeat" as Mood, labelKey: "moodHeartbeat" as const },
-];
 const WEEKDAY_KEYS = ["weekdaySun", "weekdayMon", "weekdayTue", "weekdayWed", "weekdayThu", "weekdayFri", "weekdaySat"] as const;
-
-function MoodIcon({ mood, size = 18 }: { mood: Mood; size?: number }) {
-  const c = MOOD_COLOR[mood];
-  if (mood === "crash") {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" width={size} height={size}>
-        <circle cx="12" cy="12" r="9.5" fill={c} stroke="#1A1A1A" strokeWidth="1.6" />
-        <path d="M8.5 15.5c1-1.3 2.2-2 3.5-2s2.5.7 3.5 2" stroke="#1A1A1A" strokeWidth="1.6" strokeLinecap="round" />
-        <circle cx="9" cy="10" r="1.1" fill="#1A1A1A" />
-        <circle cx="15" cy="10" r="1.1" fill="#1A1A1A" />
-      </svg>
-    );
-  }
-  if (mood === "normal") {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" width={size} height={size}>
-        <circle cx="12" cy="12" r="9.5" fill={c} stroke="#1A1A1A" strokeWidth="1.6" />
-        <path d="M8.5 14.5h7" stroke="#1A1A1A" strokeWidth="1.6" strokeLinecap="round" />
-        <circle cx="9" cy="10" r="1.1" fill="#1A1A1A" />
-        <circle cx="15" cy="10" r="1.1" fill="#1A1A1A" />
-      </svg>
-    );
-  }
-  if (mood === "great") {
-    return (
-      <svg viewBox="0 0 24 24" fill="none" width={size} height={size}>
-        <circle cx="12" cy="12" r="9.5" fill={c} stroke="#1A1A1A" strokeWidth="1.6" />
-        <path d="M8.5 13c1 1.3 2.2 2 3.5 2s2.5-.7 3.5-2" stroke="#1A1A1A" strokeWidth="1.6" strokeLinecap="round" />
-        <path d="M8.7 9.5l.9.9M15.3 9.5l-.9.9" stroke="#1A1A1A" strokeWidth="1.6" strokeLinecap="round" />
-      </svg>
-    );
-  }
-  return (
-    <svg viewBox="0 0 24 24" fill="none" width={size} height={size}>
-      <path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0112 6.5a4.3 4.3 0 017.5 3.3C19.5 15.4 12 20 12 20z" fill={c} stroke="#1A1A1A" strokeWidth="1.6" strokeLinejoin="round" />
-    </svg>
-  );
-}
 
 export function MoodCurveCard({
   uid,
@@ -119,10 +73,13 @@ export function MoodCurveCard({
     : "";
   const latestMoodDay = [...last7Days].reverse().find((d) => d.mood);
   const companionKey = latestMoodDay
-    ? ({ crash: "companionCrash", normal: "companionNormal", great: "companionGreat", heartbeat: "companionHeartbeat" } as const)[latestMoodDay.mood!]
+    ? ({
+      crash: "companionCrash", normal: "companionNormal", great: "companionGreat", heartbeat: "companionHeartbeat",
+      slack: "companionSlack", grind: "companionGrind", ox: "companionOx", flat: "companionFlat",
+    } as const)[latestMoodDay.mood!]
     : "companionEmpty";
   const moodCounts = useMemo(() => {
-    const counts: Record<Mood, number> = { crash: 0, normal: 0, great: 0, heartbeat: 0 };
+    const counts: Record<Mood, number> = { crash: 0, normal: 0, great: 0, heartbeat: 0, slack: 0, grind: 0, ox: 0, flat: 0 };
     for (const d of last7Days) if (d.mood) counts[d.mood]++;
     return MOOD_KEYS.map((m) => ({ key: m.key, n: counts[m.key] })).filter((m) => m.n > 0);
   }, [last7Days]);

@@ -4,14 +4,8 @@ import { entryHours, entryPay } from "../lib/pay";
 import { currencySymbol } from "../lib/currency";
 import { scheduleDurationHours, todaysSchedule } from "../lib/schedule";
 import { useT } from "../lib/i18n";
+import { MOOD_KEYS, MoodIcon } from "../lib/moods";
 import "./PunchConfirmModal.css";
-
-const MOOD_KEYS = [
-  { key: "crash" as Mood, labelKey: "moodCrash" as const },
-  { key: "normal" as Mood, labelKey: "moodNormal" as const },
-  { key: "great" as Mood, labelKey: "moodGreat" as const },
-  { key: "heartbeat" as Mood, labelKey: "moodHeartbeat" as const },
-];
 
 export function PunchConfirmModal({
   employer,
@@ -144,6 +138,7 @@ export function PunchConfirmModal({
                 className={`mood-tag${mood === m.key ? " selected" : ""}`}
                 onClick={() => setMood(mood === m.key ? undefined : m.key)}
               >
+                <MoodIcon mood={m.key} size={15} />
                 {t(m.labelKey)}
               </button>
             ))}

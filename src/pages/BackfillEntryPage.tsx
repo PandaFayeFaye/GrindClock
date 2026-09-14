@@ -5,15 +5,9 @@ import { addManualEntry, deleteTimeEntry, getTimeEntry, updateTimeEntry, watchEm
 import { scheduleDurationHours, todaysSchedule } from "../lib/schedule";
 import { currencySymbol } from "../lib/currency";
 import { useT } from "../lib/i18n";
+import { MOOD_KEYS, MoodIcon } from "../lib/moods";
 import type { Adjustment, Employer, Mood, TimeEntry, Worker } from "../lib/types";
 import "./BackfillEntryPage.css";
-
-const MOOD_KEYS = [
-  { key: "crash" as Mood, labelKey: "moodCrash" as const },
-  { key: "normal" as Mood, labelKey: "moodNormal" as const },
-  { key: "great" as Mood, labelKey: "moodGreat" as const },
-  { key: "heartbeat" as Mood, labelKey: "moodHeartbeat" as const },
-];
 
 function toDateInputValue(d: Date) {
   return d.toISOString().slice(0, 10);
@@ -315,6 +309,7 @@ export function BackfillEntryPage({ uid }: { uid: string }) {
                 className={`mood-tag${mood === m.key ? " selected" : ""}`}
                 onClick={() => setMood(mood === m.key ? undefined : m.key)}
               >
+                <MoodIcon mood={m.key} size={15} />
                 {t(m.labelKey)}
               </button>
             ))}
