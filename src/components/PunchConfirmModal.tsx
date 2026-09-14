@@ -186,7 +186,9 @@ export function PunchConfirmModal({
               <span className="overtime-detected-unit">{t("overtimeHoursUnit")}</span>
             </div>
             <p className="overtime-detected-mult">
-              {t("overtimeMultiplierNote", { mult: (employer.overtimeMultiplier ?? 1.5).toFixed(1) })}
+              {employer.overtimeRateMode === "fixed" && employer.overtimeHourlyRate
+                ? t("overtimeFixedRateNote", { sym: currencySymbol(employer.currency), rate: employer.overtimeHourlyRate })
+                : t("overtimeMultiplierNote", { mult: (employer.overtimeMultiplier ?? 1.5).toFixed(1) })}
             </p>
           </div>
         )}

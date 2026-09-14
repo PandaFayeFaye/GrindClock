@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { deleteField } from "firebase/firestore";
 import { Link, useNavigate } from "react-router-dom";
 import { updateTimeEntry, watchEmployers, watchTimeEntries } from "../lib/firestore";
-import { entryHours, entryPay, lumpSumAllTime, lumpSumForPeriod } from "../lib/pay";
+import { entryHours, entryOvertimePay, entryPay, lumpSumAllTime, lumpSumForPeriod } from "../lib/pay";
 import { DEFAULT_CURRENCY, currencySymbol, formatGroupedPay } from "../lib/currency";
 import { currentStreak, dateKey, leaderboard, moodDetailByDay, payByDay, startOfMonth, startOfWeek } from "../lib/stats";
 import { useWeeklyGoal } from "../lib/settings";
@@ -128,6 +128,19 @@ export function StatsPage({ uid }: { uid: string }) {
 
   const totalHours = filteredEntries.reduce((sum, e) => sum + entryHours(e), 0);
   const totalOvertimeHours = filteredEntries.reduce((sum, e) => sum + (e.overtimeHours ?? 0), 0);
+  const totalOvertimePayByCurrency = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const e of filteredEntries) {
+      const emp = employerById.get(e.employerId);
+      if (!emp) continue;
+      const otPay = entryOvertimePay(emp, e);
+      if (otPay > 0) {
+        const cur = emp.currency ?? DEFAULT_CURRENCY;
+        map.set(cur, (map.get(cur) ?? 0) + otPay);
+      }
+    }
+    return map;
+  }, [filteredEntries, employerById]);
   const totalPayByCurrency = useMemo(() => {
     const map = new Map<string, number>();
     const add = (emp: Employer, amount: number) => {
@@ -305,10 +318,17 @@ export function StatsPage({ uid }: { uid: string }) {
       <div className="summary-card">
         <div className="stat"><p className="num">{totalHours.toFixed(1)}h</p><p className="lb">{t(range === "all" ? "cumulativeHours" : "periodHours")}</p></div>
         <div className="stat"><p className="num">{formatGroupedPay(totalPayByCurrency)}</p><p className="lb">{t(range === "all" ? "cumulativePay" : "periodPay")}</p></div>
-        {totalOvertimeHours > 0 && (
-          <div className="stat"><p className="num">{totalOvertimeHours.toFixed(1)}h</p><p className="lb">{t("overtimeHoursLabel")}</p></div>
-        )}
       </div>
+
+      {totalOvertimeHours > 0.05 && (
+        <div className="overtime-summary-card">
+          <p className="overtime-summary-title">{t("overtimeHoursLabel")}</p>
+          <div className="overtime-summary-row">
+            <div className="stat"><p className="num">{totalOvertimeHours.toFixed(1)}h</p><p className="lb">{t("overtimeHoursSub")}</p></div>
+            <div className="stat"><p className="num">{formatGroupedPay(totalOvertimePayByCurrency)}</p><p className="lb">{t("overtimePaySub")}</p></div>
+          </div>
+        </div>
+      )}
 
       <div className="chart-card">
         <p className="title">{t("moodStripTitle")}</p>
@@ -539,6 +559,9 @@ export function StatsPage({ uid }: { uid: string }) {
                   <p className="n">{emp.name}</p>
                   <p className="d">
                     {new Date(e.startTime).toLocaleDateString()} · {entryHours(e).toFixed(1)}小时
+                    {e.overtimeHours && e.overtimeHours > 0.05 ? (
+                      <span className="entry-ot-chip">{t("entryOvertimeChip", { h: e.overtimeHours.toFixed(1) })}</span>
+                    ) : null}
                     {e.clockInLocation && (
                       <svg viewBox="0 0 24 24" fill="none" width="12" height="12" className="loc-ic">
                         <path d="M12 2a7 7 0 00-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 00-7-7z" fill="#8AB4A0" />
@@ -547,7 +570,15 @@ export function StatsPage({ uid }: { uid: string }) {
                     )}
                   </p>
                 </div>
-                <span className="pay">{currencySymbol(emp.currency)}{entryPay(emp, e).toFixed(1)}</span>
+                <div className="pay-col">
+                  <span className="pay">{currencySymbol(emp.currency)}{entryPay(emp, e).toFixed(1)}</span>
+                  {(() => {
+                    const otPay = entryOvertimePay(emp, e);
+                    return otPay > 0 ? (
+                      <span className="pay-ot-sub">{t("entryOvertimePaySub", { pay: `${currencySymbol(emp.currency)}${otPay.toFixed(1)}` })}</span>
+                    ) : null;
+                  })()}
+                </div>
               </div>
             );
           })}

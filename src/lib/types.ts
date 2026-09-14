@@ -15,6 +15,8 @@ export interface Employer {
   monthlySalary?: number;
   pricePerOrder?: number;
   overtimeMultiplier?: number;
+  overtimeRateMode?: "multiplier" | "fixed"; // "multiplier" (default) = hourlyRate/effective rate x overtimeMultiplier; "fixed" = a flat overtimeHourlyRate regardless of the base rate
+  overtimeHourlyRate?: number; // used when overtimeRateMode is "fixed"
   holidayMultiplier?: number;
   breakMinutes?: number;
   settlementCycle?: "daily" | "weekly" | "monthly";

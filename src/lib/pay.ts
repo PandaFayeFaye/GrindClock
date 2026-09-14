@@ -26,11 +26,22 @@ function rateMultiplier(employer: Employer, entry: TimeEntry): number {
 }
 
 /**
+ * The per-hour rate overtime actually pays: either the employer's own flat
+ * overtimeHourlyRate (when they've said "we just pay a fixed OT rate,
+ * regardless of the base rate") or the base rate x overtimeMultiplier
+ * (defaulting to a conventional 1.5x if never configured).
+ */
+function overtimeRate(employer: Employer, baseHourlyRate: number): number {
+  if (employer.overtimeRateMode === "fixed" && employer.overtimeHourlyRate) {
+    return employer.overtimeHourlyRate;
+  }
+  return baseHourlyRate * (employer.overtimeMultiplier ?? 1.5);
+}
+
+/**
  * Splits an entry's hours into regular + overtime portions when
  * `entry.overtimeHours` is set (the excess beyond a fixed daily schedule,
- * detected at clock-out) -- the overtime portion pays at the employer's
- * overtime multiplier (defaulting to a conventional 1.5x if the employer
- * never configured one) regardless of the whole-entry `isOvertime` flag,
+ * detected at clock-out) regardless of the whole-entry `isOvertime` flag,
  * which is a separate, coarser manual override.
  */
 function payWithOvertimeSplit(hours: number, hourlyRate: number, employer: Employer, entry: TimeEntry): number {
@@ -38,27 +49,26 @@ function payWithOvertimeSplit(hours: number, hourlyRate: number, employer: Emplo
   if (entry.overtimeHours && entry.overtimeHours > 0) {
     const ot = Math.min(entry.overtimeHours, hours);
     const regular = hours - ot;
-    const otMult = employer.overtimeMultiplier ?? 1.5;
-    return (regular * hourlyRate + ot * hourlyRate * otMult) * holidayMult;
+    return (regular * hourlyRate + ot * overtimeRate(employer, hourlyRate)) * holidayMult;
   }
   return hours * hourlyRate * rateMultiplier(employer, entry);
 }
 
 /**
  * Just the overtime slice of an entry's pay (0 if it has no overtimeHours) --
- * uses the employer's currently-configured overtimeMultiplier, the same rate
- * shown to and confirmed by the user when the overtime was detected/entered.
+ * uses the employer's currently-configured overtime rate (multiplier or flat
+ * rate), the same one shown to and confirmed by the user when the overtime
+ * was detected/entered.
  */
 export function entryOvertimePay(employer: Employer, entry: TimeEntry, now = Date.now()): number {
   if (!entry.overtimeHours || entry.overtimeHours <= 0) return 0;
   const hours = payableHours(employer, entry, now);
   const ot = Math.min(entry.overtimeHours, hours);
   const holidayMult = entry.isHoliday ? (employer.holidayMultiplier ?? 1) : 1;
-  const otMult = employer.overtimeMultiplier ?? 1.5;
-  let rate = 0;
-  if (employer.payType === "hourly" || employer.payType === "comprehensive") rate = employer.hourlyRate ?? 0;
-  else if (employer.payType === "monthly") rate = effectiveHourlyRate(employer) ?? 0;
-  return ot * rate * otMult * holidayMult;
+  let baseRate = 0;
+  if (employer.payType === "hourly" || employer.payType === "comprehensive") baseRate = employer.hourlyRate ?? 0;
+  else if (employer.payType === "monthly") baseRate = effectiveHourlyRate(employer) ?? 0;
+  return ot * overtimeRate(employer, baseRate) * holidayMult;
 }
 
 /** Hours actually paid for a shift: clocked duration minus the employer's unpaid break. */

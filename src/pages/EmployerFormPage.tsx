@@ -96,6 +96,8 @@ export function EmployerFormPage({ uid }: { uid: string }) {
   const [currency, setCurrency] = useState(DEFAULT_CURRENCY);
   const [baseSalary, setBaseSalary] = useState("");
   const [overtimeMultiplier, setOvertimeMultiplier] = useState<number | undefined>(undefined);
+  const [overtimeRateMode, setOvertimeRateMode] = useState<"multiplier" | "fixed">("multiplier");
+  const [overtimeHourlyRate, setOvertimeHourlyRate] = useState("");
   const [holidayMultiplier, setHolidayMultiplier] = useState<number | undefined>(undefined);
   const [breakMinutes, setBreakMinutes] = useState<number | undefined>(undefined);
   const [settlementCycle, setSettlementCycle] = useState<Employer["settlementCycle"]>(undefined);
@@ -135,6 +137,8 @@ export function EmployerFormPage({ uid }: { uid: string }) {
         setRate(String(data.hourlyRate ?? data.dailyRate ?? data.monthlySalary ?? data.pricePerOrder ?? ""));
         setBaseSalary(data.baseSalary ? String(data.baseSalary) : "");
         setOvertimeMultiplier(data.overtimeMultiplier);
+        setOvertimeRateMode(data.overtimeRateMode ?? "multiplier");
+        setOvertimeHourlyRate(data.overtimeHourlyRate ? String(data.overtimeHourlyRate) : "");
         setHolidayMultiplier(data.holidayMultiplier);
         setBreakMinutes(data.breakMinutes);
         setSettlementCycle(data.settlementCycle);
@@ -183,6 +187,8 @@ export function EmployerFormPage({ uid }: { uid: string }) {
       ...(payType === "per-order" ? { pricePerOrder: rateNum } : {}),
       ...(payType === "base+overtime" ? { baseSalary: Number(baseSalary) || 0 } : {}),
       ...(overtimeMultiplier ? { overtimeMultiplier } : {}),
+      overtimeRateMode,
+      ...(overtimeRateMode === "fixed" && Number(overtimeHourlyRate) > 0 ? { overtimeHourlyRate: Number(overtimeHourlyRate) } : {}),
       ...(holidayMultiplier ? { holidayMultiplier } : {}),
       ...(breakMinutes ? { breakMinutes } : {}),
       ...(settlementCycle ? { settlementCycle } : {}),
@@ -430,20 +436,53 @@ export function EmployerFormPage({ uid }: { uid: string }) {
         </div>
 
         <div>
-          <p className="field-label">{t("overtimeMultiplierLabel")} <span className="opt">{t("optional")}</span></p>
-          <div className="chip-row">
-            {OVERTIME_OPTIONS.map((v) => (
-              <button
-                key={v}
-                type="button"
-                className={`chip${overtimeMultiplier === v ? " selected" : ""}`}
-                onClick={() => setOvertimeMultiplier(overtimeMultiplier === v ? undefined : v)}
-              >
-                {t("multiplierSuffix", { v })}
-              </button>
-            ))}
+          <p className="field-label">{t("overtimeRateModeLabel")} <span className="opt">{t("optional")}</span></p>
+          <div className="mode-tabs">
+            <button
+              type="button"
+              className={`mode-tab${overtimeRateMode === "multiplier" ? " active" : ""}`}
+              onClick={() => setOvertimeRateMode("multiplier")}
+            >
+              {t("overtimeRateModeMultiplier")}
+            </button>
+            <button
+              type="button"
+              className={`mode-tab${overtimeRateMode === "fixed" ? " active" : ""}`}
+              onClick={() => setOvertimeRateMode("fixed")}
+            >
+              {t("overtimeRateModeFixed")}
+            </button>
           </div>
         </div>
+
+        {overtimeRateMode === "multiplier" ? (
+          <div>
+            <p className="field-label">{t("overtimeMultiplierLabel")} <span className="opt">{t("optional")}</span></p>
+            <div className="chip-row">
+              {OVERTIME_OPTIONS.map((v) => (
+                <button
+                  key={v}
+                  type="button"
+                  className={`chip${overtimeMultiplier === v ? " selected" : ""}`}
+                  onClick={() => setOvertimeMultiplier(overtimeMultiplier === v ? undefined : v)}
+                >
+                  {t("multiplierSuffix", { v })}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <div>
+            <p className="field-label">{t("overtimeHourlyRateLabel")}</p>
+            <input
+              className="rate-input"
+              type="number"
+              placeholder={CURRENCIES.find((c) => c.code === currency)?.symbol ?? "¥"}
+              value={overtimeHourlyRate}
+              onChange={(e) => setOvertimeHourlyRate(e.target.value)}
+            />
+          </div>
+        )}
 
         <div>
           <p className="field-label">{t("holidayMultiplierLabel")} <span className="opt">{t("optional")}</span></p>

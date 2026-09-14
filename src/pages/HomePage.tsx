@@ -17,7 +17,7 @@ import { SETTINGS_KEYS, useLocalToggle } from "../lib/settings";
 import { getCurrentLocation } from "../lib/geolocation";
 import { useT } from "../lib/i18n";
 import { DEFAULT_CURRENCY, currencySymbol, formatGroupedPay } from "../lib/currency";
-import { combineDateAndTime, todaysSchedule } from "../lib/schedule";
+import { combineDateAndTime, scheduleDurationHours, todaysSchedule } from "../lib/schedule";
 import "./HomePage.css";
 
 function startOfToday() {
@@ -185,12 +185,25 @@ export function HomePage({ uid }: { uid: string }) {
     const startTime = combineDateAndTime(today, start);
     let endTime = combineDateAndTime(today, end);
     if (endTime <= startTime) endTime += 24 * 3_600_000; // overnight shift
+
+    // The user can edit the actual start/end away from the scheduled slot right
+    // in this modal -- if that pushes hours past what was actually scheduled for
+    // today, it's overtime, same rule as clocking out live or backfilling.
+    const scheduled = todaysSchedule(scheduleConfirmEmployer, today);
+    const supportsAutoOvertime = scheduled !== null
+      && (scheduleConfirmEmployer.payType === "monthly" || scheduleConfirmEmployer.payType === "comprehensive");
+    const enteredHours = (endTime - startTime) / 3_600_000;
+    const overtimeHours = supportsAutoOvertime
+      ? Math.max(0, enteredHours - scheduleDurationHours(scheduled))
+      : 0;
+
     addManualEntry(uid, {
       employerId: scheduleConfirmEmployer.id,
       startTime,
       endTime,
       status: "confirmed",
       source: "manual",
+      ...(overtimeHours > 0.05 ? { overtimeHours } : {}),
     });
     setScheduleConfirmEmployer(null);
   }

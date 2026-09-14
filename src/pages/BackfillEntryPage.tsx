@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { deleteField } from "firebase/firestore";
 import { addManualEntry, deleteTimeEntry, getTimeEntry, updateTimeEntry, watchEmployers, watchWorkers } from "../lib/firestore";
 import { scheduleDurationHours, todaysSchedule } from "../lib/schedule";
+import { currencySymbol } from "../lib/currency";
 import { useT } from "../lib/i18n";
 import type { Adjustment, Employer, Mood, TimeEntry, Worker } from "../lib/types";
 import "./BackfillEntryPage.css";
@@ -277,7 +278,9 @@ export function BackfillEntryPage({ uid }: { uid: string }) {
               <span className="overtime-detected-unit">{t("overtimeHoursUnit")}</span>
             </div>
             <p className="overtime-detected-mult">
-              {t("overtimeMultiplierNote", { mult: (employer?.overtimeMultiplier ?? 1.5).toFixed(1) })}
+              {employer?.overtimeRateMode === "fixed" && employer.overtimeHourlyRate
+                ? t("overtimeFixedRateNote", { sym: currencySymbol(employer.currency), rate: employer.overtimeHourlyRate })
+                : t("overtimeMultiplierNote", { mult: (employer?.overtimeMultiplier ?? 1.5).toFixed(1) })}
             </p>
           </div>
         )}

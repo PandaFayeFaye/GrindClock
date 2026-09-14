@@ -11,14 +11,18 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .income-card, .combo-badge, .row-wrap, .fab-menu-item { animation: none !important; }
+  .income-card, .combo-badge, .row-wrap, .fab-menu-item, .banner { animation: none !important; }
 }
 
 .banner {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding-bottom: 4px;
+  gap: 16px;
+  background: var(--bg-surface);
+  border: 2px solid var(--border-quiet);
+  border-radius: var(--radius-bold);
+  padding: 16px 18px;
+  animation: card-rise 0.4s ease both;
 }
 
 .banner-title {
