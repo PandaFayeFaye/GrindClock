@@ -316,8 +316,16 @@ export function StatsPage({ uid }: { uid: string }) {
       )}
 
       <div className="summary-card">
-        <div className="stat"><p className="num">{totalHours.toFixed(1)}h</p><p className="lb">{t(range === "all" ? "cumulativeHours" : "periodHours")}</p></div>
-        <div className="stat"><p className="num">{formatGroupedPay(totalPayByCurrency)}</p><p className="lb">{t(range === "all" ? "cumulativePay" : "periodPay")}</p></div>
+        <div className="summary-card-header">
+          <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+            <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" stroke="#1A1A1A" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          <p className="summary-card-title">{t("summaryCardTitle")}</p>
+        </div>
+        <div className="summary-card-row">
+          <div className="stat"><p className="num">{totalHours.toFixed(1)}h</p><p className="lb">{t(range === "all" ? "cumulativeHours" : "periodHours")}</p></div>
+          <div className="stat"><p className="num">{formatGroupedPay(totalPayByCurrency)}</p><p className="lb">{t(range === "all" ? "cumulativePay" : "periodPay")}</p></div>
+        </div>
       </div>
 
       {totalOvertimeHours > 0.05 && (
@@ -565,7 +573,12 @@ export function StatsPage({ uid }: { uid: string }) {
                   <p className="d">
                     {new Date(e.startTime).toLocaleDateString()} · {entryHours(e).toFixed(1)}小时
                     {e.overtimeHours && e.overtimeHours > 0.05 ? (
-                      <span className="entry-ot-chip">{t("entryOvertimeChip", { h: e.overtimeHours.toFixed(1) })}</span>
+                      <span className="entry-ot-chip">
+                        <svg viewBox="0 0 24 24" fill="none" width="9" height="9">
+                          <path d="M12 2.2c1.7 3.8-2 5-2 8.6a2 2 0 104 0c0-1.1-.6-1.6-.6-1.6.9.9 1.7 2.4 1.7 3.8a5 5 0 11-10 0c0-5.1 4-6.6 3-10.8z" fill="currentColor" />
+                        </svg>
+                        {t("entryOvertimeChip", { h: e.overtimeHours.toFixed(1) })}
+                      </span>
                     ) : null}
                     {e.clockInLocation && (
                       <svg viewBox="0 0 24 24" fill="none" width="12" height="12" className="loc-ic">
@@ -580,7 +593,12 @@ export function StatsPage({ uid }: { uid: string }) {
                   {(() => {
                     const otPay = entryOvertimePay(emp, e);
                     return otPay > 0 ? (
-                      <span className="pay-ot-sub">{t("entryOvertimePaySub", { pay: `${currencySymbol(emp.currency)}${otPay.toFixed(1)}` })}</span>
+                      <span className="pay-ot-sub">
+                        <svg viewBox="0 0 24 24" fill="none" width="8" height="8">
+                          <path d="M12 2.2c1.7 3.8-2 5-2 8.6a2 2 0 104 0c0-1.1-.6-1.6-.6-1.6.9.9 1.7 2.4 1.7 3.8a5 5 0 11-10 0c0-5.1 4-6.6 3-10.8z" fill="currentColor" />
+                        </svg>
+                        {t("entryOvertimePaySub", { pay: `${currencySymbol(emp.currency)}${otPay.toFixed(1)}` })}
+                      </span>
                     ) : null;
                   })()}
                 </div>

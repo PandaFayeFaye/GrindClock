@@ -17,28 +17,48 @@
 .banner {
   display: flex;
   align-items: center;
-  gap: 16px;
-  background: var(--bg-surface);
-  border: 2px solid var(--border-quiet);
+  gap: 14px;
+  background: var(--accent-skyblue);
+  border: 3px solid var(--border-bold);
   border-radius: var(--radius-bold);
-  padding: 16px 18px;
+  padding: 14px 16px;
+  box-shadow: var(--shadow-bold);
   animation: card-rise 0.4s ease both;
+}
+
+.banner-avatar {
+  flex-shrink: 0;
+  display: flex;
+  background: #fff;
+  border: 2.5px solid var(--border-bold);
+  border-radius: 999px;
+  padding: 3px;
+}
+
+.banner-text {
+  min-width: 0;
+  flex: 1;
 }
 
 .banner-title {
   font-family: var(--font-display);
-  font-size: 18px;
+  font-size: 17px;
   margin: 0;
+  overflow-wrap: break-word;
 }
 
 .home-tier-chip {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-top: 6px;
+  margin-top: 8px;
+  padding: 4px 10px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1.5px solid rgba(26, 26, 26, 0.25);
+  border-radius: var(--radius-pill);
   text-decoration: none;
   color: inherit;
-  max-width: 220px;
+  max-width: 240px;
 }
 
 .home-tier-name {
@@ -53,8 +73,8 @@
   flex: 1;
   height: 6px;
   border-radius: 4px;
-  background: var(--bg-base);
-  border: 1.3px solid var(--border-quiet);
+  background: rgba(255, 255, 255, 0.6);
+  border: 1.3px solid rgba(26, 26, 26, 0.2);
   overflow: hidden;
   min-width: 30px;
 }
@@ -68,7 +88,7 @@
 .home-tier-next {
   font-size: 9.5px;
   font-weight: 700;
-  color: var(--text-muted);
+  color: rgba(26, 26, 26, 0.55);
   white-space: nowrap;
   flex-shrink: 0;
 }

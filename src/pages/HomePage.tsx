@@ -256,7 +256,9 @@ export function HomePage({ uid }: { uid: string }) {
     <div className="home-page">
       {!simpleMode && (
         <div className="banner">
-          {animal ? <AvatarBadge animal={animal} mbti={mbti} size={52} /> : <Mascot size={52} />}
+          <div className="banner-avatar">
+            {animal ? <AvatarBadge animal={animal} mbti={mbti} size={48} /> : <Mascot size={48} />}
+          </div>
           <div className="banner-text">
             <p className="banner-title">
               {nickname ? t("homeBannerNamed", { name: nickname }) : t("homeBanner")}

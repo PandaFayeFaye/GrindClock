@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { watchEmployers, watchTimeEntries, watchUserProfile } from "../lib/firestore";
-import { entryHours, entryPay, lumpSumForPeriod } from "../lib/pay";
+import { entryHours, entryOvertimePay, entryPay, lumpSumForPeriod } from "../lib/pay";
 import { DEFAULT_CURRENCY, currencySymbol, formatGroupedPay } from "../lib/currency";
 import { currentStreak, dateKey, leaderboard, startOfMonth } from "../lib/stats";
 import { downloadBlob, renderRecapShareImage } from "../lib/shareImage";
@@ -88,6 +88,21 @@ export function MonthlyRecapPage({ uid }: { uid: string }) {
     for (const emp of employers) add(emp.currency ?? DEFAULT_CURRENCY, lumpSumForPeriod(emp, monthEntries));
     return map;
   }, [monthEntries, employerById, employers]);
+
+  const totalOvertimeHours = useMemo(() => monthEntries.reduce((s, e) => s + (e.overtimeHours ?? 0), 0), [monthEntries]);
+  const totalOvertimePayByCurrency = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const e of monthEntries) {
+      const emp = employerById.get(e.employerId);
+      if (!emp) continue;
+      const otPay = entryOvertimePay(emp, e);
+      if (otPay > 0) {
+        const cur = emp.currency ?? DEFAULT_CURRENCY;
+        map.set(cur, (map.get(cur) ?? 0) + otPay);
+      }
+    }
+    return map;
+  }, [monthEntries, employerById]);
 
   const board = useMemo(() => leaderboard(monthEntries, employers, monthStart, true), [monthEntries, employers, monthStart]);
   const topEmployer = board[0]?.employer.name ?? "—";
@@ -242,6 +257,9 @@ export function MonthlyRecapPage({ uid }: { uid: string }) {
               </p>
             )}
             <p className="slide-caption">{t("recapHoursCaption", { n: employers.length })}</p>
+            {totalOvertimeHours > 0.05 && (
+              <p className="recap-ot-note">{t("recapOvertimeHoursNote", { h: totalOvertimeHours.toFixed(1) })}</p>
+            )}
           </div>
         )}
 
@@ -252,6 +270,9 @@ export function MonthlyRecapPage({ uid }: { uid: string }) {
               {singleCurrency ? `${currencySymbol(singleCurrencyCode)}${payCount.toFixed(0)}` : formatGroupedPay(totalPayByCurrency)}
             </p>
             <p className="slide-caption">{t("recapPayCaption", { name: topEmployer })}</p>
+            {totalOvertimePayByCurrency.size > 0 && (
+              <p className="recap-ot-note">{t("recapOvertimePayNote", { pay: formatGroupedPay(totalOvertimePayByCurrency) })}</p>
+            )}
           </div>
         )}
 
@@ -263,6 +284,12 @@ export function MonthlyRecapPage({ uid }: { uid: string }) {
               <div className="stat-tile stagger-2"><p className="n">{topEmployer}</p><p className="l">{t("topEmployerLabel")}</p></div>
               <div className="stat-tile stagger-3"><p className="n">{hardestDay}</p><p className="l">{t("memorableDayLabel")}</p></div>
               <div className="stat-tile stagger-4"><p className="n">{formatGroupedPay(totalPayByCurrency)}</p><p className="l">{t("crossEmployerTotal", { n: employers.length })}</p></div>
+              {totalOvertimeHours > 0.05 && (
+                <div className="stat-tile stat-tile-ot stagger-5">
+                  <p className="n">{totalOvertimeHours.toFixed(1)}h · {formatGroupedPay(totalOvertimePayByCurrency)}</p>
+                  <p className="l">{t("recapOvertimeTileLabel")}</p>
+                </div>
+              )}
             </div>
           </div>
         )}
