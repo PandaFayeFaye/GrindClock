@@ -121,7 +121,7 @@ export function MoodCurveCard({
               style={{ left: `${x}%`, top: `${y}%` }}
               onClick={() => openMoodEditor(d)}
             >
-              {d.mood ? <MoodIcon mood={d.mood} /> : <span className="mood-dot" />}
+              {d.mood ? <MoodIcon mood={d.mood} size={21} /> : <span className="mood-dot" />}
             </button>
           );
         })}
@@ -134,7 +134,7 @@ export function MoodCurveCard({
         <div className="mood-dist-row">
           {moodCounts.map(({ key, n }) => (
             <span className="mood-dist-chip" key={key}>
-              <MoodIcon mood={key} size={13} />
+              <MoodIcon mood={key} size={22} />
               ×{n}
             </span>
           ))}
