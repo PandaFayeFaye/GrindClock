@@ -29,9 +29,17 @@ export function BackfillEntryPage({ uid }: { uid: string }) {
   const worker = workers.find((w) => w.id === workerId);
 
   const [selectedEmployerId, setSelectedEmployerId] = useState(presetEmployerId ?? "");
-  // Fall back to the first employer once the list loads, without a setState-in-effect
+  // Archived gigs can't be picked for new entries, but an entry already logged
+  // against one (being edited) must still show that gig as its selected option.
+  const activeEmployers = useMemo(() => employers.filter((e) => !e.archived), [employers]);
+  const pickableEmployers = useMemo(() => {
+    if (!selectedEmployerId || activeEmployers.some((e) => e.id === selectedEmployerId)) return activeEmployers;
+    const current = employers.find((e) => e.id === selectedEmployerId);
+    return current ? [...activeEmployers, current] : activeEmployers;
+  }, [activeEmployers, employers, selectedEmployerId]);
+  // Fall back to the first active employer once the list loads, without a setState-in-effect
   // round trip -- this is derived at render time, not synced.
-  const employerId = selectedEmployerId || employers[0]?.id || "";
+  const employerId = selectedEmployerId || activeEmployers[0]?.id || "";
   const setEmployerId = setSelectedEmployerId;
 
   const [date, setDate] = useState(toDateInputValue(new Date()));
@@ -193,8 +201,8 @@ export function BackfillEntryPage({ uid }: { uid: string }) {
         <div>
           <p className="field-label">{t("employerLabel")}</p>
           <select className="select-field" value={employerId} onChange={(e) => setEmployerId(e.target.value)}>
-            {employers.length === 0 && <option value="">{t("noEmployersOption")}</option>}
-            {employers.map((e) => (
+            {pickableEmployers.length === 0 && <option value="">{t("noEmployersOption")}</option>}
+            {pickableEmployers.map((e) => (
               <option key={e.id} value={e.id}>{e.name}</option>
             ))}
           </select>

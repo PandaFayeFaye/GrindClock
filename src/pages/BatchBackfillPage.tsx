@@ -26,9 +26,10 @@ export function BatchBackfillPage({ uid }: { uid: string }) {
     return () => { unsubEmployers(); unsubEntries(); };
   }, [uid]);
 
+  const activeEmployers = useMemo(() => employers.filter((e) => !e.archived), [employers]);
   const [employerId, setEmployerId] = useState("");
-  const employerIdOrFirst = employerId || employers[0]?.id || "";
-  const selectedEmployer = employers.find((e) => e.id === employerIdOrFirst);
+  const employerIdOrFirst = employerId || activeEmployers[0]?.id || "";
+  const selectedEmployer = activeEmployers.find((e) => e.id === employerIdOrFirst);
   const supportsAutoOvertime = selectedEmployer?.scheduleMode === "fixed"
     && (selectedEmployer.payType === "monthly" || selectedEmployer.payType === "comprehensive");
 
@@ -186,7 +187,7 @@ export function BatchBackfillPage({ uid }: { uid: string }) {
           <p className="field-label">{t("employerLabel")}</p>
           <select className="select-field" value={employerIdOrFirst} onChange={(e) => { setEmployerId(e.target.value); setConfirmDelete(false); }}>
             {employers.length === 0 && <option value="">{t("noEmployersOption")}</option>}
-            {employers.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
+            {activeEmployers.map((e) => <option key={e.id} value={e.id}>{e.name}</option>)}
           </select>
         </div>
 

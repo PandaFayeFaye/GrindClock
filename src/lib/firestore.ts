@@ -12,7 +12,6 @@ import {
   query,
   setDoc,
   updateDoc,
-  where,
   writeBatch,
 } from "firebase/firestore";
 import { db } from "./firebase";
@@ -48,13 +47,14 @@ export function updateEmployer(uid: string, employerId: string, data: Partial<Em
   return updateDoc(doc(employersCol(uid), employerId), data);
 }
 
-/** Deletes a gig and every time entry logged against it (own + any delegated team entries). */
-export async function deleteEmployer(uid: string, employerId: string) {
-  const entriesSnap = await getDocs(query(timeEntriesCol(uid), where("employerId", "==", employerId)));
-  const batch = writeBatch(db);
-  for (const d of entriesSnap.docs) batch.delete(d.ref);
-  batch.delete(doc(employersCol(uid), employerId));
-  await batch.commit();
+/** Retires a gig: hidden from Home/punch flows from now on, but its history stays untouched. */
+export function archiveEmployer(uid: string, employerId: string) {
+  return updateDoc(doc(employersCol(uid), employerId), { archived: true });
+}
+
+/** Un-retires a gig so it shows up on Home again. */
+export function reactivateEmployer(uid: string, employerId: string) {
+  return updateDoc(doc(employersCol(uid), employerId), { archived: false });
 }
 
 export function watchTimeEntries(uid: string, cb: (list: TimeEntry[]) => void) {

@@ -25,9 +25,11 @@ export function NetPayComparePage({ uid }: { uid: string }) {
     return () => { unsubEmployers(); unsubEntries(); };
   }, [uid]);
 
+  const activeEmployers = useMemo(() => employers.filter((e) => !e.archived), [employers]);
+
   const rows: Row[] = useMemo(() => {
     const personalConfirmed = entries.filter((e) => !e.workerId && e.status === "confirmed" && e.endTime);
-    return employers
+    return activeEmployers
       .map((emp) => {
         const empEntries = personalConfirmed.filter((e) => e.employerId === emp.id);
         const totalHours = empEntries.reduce((s, e) => s + entryHours(e), 0);
@@ -48,11 +50,11 @@ export function NetPayComparePage({ uid }: { uid: string }) {
         return { employer: emp, nominal, actual };
       })
       .sort((a, b) => b.actual - a.actual);
-  }, [employers, entries]);
+  }, [activeEmployers, entries]);
 
   const hasAnyEntries = entries.some((e) => !e.workerId && e.status === "confirmed" && e.endTime);
 
-  if (employers.length < 2) {
+  if (activeEmployers.length < 2) {
     return (
       <div className="netpay-page">
         <div className="topbar">

@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactElement } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
-import { addEmployer, deleteEmployer, employersCol, updateEmployer, watchEmployers } from "../lib/firestore";
+import { addEmployer, archiveEmployer, employersCol, reactivateEmployer, updateEmployer, watchEmployers } from "../lib/firestore";
 import type { Adjustment, Employer, PayType } from "../lib/types";
 import { WEEKDAYS } from "../lib/schedule";
 import { Mascot } from "../components/Mascot";
@@ -114,6 +114,7 @@ export function EmployerFormPage({ uid }: { uid: string }) {
   const [duplicateConfirm, setDuplicateConfirm] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [archived, setArchived] = useState(false);
 
   useEffect(() => watchEmployers(uid, setExistingEmployers), [uid]);
 
@@ -149,6 +150,7 @@ export function EmployerFormPage({ uid }: { uid: string }) {
         setIdleTimePct(data.idleTimePct ? String(data.idleTimePct) : "");
         setDefaultAdjustments(data.defaultAdjustments ?? []);
         setNote(data.note ?? "");
+        setArchived(!!data.archived);
         if (data.commuteMinutes || data.commuteCost || data.idleTimePct) setCommuteOpen(true);
       }
       setLoaded(true);
@@ -218,7 +220,7 @@ export function EmployerFormPage({ uid }: { uid: string }) {
     }
   }
 
-  async function handleDeleteClick() {
+  async function handleArchiveClick() {
     if (!employerId) return;
     if (!confirmDelete) {
       setConfirmDelete(true);
@@ -226,12 +228,26 @@ export function EmployerFormPage({ uid }: { uid: string }) {
     }
     setDeleting(true);
     try {
-      await deleteEmployer(uid, employerId);
+      await archiveEmployer(uid, employerId);
       navigate("/");
     } catch (err) {
-      console.error("Failed to delete employer", err);
+      console.error("Failed to archive employer", err);
       setDeleting(false);
       window.alert(err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  async function handleReactivateClick() {
+    if (!employerId) return;
+    setDeleting(true);
+    try {
+      await reactivateEmployer(uid, employerId);
+      setArchived(false);
+    } catch (err) {
+      console.error("Failed to reactivate employer", err);
+      window.alert(err instanceof Error ? err.message : String(err));
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -650,15 +666,31 @@ export function EmployerFormPage({ uid }: { uid: string }) {
         {isEdit && employerId && (
           <div className="danger-zone">
             <p className="field-label">{t("dangerZoneLabel")}</p>
-            <p className="danger-zone-hint">{t("deleteEmployerHint")}</p>
-            <button
-              type="button"
-              className="delete-employer-btn"
-              disabled={deleting}
-              onClick={handleDeleteClick}
-            >
-              {deleting ? t("deletingEllipsis") : confirmDelete ? t("deleteEmployerConfirmBtn") : t("deleteEmployerBtn")}
-            </button>
+            {archived ? (
+              <>
+                <p className="danger-zone-hint">{t("reactivateEmployerHint")}</p>
+                <button
+                  type="button"
+                  className="reactivate-employer-btn"
+                  disabled={deleting}
+                  onClick={handleReactivateClick}
+                >
+                  {deleting ? t("reactivatingEllipsis") : t("reactivateEmployerBtn")}
+                </button>
+              </>
+            ) : (
+              <>
+                <p className="danger-zone-hint">{t("archiveEmployerHint")}</p>
+                <button
+                  type="button"
+                  className="delete-employer-btn"
+                  disabled={deleting}
+                  onClick={handleArchiveClick}
+                >
+                  {deleting ? t("archivingEllipsis") : confirmDelete ? t("archiveEmployerConfirmBtn") : t("archiveEmployerBtn")}
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>

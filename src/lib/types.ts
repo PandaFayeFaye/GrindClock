@@ -25,6 +25,7 @@ export interface Employer {
   idleTimePct?: number; // estimated % of on-shift time spent idle/waiting (e.g. between rideshare/delivery orders)
   defaultAdjustments?: Adjustment[]; // recurring per-shift bonus/deduction rules, auto-applied to every new entry
   note?: string;
+  archived?: boolean; // retired -- hidden from Home/punch flows, but its history stays intact and it can be reactivated
 }
 
 export type Mood = "crash" | "normal" | "great" | "heartbeat" | "slack" | "grind" | "ox" | "flat";

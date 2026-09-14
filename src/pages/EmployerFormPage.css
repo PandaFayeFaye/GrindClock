@@ -470,3 +470,18 @@
 .employer-form .delete-employer-btn:disabled {
   opacity: 0.5;
 }
+
+.employer-form .reactivate-employer-btn {
+  width: 100%;
+  min-height: 46px;
+  border-radius: 12px;
+  border: 2px solid var(--accent-green);
+  background: var(--bg-surface);
+  color: var(--accent-green);
+  font-weight: 800;
+  font-size: 13.5px;
+}
+
+.employer-form .reactivate-employer-btn:disabled {
+  opacity: 0.5;
+}

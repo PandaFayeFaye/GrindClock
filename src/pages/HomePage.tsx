@@ -97,6 +97,9 @@ export function HomePage({ uid }: { uid: string }) {
   );
 
   const employerById = useMemo(() => new Map(employers.map((e) => [e.id, e])), [employers]);
+  // Archived gigs keep their history (still resolvable above for past pay/hours) but
+  // drop out of the active punch list -- reactivating one from Settings brings it back.
+  const activeEmployers = useMemo(() => employers.filter((e) => !e.archived), [employers]);
   const employerIdsWithEntryToday = useMemo(() => new Set(todaysEntries.map((e) => e.employerId)), [todaysEntries]);
   const todaysHoursByEmployer = useMemo(() => {
     const map = new Map<string, number>();
@@ -279,7 +282,7 @@ export function HomePage({ uid }: { uid: string }) {
         </div>
       )}
 
-      {employers.length > 0 ? (
+      {activeEmployers.length > 0 ? (
         <>
           {!simpleMode && workingCount >= 2 && (
             <div className="combo-badge">
@@ -329,7 +332,7 @@ export function HomePage({ uid }: { uid: string }) {
           </div>
 
           <div className="list">
-            {employers.map((emp, i) => {
+            {activeEmployers.map((emp, i) => {
               const active = activeByEmployer.get(emp.id);
               const schedule = todaysSchedule(emp);
               const showScheduleCard = !!schedule && !active && !employerIdsWithEntryToday.has(emp.id);
@@ -441,7 +444,7 @@ export function HomePage({ uid }: { uid: string }) {
         />
       )}
 
-      {employers.length > 0 && (
+      {activeEmployers.length > 0 && (
         <div className="fab-wrap">
           {menuOpen && (
             <>

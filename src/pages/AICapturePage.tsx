@@ -316,7 +316,7 @@ export function AICapturePage({ uid }: { uid: string }) {
               <p className="field-label">{t("employerLabel")}</p>
               <select className="select-field" value={employerId} onChange={(e) => setEmployerId(e.target.value)}>
                 <option value="">{t("pleaseSelect")}</option>
-                {employers.map((emp) => <option key={emp.id} value={emp.id}>{emp.name}</option>)}
+                {employers.filter((emp) => !emp.archived).map((emp) => <option key={emp.id} value={emp.id}>{emp.name}</option>)}
               </select>
             </div>
 

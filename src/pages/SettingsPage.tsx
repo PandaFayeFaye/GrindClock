@@ -50,6 +50,13 @@ function NavRow({ to, icon, title }: { to: string; icon: ReactNode; title: strin
 }
 
 const ICONS = {
+  archive: (
+    <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
+      <rect x="3.5" y="5" width="17" height="4" rx="1.2" stroke="#1A1A1A" strokeWidth="1.8" />
+      <path d="M4.5 9.5v8a1.8 1.8 0 001.8 1.8h11.4a1.8 1.8 0 001.8-1.8v-8" stroke="#1A1A1A" strokeWidth="1.8" />
+      <path d="M10 13h4" stroke="#1A1A1A" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  ),
   netPay: (
     <svg viewBox="0 0 24 24" fill="none" width="18" height="18">
       <path d="M12 2v20M17 6H9.5a3 3 0 000 6h5a3 3 0 010 6H6" stroke="#1A1A1A" strokeWidth="2" strokeLinecap="round" />
@@ -163,6 +170,7 @@ export function SettingsPage({ uid }: { uid: string }) {
   }
 
   const employerById = useMemo(() => new Map(employers.map((e) => [e.id, e])), [employers]);
+  const archivedEmployers = useMemo(() => employers.filter((e) => e.archived), [employers]);
   const confirmedEntries = useMemo(() => entries.filter((e) => e.status === "confirmed" && e.endTime), [entries]);
 
   return (
@@ -216,6 +224,17 @@ export function SettingsPage({ uid }: { uid: string }) {
           <NavRow to="/recap" icon={ICONS.recap} title={t("monthlyRecap")} />
         </div>
       </div>
+
+      {archivedEmployers.length > 0 && (
+        <div>
+          <p className="group-label">{t("groupArchivedEmployers")}</p>
+          <div className="group">
+            {archivedEmployers.map((emp) => (
+              <NavRow key={emp.id} to={`/employers/${emp.id}`} icon={ICONS.archive} title={emp.name} />
+            ))}
+          </div>
+        </div>
+      )}
 
       <div>
         <p className="group-label">{t("groupTeam")}</p>
