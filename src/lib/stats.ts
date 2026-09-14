@@ -76,6 +76,19 @@ export function moodDetailByDay(entries: TimeEntry[]): Map<string, { mood: Mood;
   return map;
 }
 
+/** Today's mood if logged; otherwise the most recently logged mood from any past day. */
+export function latestMoodOrFallback(entries: TimeEntry[]): Mood | undefined {
+  const todayKey = dateKey(Date.now());
+  const today = moodDetailByDay(entries).get(todayKey);
+  if (today) return today.mood;
+  let best: TimeEntry | null = null;
+  for (const e of entries) {
+    if (!isConfirmedPersonal(e) || !e.mood) continue;
+    if (!best || e.startTime > best.startTime) best = e;
+  }
+  return best?.mood;
+}
+
 export interface LeaderboardRow {
   employer: Employer;
   hours: number;

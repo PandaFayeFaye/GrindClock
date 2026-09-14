@@ -20,6 +20,55 @@
   40% { transform: scaleX(0.7); opacity: 0.15; }
 }
 
+/* 崩溃 -- slow, low sink with a sad tilt */
+@keyframes companion-mood-crash {
+  0%, 100% { transform: translateY(0) rotate(-6deg) scale(0.98); }
+  50% { transform: translateY(4px) rotate(-9deg) scale(0.96); }
+}
+
+/* 爽 -- big, springy, happy hops */
+@keyframes companion-mood-great {
+  0%, 100% { transform: translateY(0) rotate(-4deg) scale(1); }
+  25% { transform: translateY(-20px) rotate(4deg) scale(1.06); }
+  50% { transform: translateY(-24px) rotate(6deg) scale(1.08); }
+  75% { transform: translateY(-6px) rotate(-2deg) scale(1.02); }
+}
+
+/* 心动 -- quick double heartbeat pulse */
+@keyframes companion-mood-heartbeat {
+  0%, 40%, 100% { transform: translateY(0) rotate(-3deg) scale(1); }
+  15% { transform: translateY(-4px) rotate(-1deg) scale(1.1); }
+  25% { transform: translateY(0) rotate(-3deg) scale(1); }
+  32% { transform: translateY(-6px) rotate(1deg) scale(1.14); }
+}
+
+/* 摸鱼 -- lazy, slow side-to-side float */
+@keyframes companion-mood-slack {
+  0%, 100% { transform: translateX(-4px) rotate(-5deg) scale(1); }
+  50% { transform: translateX(4px) rotate(4deg) scale(1.01); }
+}
+
+/* 爆肝 -- fast, jittery, intense vibration */
+@keyframes companion-mood-grind {
+  0%, 100% { transform: translate(0, 0) rotate(0deg); }
+  20% { transform: translate(-2px, -3px) rotate(-3deg); }
+  40% { transform: translate(2px, -6px) rotate(3deg); }
+  60% { transform: translate(-2px, -2px) rotate(-2deg); }
+  80% { transform: translate(2px, -5px) rotate(2deg); }
+}
+
+/* 社畜 -- heavy, tired, low-amplitude droopy sway */
+@keyframes companion-mood-ox {
+  0%, 100% { transform: translateY(2px) rotate(-4deg) scale(0.99); }
+  50% { transform: translateY(6px) rotate(2deg) scale(0.97); }
+}
+
+/* 躺平 -- lying flat on its side, barely moving */
+@keyframes companion-mood-flat {
+  0%, 100% { transform: rotate(78deg) translateY(0); }
+  50% { transform: rotate(78deg) translateY(-2px); }
+}
+
 .companion-avatar-btn {
   padding: 0;
   border: none;
@@ -33,9 +82,17 @@
   animation: companion-bob 3.4s ease-in-out infinite;
 }
 
+.companion-avatar-btn.mood-crash { animation: companion-mood-crash 3.6s ease-in-out infinite; }
+.companion-avatar-btn.mood-great { animation: companion-mood-great 1.6s ease-in-out infinite; }
+.companion-avatar-btn.mood-heartbeat { animation: companion-mood-heartbeat 2.2s ease-in-out infinite; }
+.companion-avatar-btn.mood-slack { animation: companion-mood-slack 4.5s ease-in-out infinite; }
+.companion-avatar-btn.mood-grind { animation: companion-mood-grind 0.6s ease-in-out infinite; }
+.companion-avatar-btn.mood-ox { animation: companion-mood-ox 4s ease-in-out infinite; }
+.companion-avatar-btn.mood-flat { animation: companion-mood-flat 5s ease-in-out infinite; }
+
 @media (prefers-reduced-motion: reduce) {
   .companion-avatar-btn {
-    animation: none;
+    animation: none !important;
   }
   .companion-shadow {
     animation: none !important;
@@ -182,4 +239,16 @@
 
 .companion-popover-mood.hungry {
   color: var(--accent-coral);
+}
+
+.companion-popover-usermood {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin: 6px 0 0;
+  padding-top: 6px;
+  border-top: 1.3px dashed var(--border-quiet);
 }

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { addManualEntry, clockIn, clockOut, watchEmployers, watchTimeEntries, watchUserProfile } from "../lib/firestore";
 import { entryHours, entryOvertimePay, entryPay, mergedHoursToday } from "../lib/pay";
-import { startOfMonth, startOfWeek } from "../lib/stats";
+import { latestMoodOrFallback, startOfMonth, startOfWeek } from "../lib/stats";
 import { TIERS, TIER_COLORS, currentTierIndex } from "../lib/tiers";
 import type { Adjustment, Employer, Mood, TimeEntry } from "../lib/types";
 import { Mascot } from "../components/Mascot";
@@ -176,6 +176,7 @@ export function HomePage({ uid }: { uid: string }) {
   const nextPetStage = PET_STAGES[petStageIdx + 1];
   const petHungry = isPetHungry(lastFedAt);
   const hungryHours = Math.floor(hoursSinceFed(lastFedAt));
+  const companionMood = useMemo(() => latestMoodOrFallback(personalEntries), [personalEntries]);
 
   async function handlePunch(employer: Employer) {
     const active = activeByEmployer.get(employer.id);
@@ -436,6 +437,7 @@ export function HomePage({ uid }: { uid: string }) {
           progressCaptionVars={nextPetStage ? { h: (nextPetStage.threshold - totalHours).toFixed(0) } : undefined}
           moodCaptionKey={lastFedAt == null ? "petNeverFedCaption" : petHungry ? "petHungryCaption" : "petFedCaption"}
           moodCaptionVars={petHungry && lastFedAt != null ? { h: hungryHours } : undefined}
+          userMood={companionMood}
         />
       )}
 

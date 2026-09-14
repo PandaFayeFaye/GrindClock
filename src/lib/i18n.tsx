@@ -542,6 +542,7 @@ const dict = {
 
   petCardTitle: { zh: "搬砖搭子", en: "Grind Buddy" },
   companionHint: { zh: "这是你的搬砖搭子，点它看看～", en: "This is your Grind Buddy — tap to check on it" },
+  companionUserMoodCaption: { zh: "跟着你的心情「{mood}」动起来了", en: "Moving to match your mood: {mood}" },
   petStageEgg: { zh: "破壳蛋崽", en: "Hatchling" },
   petStageBaby: { zh: "打工幼崽", en: "Grind Pup" },
   petStageGrowing: { zh: "拼命练习生", en: "Hustler-in-training" },

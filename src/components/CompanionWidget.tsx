@@ -2,6 +2,8 @@ import { useState } from "react";
 import { characterImageSrc, type AnimalKey, type PetAccessory } from "../lib/avatar";
 import { SETTINGS_KEYS, useLocalToggle } from "../lib/settings";
 import { useT, type DictKey } from "../lib/i18n";
+import { MOOD_KEYS, MoodIcon } from "../lib/moods";
+import type { Mood } from "../lib/types";
 import "./CompanionWidget.css";
 
 export function CompanionWidget({
@@ -15,6 +17,7 @@ export function CompanionWidget({
   progressCaptionVars,
   moodCaptionKey,
   moodCaptionVars,
+  userMood,
   dataTour,
 }: {
   animal: AnimalKey;
@@ -27,6 +30,7 @@ export function CompanionWidget({
   progressCaptionVars?: Record<string, string | number>;
   moodCaptionKey: DictKey;
   moodCaptionVars?: Record<string, string | number>;
+  userMood?: Mood;
   dataTour?: string;
 }) {
   const t = useT();
@@ -51,6 +55,12 @@ export function CompanionWidget({
           <p className={hungry ? "companion-popover-mood hungry" : "companion-popover-mood"}>
             {t(moodCaptionKey, moodCaptionVars)}
           </p>
+          {userMood && (
+            <p className="companion-popover-usermood">
+              <MoodIcon mood={userMood} size={14} />
+              {t("companionUserMoodCaption", { mood: t(MOOD_KEYS.find((m) => m.key === userMood)!.labelKey) })}
+            </p>
+          )}
         </div>
       )}
       {!hintSeen && !open && (
@@ -59,7 +69,12 @@ export function CompanionWidget({
         </button>
       )}
       <div className="companion-shadow" />
-      <button type="button" className="companion-avatar-btn" onClick={handleTap} aria-label={t("petCardTitle")}>
+      <button
+        type="button"
+        className={`companion-avatar-btn${userMood ? ` mood-${userMood}` : ""}`}
+        onClick={handleTap}
+        aria-label={t("petCardTitle")}
+      >
         <img
           className={hungry ? "companion-img hungry" : "companion-img"}
           src={characterImageSrc(animal, mbti)}
