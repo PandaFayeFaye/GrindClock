@@ -68,7 +68,11 @@ export function CompanionWidget({
           {t("companionHint")}
         </button>
       )}
-      <div className="companion-shadow" />
+      {userMood && !open && (
+        <div className={`companion-mood-bubble mood-${userMood}`}>
+          {t(MOOD_BUBBLE_KEYS[userMood])}
+        </div>
+      )}
       <button
         type="button"
         className={`companion-avatar-btn${userMood ? ` mood-${userMood}` : ""}`}
@@ -98,6 +102,18 @@ export function CompanionWidget({
           </svg>
         )}
       </button>
+      <div className="companion-shadow" />
     </div>
   );
 }
+
+const MOOD_BUBBLE_KEYS: Record<Mood, DictKey> = {
+  crash: "companionBubbleCrash",
+  normal: "companionBubbleNormal",
+  great: "companionBubbleGreat",
+  heartbeat: "companionBubbleHeartbeat",
+  slack: "companionBubbleSlack",
+  grind: "companionBubbleGrind",
+  ox: "companionBubbleOx",
+  flat: "companionBubbleFlat",
+};

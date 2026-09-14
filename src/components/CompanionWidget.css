@@ -20,53 +20,66 @@
   40% { transform: scaleX(0.7); opacity: 0.15; }
 }
 
-/* 崩溃 -- slow, low sink with a sad tilt */
+/* 崩溃 -- fast face-plant collapse, twitches on the ground, slowly gets back up */
 @keyframes companion-mood-crash {
-  0%, 100% { transform: translateY(0) rotate(-6deg) scale(0.98); }
-  50% { transform: translateY(4px) rotate(-9deg) scale(0.96); }
+  0% { transform: translateY(0) rotate(0deg) scale(1); }
+  8% { transform: translateY(11px) rotate(72deg) scale(0.9); }
+  12%, 48% { transform: translateY(13px) rotate(80deg) scale(0.88); }
+  52% { transform: translateY(11px) rotate(74deg) scale(0.9); }
+  56%, 88% { transform: translateY(13px) rotate(80deg) scale(0.88); }
+  96% { transform: translateY(5px) rotate(30deg) scale(0.94); }
+  100% { transform: translateY(0) rotate(0deg) scale(1); }
 }
 
-/* 爽 -- big, springy, happy hops */
+/* 爽 -- big, springy, joyful hops */
 @keyframes companion-mood-great {
-  0%, 100% { transform: translateY(0) rotate(-4deg) scale(1); }
-  25% { transform: translateY(-20px) rotate(4deg) scale(1.06); }
-  50% { transform: translateY(-24px) rotate(6deg) scale(1.08); }
-  75% { transform: translateY(-6px) rotate(-2deg) scale(1.02); }
+  0%, 100% { transform: translateY(0) rotate(-6deg) scale(1); }
+  20% { transform: translateY(-30px) rotate(9deg) scale(1.14); }
+  45% { transform: translateY(-36px) rotate(11deg) scale(1.16); }
+  70% { transform: translateY(-8px) rotate(-5deg) scale(1.04); }
 }
 
-/* 心动 -- quick double heartbeat pulse */
+/* 心动 -- strong double heartbeat pulse */
 @keyframes companion-mood-heartbeat {
-  0%, 40%, 100% { transform: translateY(0) rotate(-3deg) scale(1); }
-  15% { transform: translateY(-4px) rotate(-1deg) scale(1.1); }
-  25% { transform: translateY(0) rotate(-3deg) scale(1); }
-  32% { transform: translateY(-6px) rotate(1deg) scale(1.14); }
+  0%, 40%, 100% { transform: scale(1) rotate(-3deg); }
+  12% { transform: scale(1.24) rotate(3deg); }
+  22% { transform: scale(1) rotate(-3deg); }
+  30% { transform: scale(1.3) rotate(4deg); }
 }
 
-/* 摸鱼 -- lazy, slow side-to-side float */
+/* 摸鱼 -- lazy, loose side-to-side drift with a head tilt */
 @keyframes companion-mood-slack {
-  0%, 100% { transform: translateX(-4px) rotate(-5deg) scale(1); }
-  50% { transform: translateX(4px) rotate(4deg) scale(1.01); }
+  0%, 100% { transform: translate(-11px, 0) rotate(-11deg); }
+  50% { transform: translate(11px, -7px) rotate(10deg); }
 }
 
-/* 爆肝 -- fast, jittery, intense vibration */
+/* 爆肝 -- fast, snappy left-right spin, like sprinting in circles */
 @keyframes companion-mood-grind {
-  0%, 100% { transform: translate(0, 0) rotate(0deg); }
-  20% { transform: translate(-2px, -3px) rotate(-3deg); }
-  40% { transform: translate(2px, -6px) rotate(3deg); }
-  60% { transform: translate(-2px, -2px) rotate(-2deg); }
-  80% { transform: translate(2px, -5px) rotate(2deg); }
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(-34deg) scale(1.06); }
+  50% { transform: rotate(2deg) scale(0.96); }
+  75% { transform: rotate(34deg) scale(1.06); }
 }
 
-/* 社畜 -- heavy, tired, low-amplitude droopy sway */
+/* 社畜 -- glitchy "鬼畜" stutter loop: quick jerky multi-direction jumps */
 @keyframes companion-mood-ox {
-  0%, 100% { transform: translateY(2px) rotate(-4deg) scale(0.99); }
-  50% { transform: translateY(6px) rotate(2deg) scale(0.97); }
+  0% { transform: translate(0, 0) rotate(-4deg) scale(1); }
+  10% { transform: translate(-7px, 3px) rotate(7deg) scale(0.94); }
+  20% { transform: translate(6px, -4px) rotate(-9deg) scale(1.06); }
+  30% { transform: translate(-5px, 5px) rotate(6deg) scale(0.95); }
+  40% { transform: translate(7px, -3px) rotate(-7deg) scale(1.05); }
+  50% { transform: translate(-4px, 4px) rotate(8deg) scale(0.94); }
+  60% { transform: translate(5px, -5px) rotate(-6deg) scale(1.05); }
+  70% { transform: translate(-6px, 2px) rotate(7deg) scale(0.96); }
+  80% { transform: translate(4px, -4px) rotate(-8deg) scale(1.04); }
+  90% { transform: translate(-5px, 3px) rotate(6deg) scale(0.97); }
+  100% { transform: translate(0, 0) rotate(-4deg) scale(1); }
 }
 
 /* 躺平 -- lying flat on its side, barely moving */
 @keyframes companion-mood-flat {
-  0%, 100% { transform: rotate(78deg) translateY(0); }
-  50% { transform: rotate(78deg) translateY(-2px); }
+  0%, 100% { transform: rotate(86deg) translateY(0); }
+  50% { transform: rotate(86deg) translateY(-2px); }
 }
 
 .companion-avatar-btn {
@@ -82,12 +95,12 @@
   animation: companion-bob 3.4s ease-in-out infinite;
 }
 
-.companion-avatar-btn.mood-crash { animation: companion-mood-crash 3.6s ease-in-out infinite; }
-.companion-avatar-btn.mood-great { animation: companion-mood-great 1.6s ease-in-out infinite; }
-.companion-avatar-btn.mood-heartbeat { animation: companion-mood-heartbeat 2.2s ease-in-out infinite; }
-.companion-avatar-btn.mood-slack { animation: companion-mood-slack 4.5s ease-in-out infinite; }
-.companion-avatar-btn.mood-grind { animation: companion-mood-grind 0.6s ease-in-out infinite; }
-.companion-avatar-btn.mood-ox { animation: companion-mood-ox 4s ease-in-out infinite; }
+.companion-avatar-btn.mood-crash { animation: companion-mood-crash 4.2s ease-in-out infinite; }
+.companion-avatar-btn.mood-great { animation: companion-mood-great 1.3s ease-in-out infinite; }
+.companion-avatar-btn.mood-heartbeat { animation: companion-mood-heartbeat 1.7s ease-in-out infinite; }
+.companion-avatar-btn.mood-slack { animation: companion-mood-slack 3.6s ease-in-out infinite; }
+.companion-avatar-btn.mood-grind { animation: companion-mood-grind 0.45s linear infinite; }
+.companion-avatar-btn.mood-ox { animation: companion-mood-ox 1s steps(10, end) infinite; }
 .companion-avatar-btn.mood-flat { animation: companion-mood-flat 5s ease-in-out infinite; }
 
 @media (prefers-reduced-motion: reduce) {
@@ -116,7 +129,7 @@
   height: 9px;
   border-radius: 50%;
   background: rgba(26, 26, 26, 0.35);
-  margin-bottom: -3px;
+  margin-top: -3px;
   animation: companion-shadow-pulse 3.4s ease-in-out infinite;
 }
 
@@ -239,6 +252,47 @@
 
 .companion-popover-mood.hungry {
   color: var(--accent-coral);
+}
+
+@keyframes companion-bubble-pop {
+  from { opacity: 0; transform: translateY(6px) scale(0.8); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.companion-mood-bubble {
+  position: absolute;
+  bottom: 68px;
+  left: 80px;
+  max-width: 130px;
+  background: var(--bg-surface);
+  border: 2px solid var(--border-bold);
+  border-radius: 14px;
+  padding: 5px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+  box-shadow: var(--shadow-bold-sm);
+  animation: companion-bubble-pop 0.25s ease both;
+  z-index: 1;
+}
+
+.companion-mood-bubble::after {
+  content: "";
+  position: absolute;
+  bottom: -6px;
+  left: 14px;
+  width: 10px;
+  height: 10px;
+  background: var(--bg-surface);
+  border-right: 2px solid var(--border-bold);
+  border-bottom: 2px solid var(--border-bold);
+  transform: rotate(45deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .companion-mood-bubble {
+    animation: none;
+  }
 }
 
 .companion-popover-usermood {
