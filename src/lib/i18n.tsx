@@ -471,9 +471,8 @@ const dict = {
   periodHours: { zh: "本时段搬砖时长", en: "Hours this period" },
   periodPay: { zh: "本时段收入", en: "Earned this period" },
   summaryCardTitle: { zh: "核心统计", en: "Overview" },
-  chartHoursLabel: { zh: " 已工作", en: " worked" },
-  chartPayLabel: { zh: " 已赚", en: " earned" },
   weekHoursNote: { zh: "本周已工作 {h} 小时", en: "{h}h worked this week" },
+  dayDetailFmt: { zh: "{month}月{day}日：工时 {h}h · 收入 {pay}", en: "{month}/{day}: {h}h · {pay}" },
   moodPayInsight: { zh: "本周赚最多的一天（{day}）心情是「{mood}」", en: "Your best-earning day this week ({day}) felt {mood}" },
   recapOvertimeHoursNote: { zh: "其中加班 {h}h", en: "incl. {h}h OT" },
   recapOvertimePayNote: { zh: "其中加班收入 {pay}", en: "incl. {pay} OT" },
@@ -518,6 +517,7 @@ const dict = {
   recapTeaserT1: { zh: "查看本月打工战绩", en: "See this month's recap" },
   recapTeaserT2: { zh: "点击生成本月总结 →", en: "Tap to generate →" },
   detailListTitle: { zh: "明细", en: "Details" },
+  jumpToDetailBtn: { zh: "查看明细", en: "View details" },
   exportCsv: { zh: "导出", en: "Export" },
   detailEmpty: { zh: "打完第一次卡，这里就会出现你的战绩", en: "Punch in once and your record shows up here" },
 

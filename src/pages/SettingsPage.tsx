@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { logout } from "../lib/auth";
 import { setUserProfile, watchEmployers, watchTimeEntries, watchUserProfile } from "../lib/firestore";
 import { ExportPanel } from "../components/ExportPanel";
+import { MoodCurveCard } from "../components/MoodCurveCard";
 import { AvatarPicker } from "../components/AvatarPicker";
 import { AvatarBadge, type AnimalKey } from "../lib/avatar";
 import { entryHours } from "../lib/pay";
@@ -205,6 +206,8 @@ export function SettingsPage({ uid }: { uid: string }) {
         </div>
         <Link className="badge-wall-link" to="/badges">{t("viewBadgeWallArrow")}</Link>
       </div>
+
+      <MoodCurveCard uid={uid} personalConfirmed={personalConfirmed} employerById={employerById} />
 
       <div>
         <p className="group-label">{t("groupInsights")}</p>

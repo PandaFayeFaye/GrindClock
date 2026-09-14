@@ -1,0 +1,176 @@
+.mood-curve-card {
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-quiet);
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.mood-curve-card .title {
+  font-size: 12px;
+  font-weight: 800;
+  margin: 0 0 12px;
+}
+
+.mood-curve {
+  position: relative;
+  height: 110px;
+  margin: 4px 4px 26px;
+}
+
+.mood-curve-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.mood-point {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  margin-left: -13px;
+  margin-top: -13px;
+  border: none;
+  background: var(--bg-surface);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1.5px 0 rgba(26, 26, 26, 0.25);
+  transition: transform 0.15s ease;
+}
+
+.mood-point:active { transform: scale(0.9); }
+
+.mood-point.empty {
+  background: none;
+  box-shadow: none;
+}
+
+.mood-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  border: 1.5px dashed var(--border-quiet);
+}
+
+.mood-point.loggable .mood-dot {
+  border-color: var(--accent-blue);
+  border-style: solid;
+}
+
+.mood-editor {
+  background: var(--bg-base);
+  border: 1.5px solid var(--border-quiet);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mood-edit-tags {
+  display: flex;
+  gap: 6px;
+}
+
+.mood-edit-tag {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 2px;
+  border-radius: 10px;
+  border: 1.8px solid var(--border-quiet);
+  background: var(--bg-surface);
+  font-size: 9.5px;
+  font-weight: 800;
+  color: var(--text-muted);
+}
+
+.mood-edit-tag.selected {
+  border-color: var(--border-bold);
+  background: var(--accent-yellow);
+  color: var(--text-primary);
+}
+
+.mood-edit-note {
+  width: 100%;
+  padding: 9px 12px;
+  border: 1.5px solid var(--border-quiet);
+  border-radius: 10px;
+  font-size: 12.5px;
+  background: var(--bg-surface);
+}
+
+.mood-editor-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.mood-editor-cancel, .mood-editor-save {
+  flex: 1;
+  min-height: 38px;
+  border-radius: 10px;
+  font-size: 12.5px;
+  font-weight: 800;
+}
+
+.mood-editor-cancel {
+  border: 1.8px solid var(--border-quiet);
+  background: var(--bg-surface);
+  color: var(--text-muted);
+}
+
+.mood-editor-save {
+  border: 1.8px solid var(--border-bold);
+  background: var(--accent-blue);
+  color: #fff;
+}
+
+.mood-x-labels {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -18px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.mood-x-labels span {
+  font-size: 9px;
+  color: var(--text-muted);
+  font-weight: 700;
+  width: 26px;
+  text-align: center;
+}
+
+.mood-companion {
+  margin: 8px 0 0;
+  font-size: 11.5px;
+  color: var(--text-muted);
+  text-align: center;
+  font-weight: 700;
+}
+
+.mood-dist-row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+.mood-dist-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--bg-base);
+  border: 1.3px solid var(--border-quiet);
+  font-size: 10.5px;
+  font-weight: 800;
+  color: var(--text-muted);
+}

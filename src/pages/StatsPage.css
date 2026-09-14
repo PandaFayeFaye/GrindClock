@@ -67,6 +67,31 @@
   overflow-x: auto;
 }
 
+.range-row-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.range-row-wrap .range-row {
+  flex: 1;
+  min-width: 0;
+}
+
+.jump-detail-btn {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  padding: 7px 11px;
+  border-radius: 999px;
+  border: 1.8px solid var(--border-bold);
+  background: var(--accent-yellow);
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
 .range-chip {
   flex-shrink: 0;
   padding: 7px 14px;
@@ -203,207 +228,6 @@
   margin: 0 0 12px;
 }
 
-.mood-curve {
-  position: relative;
-  height: 110px;
-  margin: 4px 4px 26px;
-}
-
-.mood-curve-svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.mood-point {
-  position: absolute;
-  width: 26px;
-  height: 26px;
-  margin-left: -13px;
-  margin-top: -13px;
-  border: none;
-  background: var(--bg-surface);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 1.5px 0 rgba(26, 26, 26, 0.25);
-  transition: transform 0.15s ease;
-}
-
-.mood-point:active { transform: scale(0.9); }
-
-.mood-point.empty {
-  background: none;
-  box-shadow: none;
-}
-
-.mood-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  border: 1.5px dashed var(--border-quiet);
-}
-
-.mood-point.loggable .mood-dot {
-  border-color: var(--accent-blue);
-  border-style: solid;
-}
-
-.mood-editor {
-  background: var(--bg-base);
-  border: 1.5px solid var(--border-quiet);
-  border-radius: 12px;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.mood-edit-tags {
-  display: flex;
-  gap: 6px;
-}
-
-.mood-edit-tag {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  padding: 8px 2px;
-  border-radius: 10px;
-  border: 1.8px solid var(--border-quiet);
-  background: var(--bg-surface);
-  font-size: 9.5px;
-  font-weight: 800;
-  color: var(--text-muted);
-}
-
-.mood-edit-tag.selected {
-  border-color: var(--border-bold);
-  background: var(--accent-yellow);
-  color: var(--text-primary);
-}
-
-.mood-edit-note {
-  width: 100%;
-  padding: 9px 12px;
-  border: 1.5px solid var(--border-quiet);
-  border-radius: 10px;
-  font-size: 12.5px;
-  background: var(--bg-surface);
-}
-
-.mood-editor-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.mood-editor-cancel, .mood-editor-save {
-  flex: 1;
-  min-height: 38px;
-  border-radius: 10px;
-  font-size: 12.5px;
-  font-weight: 800;
-}
-
-.mood-editor-cancel {
-  border: 1.8px solid var(--border-quiet);
-  background: var(--bg-surface);
-  color: var(--text-muted);
-}
-
-.mood-editor-save {
-  border: 1.8px solid var(--border-bold);
-  background: var(--accent-blue);
-  color: #fff;
-}
-
-.mood-x-labels {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -18px;
-  display: flex;
-  justify-content: space-between;
-}
-
-.mood-x-labels span {
-  font-size: 9px;
-  color: var(--text-muted);
-  font-weight: 700;
-  width: 26px;
-  text-align: center;
-}
-
-.mood-callout {
-  margin-top: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--bg-base);
-  border: 1.5px dashed var(--border-quiet);
-  border-radius: 12px;
-  padding: 10px 12px;
-}
-
-.mood-callout p {
-  font-size: 12px;
-  color: var(--text-primary);
-  margin: 0;
-  line-height: 1.5;
-}
-
-.mood-companion {
-  margin: 8px 0 0;
-  font-size: 11.5px;
-  color: var(--text-muted);
-  text-align: center;
-  font-weight: 700;
-}
-
-.mood-dist-row {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 10px;
-  flex-wrap: wrap;
-}
-
-.mood-dist-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  padding: 3px 8px;
-  border-radius: 999px;
-  background: var(--bg-base);
-  border: 1.3px solid var(--border-quiet);
-  font-size: 10.5px;
-  font-weight: 800;
-  color: var(--text-muted);
-}
-
-.chart-summary-row {
-  display: flex;
-  gap: 14px;
-  margin: 2px 0 12px;
-}
-
-.chart-summary-item {
-  font-size: 11px;
-  color: var(--text-muted);
-  font-weight: 600;
-}
-
-.chart-summary-item b {
-  font-family: var(--font-display);
-  font-size: 13.5px;
-  color: var(--text-primary);
-  font-variant-numeric: tabular-nums;
-}
-
 .ring-hours-note {
   margin: 4px 0 0;
   font-size: 11px;
@@ -424,10 +248,13 @@
 }
 .viz-tab.active { background: var(--border-bold); color: var(--accent-yellow); }
 
-.bars { display: flex; align-items: flex-end; gap: 10px; height: 120px; }
-.bar-col { flex: 1; display: flex; flex-direction: column-reverse; align-items: center; gap: 6px; height: 100%; }
+.bars { display: flex; align-items: stretch; gap: 8px; height: 148px; }
+.bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 0; }
+.bar-pay { font-size: 9px; font-weight: 800; color: var(--text-primary); height: 12px; white-space: nowrap; }
+.bar-track { flex: 1; display: flex; align-items: flex-end; width: 100%; min-height: 0; }
 .bar-stack { width: 100%; border-radius: 4px 4px 0 0; background: var(--accent-yellow); border: 1.5px solid var(--border-bold); }
 .bar-day { font-size: 10px; color: var(--text-muted); font-weight: 700; }
+.bar-hours { font-size: 9px; color: var(--text-muted); font-weight: 600; font-variant-numeric: tabular-nums; }
 
 .streak-chip {
   display: inline-flex;
@@ -446,8 +273,28 @@
 .weekday-header span { text-align: center; font-size: 9.5px; font-weight: 800; color: var(--text-muted); }
 
 .heatmap { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
-.stats-page .heat-cell { aspect-ratio: 1; border-radius: 5px; border: 1.3px solid rgba(26, 26, 26, 0.15); position: relative; }
-.stats-page .heat-cell.blank, .streak-cell.blank { border: none; background: none; }
+.stats-page .heat-cell { aspect-ratio: 1; border-radius: 5px; border: 1.3px solid rgba(26, 26, 26, 0.15); position: relative; cursor: pointer; }
+.stats-page .heat-cell.blank, .streak-cell.blank { border: none; background: none; cursor: default; }
+.stats-page .heat-cell.selected { border: 1.8px solid var(--border-bold); box-shadow: 0 0 0 1.5px var(--accent-blue); }
+.cell-dot {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent-blue);
+}
+.cal-day-detail {
+  margin: 10px 0 0;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: center;
+  background: var(--bg-base);
+  border-radius: 10px;
+  padding: 7px 10px;
+}
 .cell-day {
   position: absolute;
   bottom: 2px;
