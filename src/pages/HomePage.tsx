@@ -99,6 +99,23 @@ export function HomePage({ uid }: { uid: string }) {
     for (const e of todaysEntries) map.set(e.employerId, (map.get(e.employerId) ?? 0) + entryHours(e));
     return map;
   }, [todaysEntries]);
+  const todaysOvertimeByEmployer = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const e of todaysEntries) {
+      if (!e.overtimeHours) continue;
+      map.set(e.employerId, (map.get(e.employerId) ?? 0) + e.overtimeHours);
+    }
+    return map;
+  }, [todaysEntries]);
+  const todaysPayByEmployer = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const e of todaysEntries) {
+      const emp = employerById.get(e.employerId);
+      if (!emp) continue;
+      map.set(e.employerId, (map.get(e.employerId) ?? 0) + entryPay(emp, e));
+    }
+    return map;
+  }, [todaysEntries, employerById]);
 
   const todaysHours = useMemo(() => mergedHoursToday(personalEntries), [personalEntries]);
 
@@ -342,14 +359,6 @@ export function HomePage({ uid }: { uid: string }) {
                           ? `${currencySymbol(emp.currency)}${emp.hourlyRate ?? 0}/h`
                           : emp.payType}
                       </span>
-                      {!active && employerIdsWithEntryToday.has(emp.id) && (
-                        <span className="done-today-chip">
-                          <svg viewBox="0 0 24 24" fill="none" width="9" height="9">
-                            <path d="M4.5 12.5l4.5 4.5L19.5 6" stroke="#fff" strokeWidth="3.6" strokeLinecap="round" strokeLinejoin="round" />
-                          </svg>
-                          {t("doneToday", { h: (todaysHoursByEmployer.get(emp.id) ?? 0).toFixed(1) })}
-                        </span>
-                      )}
                     </div>
                   </Link>
                   <button
@@ -360,6 +369,22 @@ export function HomePage({ uid }: { uid: string }) {
                     {active ? t("clockOut") : t("clockIn")}
                   </button>
                 </div>
+                {!active && employerIdsWithEntryToday.has(emp.id) && (() => {
+                  const empHours = todaysHoursByEmployer.get(emp.id) ?? 0;
+                  const empOvertime = todaysOvertimeByEmployer.get(emp.id) ?? 0;
+                  const empPay = todaysPayByEmployer.get(emp.id) ?? 0;
+                  return (
+                    <div className="done-today-footer">
+                      <svg viewBox="0 0 24 24" fill="none" width="12" height="12">
+                        <path d="M4.5 12.5l4.5 4.5L19.5 6" stroke="#2A9D5C" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      <span>
+                        {t("doneTodaySummary", { h: empHours.toFixed(1), pay: `${currencySymbol(emp.currency)}${empPay.toFixed(1)}` })}
+                        {empOvertime > 0.05 && t("doneTodayOvertimeSuffix", { h: empOvertime.toFixed(1) })}
+                      </span>
+                    </div>
+                  );
+                })()}
                 {!active && !employerIdsWithEntryToday.has(emp.id) && (
                   <button type="button" className="retro-btn" onClick={() => setRetroEmployer(emp)}>
                     <svg viewBox="0 0 24 24" fill="none" width="13" height="13">

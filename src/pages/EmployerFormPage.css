@@ -209,6 +209,67 @@
   font-family: var(--font-body);
 }
 
+.ot-rate-panel {
+  background: var(--bg-surface);
+  border: 1.5px solid var(--border-quiet);
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.ot-rate-row {
+  display: flex;
+  gap: 8px;
+}
+
+.ot-rate-card {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 2px solid var(--border-quiet);
+  border-radius: 12px;
+  background: var(--bg-base);
+  color: var(--text-muted);
+}
+
+.ot-rate-card .ic {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.ot-rate-card .ort-title {
+  font-size: 11.5px;
+  font-weight: 800;
+  line-height: 1.25;
+  text-align: left;
+}
+
+.ot-rate-card.selected {
+  border-color: var(--border-bold);
+  background: var(--accent-coral);
+  color: #fff;
+  box-shadow: var(--shadow-bold-sm);
+}
+
+.ot-rate-body {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1.3px dashed var(--border-quiet);
+}
+
+.ot-rate-body-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin: 0 0 8px;
+}
+
+.chip-ot.selected {
+  background: var(--accent-coral);
+  color: #fff;
+}
+
 .schedule-mode-row {
   display: flex;
   gap: 8px;

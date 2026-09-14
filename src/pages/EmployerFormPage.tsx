@@ -437,52 +437,65 @@ export function EmployerFormPage({ uid }: { uid: string }) {
 
         <div>
           <p className="field-label">{t("overtimeRateModeLabel")} <span className="opt">{t("optional")}</span></p>
-          <div className="mode-tabs">
-            <button
-              type="button"
-              className={`mode-tab${overtimeRateMode === "multiplier" ? " active" : ""}`}
-              onClick={() => setOvertimeRateMode("multiplier")}
-            >
-              {t("overtimeRateModeMultiplier")}
-            </button>
-            <button
-              type="button"
-              className={`mode-tab${overtimeRateMode === "fixed" ? " active" : ""}`}
-              onClick={() => setOvertimeRateMode("fixed")}
-            >
-              {t("overtimeRateModeFixed")}
-            </button>
+          <div className="ot-rate-panel">
+            <div className="ot-rate-row">
+              <button
+                type="button"
+                className={`ot-rate-card${overtimeRateMode === "multiplier" ? " selected" : ""}`}
+                onClick={() => setOvertimeRateMode("multiplier")}
+              >
+                <span className="ic">
+                  <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
+                    <path d="M7 8h10M7 12h6M7 16h10" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" />
+                  </svg>
+                </span>
+                <span className="ort-title">{t("overtimeRateModeMultiplier")}</span>
+              </button>
+              <button
+                type="button"
+                className={`ot-rate-card${overtimeRateMode === "fixed" ? " selected" : ""}`}
+                onClick={() => setOvertimeRateMode("fixed")}
+              >
+                <span className="ic">
+                  <svg viewBox="0 0 24 24" fill="none" width="20" height="20">
+                    <circle cx="12" cy="12" r="8" stroke="currentColor" strokeWidth="2.3" />
+                    <path d="M12 8v8M9.5 9.8c0-1 .9-1.8 2.5-1.8s2.3.8 2.3 1.7c0 2.3-4.8 1.3-4.8 3.6 0 .9 1 1.7 2.5 1.7s2.5-.8 2.5-1.8" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                  </svg>
+                </span>
+                <span className="ort-title">{t("overtimeRateModeFixed")}</span>
+              </button>
+            </div>
+
+            {overtimeRateMode === "multiplier" ? (
+              <div className="ot-rate-body">
+                <p className="ot-rate-body-label">{t("overtimeMultiplierLabel")} <span className="opt">{t("optional")}</span></p>
+                <div className="chip-row">
+                  {OVERTIME_OPTIONS.map((v) => (
+                    <button
+                      key={v}
+                      type="button"
+                      className={`chip chip-ot${overtimeMultiplier === v ? " selected" : ""}`}
+                      onClick={() => setOvertimeMultiplier(overtimeMultiplier === v ? undefined : v)}
+                    >
+                      {t("multiplierSuffix", { v })}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="ot-rate-body">
+                <p className="ot-rate-body-label">{t("overtimeHourlyRateLabel")}</p>
+                <input
+                  className="rate-input"
+                  type="number"
+                  placeholder={CURRENCIES.find((c) => c.code === currency)?.symbol ?? "¥"}
+                  value={overtimeHourlyRate}
+                  onChange={(e) => setOvertimeHourlyRate(e.target.value)}
+                />
+              </div>
+            )}
           </div>
         </div>
-
-        {overtimeRateMode === "multiplier" ? (
-          <div>
-            <p className="field-label">{t("overtimeMultiplierLabel")} <span className="opt">{t("optional")}</span></p>
-            <div className="chip-row">
-              {OVERTIME_OPTIONS.map((v) => (
-                <button
-                  key={v}
-                  type="button"
-                  className={`chip${overtimeMultiplier === v ? " selected" : ""}`}
-                  onClick={() => setOvertimeMultiplier(overtimeMultiplier === v ? undefined : v)}
-                >
-                  {t("multiplierSuffix", { v })}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : (
-          <div>
-            <p className="field-label">{t("overtimeHourlyRateLabel")}</p>
-            <input
-              className="rate-input"
-              type="number"
-              placeholder={CURRENCIES.find((c) => c.code === currency)?.symbol ?? "¥"}
-              value={overtimeHourlyRate}
-              onChange={(e) => setOvertimeHourlyRate(e.target.value)}
-            />
-          </div>
-        )}
 
         <div>
           <p className="field-label">{t("holidayMultiplierLabel")} <span className="opt">{t("optional")}</span></p>

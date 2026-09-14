@@ -91,7 +91,7 @@ export function StatsPage({ uid }: { uid: string }) {
   const [viz, setViz] = useState<Viz>("trend");
   const [weeklyGoal, setWeeklyGoal] = useWeeklyGoal();
   const [editingGoal, setEditingGoal] = useState(false);
-  const [range, setRange] = useState<RangeKey>("all");
+  const [range, setRange] = useState<RangeKey>("month");
   const [filterEmployerIds, setFilterEmployerIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -322,7 +322,12 @@ export function StatsPage({ uid }: { uid: string }) {
 
       {totalOvertimeHours > 0.05 && (
         <div className="overtime-summary-card">
-          <p className="overtime-summary-title">{t("overtimeHoursLabel")}</p>
+          <div className="overtime-summary-header">
+            <svg viewBox="0 0 24 24" fill="none" width="16" height="16">
+              <path d="M12 2.2c1.7 3.8-2 5-2 8.6a2 2 0 104 0c0-1.1-.6-1.6-.6-1.6.9.9 1.7 2.4 1.7 3.8a5 5 0 11-10 0c0-5.1 4-6.6 3-10.8z" fill="#fff" />
+            </svg>
+            <p className="overtime-summary-title">{t("overtimeHoursLabel")}</p>
+          </div>
           <div className="overtime-summary-row">
             <div className="stat"><p className="num">{totalOvertimeHours.toFixed(1)}h</p><p className="lb">{t("overtimeHoursSub")}</p></div>
             <div className="stat"><p className="num">{formatGroupedPay(totalOvertimePayByCurrency)}</p><p className="lb">{t("overtimePaySub")}</p></div>
