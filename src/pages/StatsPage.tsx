@@ -306,7 +306,7 @@ export function StatsPage({ uid }: { uid: string }) {
           </span>
           <p className="title">{t("payCalendarTitle", { month: monthLabel })}</p>
           <div className="weekday-header">
-            {["日", "一", "二", "三", "四", "五", "六"].map((d) => <span key={d}>{d}</span>)}
+            {WEEKDAY_KEYS.map((k) => <span key={k}>{t(k)}</span>)}
           </div>
           <div className="heatmap">
             {Array.from({ length: calendarLeadingBlanks }).map((_, i) => <div className="heat-cell blank" key={`b${i}`} />)}
@@ -325,9 +325,9 @@ export function StatsPage({ uid }: { uid: string }) {
             ))}
           </div>
           <div className="heat-legend">
-            <span>少</span>
+            <span>{t("heatLegendLess")}</span>
             {heatHex.map((hex) => <i key={hex} style={{ background: hex }} />)}
-            <span>多</span>
+            <span>{t("heatLegendMore")}</span>
           </div>
           {selectedCalDayInfo && (
             <p className="cal-day-detail">
@@ -342,7 +342,7 @@ export function StatsPage({ uid }: { uid: string }) {
 
           <p className="title" style={{ marginTop: 16 }}>{t("streakCalendarTitle", { month: monthLabel })}</p>
           <div className="weekday-header">
-            {["日", "一", "二", "三", "四", "五", "六"].map((d) => <span key={d}>{d}</span>)}
+            {WEEKDAY_KEYS.map((k) => <span key={k}>{t(k)}</span>)}
           </div>
           <div className="heatmap streak-grid">
             {Array.from({ length: calendarLeadingBlanks }).map((_, i) => <div className="streak-cell blank" key={`b${i}`} />)}
@@ -437,7 +437,7 @@ export function StatsPage({ uid }: { uid: string }) {
         <ExportPanel
           entries={filteredEntries}
           employerById={employerById}
-          filenameBase={`gigtime-明细-${range}`}
+          filenameBase={`grindclock-${t("exportDetailFilenamePart")}-${range}`}
           onClose={() => setExportOpen(false)}
         />
       )}
@@ -455,7 +455,7 @@ export function StatsPage({ uid }: { uid: string }) {
                 <div className="info">
                   <p className="n">{emp.name}</p>
                   <p className="d">
-                    {new Date(e.startTime).toLocaleDateString()} · {entryHours(e).toFixed(1)}小时
+                    {new Date(e.startTime).toLocaleDateString()} · {entryHours(e).toFixed(1)}{t("hoursUnitPlain")}
                     {e.overtimeHours && e.overtimeHours > 0.05 ? (
                       <span className="entry-ot-chip">
                         <svg viewBox="0 0 24 24" fill="none" width="9" height="9">

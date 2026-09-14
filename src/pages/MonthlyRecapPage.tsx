@@ -187,7 +187,7 @@ export function MonthlyRecapPage({ uid }: { uid: string }) {
         heatCells,
         lang,
       });
-      downloadBlob(blob, `gigtime-recap-${monthLabel}.png`);
+      downloadBlob(blob, `grindclock-recap-${monthLabel}.png`);
     } finally {
       setGenerating(false);
     }

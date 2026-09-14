@@ -254,6 +254,6 @@
   color: var(--accent-yellow);
 }
 
-.save-btn.danger {
+.batch-form .save-btn.danger {
   background: var(--accent-coral);
 }

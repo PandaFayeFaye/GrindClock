@@ -308,7 +308,7 @@ export function SettingsPage({ uid }: { uid: string }) {
         <ExportPanel
           entries={confirmedEntries}
           employerById={employerById}
-          filenameBase="gigtime-all-data"
+          filenameBase="grindclock-all-data"
           onClose={() => setExportOpen(false)}
         />
       )}

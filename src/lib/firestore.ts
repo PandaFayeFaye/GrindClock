@@ -12,6 +12,7 @@ import {
   query,
   setDoc,
   updateDoc,
+  where,
   writeBatch,
 } from "firebase/firestore";
 import { db } from "./firebase";
@@ -45,6 +46,15 @@ export function addEmployer(uid: string, data: Omit<Employer, "id">) {
 
 export function updateEmployer(uid: string, employerId: string, data: Partial<Employer>) {
   return updateDoc(doc(employersCol(uid), employerId), data);
+}
+
+/** Deletes a gig and every time entry logged against it (own + any delegated team entries). */
+export async function deleteEmployer(uid: string, employerId: string) {
+  const entriesSnap = await getDocs(query(timeEntriesCol(uid), where("employerId", "==", employerId)));
+  const batch = writeBatch(db);
+  for (const d of entriesSnap.docs) batch.delete(d.ref);
+  batch.delete(doc(employersCol(uid), employerId));
+  await batch.commit();
 }
 
 export function watchTimeEntries(uid: string, cb: (list: TimeEntry[]) => void) {

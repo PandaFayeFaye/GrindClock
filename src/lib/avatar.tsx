@@ -2,22 +2,22 @@ export type AnimalKey =
   | "rat" | "cat" | "cow" | "rabbit" | "tiger" | "sheep" | "monkey" | "dog"
   | "pig" | "horse" | "snake" | "chick" | "dragon" | "giraffe" | "capybara";
 
-export const ANIMALS: { key: AnimalKey; label: string }[] = [
-  { key: "rat", label: "老鼠" },
-  { key: "cat", label: "猫咪" },
-  { key: "cow", label: "小牛" },
-  { key: "rabbit", label: "兔子" },
-  { key: "tiger", label: "老虎" },
-  { key: "sheep", label: "小羊" },
-  { key: "monkey", label: "猴子" },
-  { key: "dog", label: "狗狗" },
-  { key: "pig", label: "猪猪" },
-  { key: "horse", label: "小马" },
-  { key: "snake", label: "小蛇" },
-  { key: "chick", label: "小鸡" },
-  { key: "dragon", label: "小龙" },
-  { key: "giraffe", label: "长颈鹿" },
-  { key: "capybara", label: "卡皮巴拉" },
+export const ANIMALS: { key: AnimalKey; labelKey: "animalRat" | "animalCat" | "animalCow" | "animalRabbit" | "animalTiger" | "animalSheep" | "animalMonkey" | "animalDog" | "animalPig" | "animalHorse" | "animalSnake" | "animalChick" | "animalDragon" | "animalGiraffe" | "animalCapybara" }[] = [
+  { key: "rat", labelKey: "animalRat" },
+  { key: "cat", labelKey: "animalCat" },
+  { key: "cow", labelKey: "animalCow" },
+  { key: "rabbit", labelKey: "animalRabbit" },
+  { key: "tiger", labelKey: "animalTiger" },
+  { key: "sheep", labelKey: "animalSheep" },
+  { key: "monkey", labelKey: "animalMonkey" },
+  { key: "dog", labelKey: "animalDog" },
+  { key: "pig", labelKey: "animalPig" },
+  { key: "horse", labelKey: "animalHorse" },
+  { key: "snake", labelKey: "animalSnake" },
+  { key: "chick", labelKey: "animalChick" },
+  { key: "dragon", labelKey: "animalDragon" },
+  { key: "giraffe", labelKey: "animalGiraffe" },
+  { key: "capybara", labelKey: "animalCapybara" },
 ];
 
 export const MBTI_TYPES = [

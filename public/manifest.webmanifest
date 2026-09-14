@@ -1,7 +1,7 @@
 {
   "name": "牛马打卡机 GrindClock",
   "short_name": "GrindClock",
-  "description": "多雇主打工人计时记账搭子",
+  "description": "多副本打工人计时记账搭子",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#FFFFFF",

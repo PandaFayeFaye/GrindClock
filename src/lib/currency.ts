@@ -1,20 +1,20 @@
 export interface CurrencyDef {
   code: string;
   symbol: string;
-  label: string;
+  labelKey: "currencyCNY" | "currencyUSD" | "currencyEUR" | "currencyGBP" | "currencyAUD" | "currencyCAD" | "currencyJPY" | "currencyKRW" | "currencyHKD" | "currencySGD";
 }
 
 export const CURRENCIES: CurrencyDef[] = [
-  { code: "CNY", symbol: "¥", label: "人民币" },
-  { code: "USD", symbol: "$", label: "美元" },
-  { code: "EUR", symbol: "€", label: "欧元" },
-  { code: "GBP", symbol: "£", label: "英镑" },
-  { code: "AUD", symbol: "A$", label: "澳元" },
-  { code: "CAD", symbol: "C$", label: "加元" },
-  { code: "JPY", symbol: "¥", label: "日元" },
-  { code: "KRW", symbol: "₩", label: "韩元" },
-  { code: "HKD", symbol: "HK$", label: "港币" },
-  { code: "SGD", symbol: "S$", label: "新加坡元" },
+  { code: "CNY", symbol: "¥", labelKey: "currencyCNY" },
+  { code: "USD", symbol: "$", labelKey: "currencyUSD" },
+  { code: "EUR", symbol: "€", labelKey: "currencyEUR" },
+  { code: "GBP", symbol: "£", labelKey: "currencyGBP" },
+  { code: "AUD", symbol: "A$", labelKey: "currencyAUD" },
+  { code: "CAD", symbol: "C$", labelKey: "currencyCAD" },
+  { code: "JPY", symbol: "¥", labelKey: "currencyJPY" },
+  { code: "KRW", symbol: "₩", labelKey: "currencyKRW" },
+  { code: "HKD", symbol: "HK$", labelKey: "currencyHKD" },
+  { code: "SGD", symbol: "S$", labelKey: "currencySGD" },
 ];
 
 export const DEFAULT_CURRENCY = "CNY";

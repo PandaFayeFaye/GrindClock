@@ -36,7 +36,7 @@ export function AvatarPicker({
             onClick={() => setAnimal(a.key)}
           >
             <AvatarBadge animal={a.key} size={44} />
-            <span>{a.label}</span>
+            <span>{t(a.labelKey)}</span>
           </button>
         ))}
       </div>

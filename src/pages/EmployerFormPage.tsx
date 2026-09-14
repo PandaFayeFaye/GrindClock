@@ -1,7 +1,7 @@
 import { useEffect, useState, type ReactElement } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { doc, getDoc } from "firebase/firestore";
-import { addEmployer, employersCol, updateEmployer, watchEmployers } from "../lib/firestore";
+import { addEmployer, deleteEmployer, employersCol, updateEmployer, watchEmployers } from "../lib/firestore";
 import type { Adjustment, Employer, PayType } from "../lib/types";
 import { WEEKDAYS } from "../lib/schedule";
 import { Mascot } from "../components/Mascot";
@@ -112,6 +112,8 @@ export function EmployerFormPage({ uid }: { uid: string }) {
   const [justSaved, setJustSaved] = useState(false);
   const [existingEmployers, setExistingEmployers] = useState<Employer[]>([]);
   const [duplicateConfirm, setDuplicateConfirm] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => watchEmployers(uid, setExistingEmployers), [uid]);
 
@@ -212,6 +214,23 @@ export function EmployerFormPage({ uid }: { uid: string }) {
     } catch (err) {
       console.error("Failed to save employer", err);
       setSaving(false);
+      window.alert(err instanceof Error ? err.message : String(err));
+    }
+  }
+
+  async function handleDeleteClick() {
+    if (!employerId) return;
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
+    setDeleting(true);
+    try {
+      await deleteEmployer(uid, employerId);
+      navigate("/");
+    } catch (err) {
+      console.error("Failed to delete employer", err);
+      setDeleting(false);
       window.alert(err instanceof Error ? err.message : String(err));
     }
   }
@@ -406,7 +425,7 @@ export function EmployerFormPage({ uid }: { uid: string }) {
           <p className="field-label">{t("currencyLabel")}</p>
           <select className="select-field currency-select" value={currency} onChange={(e) => setCurrency(e.target.value)}>
             {CURRENCIES.map((c) => (
-              <option key={c.code} value={c.code}>{c.symbol} {c.code} · {c.label}</option>
+              <option key={c.code} value={c.code}>{c.symbol} {c.code} · {t(c.labelKey)}</option>
             ))}
           </select>
         </div>
@@ -627,6 +646,21 @@ export function EmployerFormPage({ uid }: { uid: string }) {
             onChange={(e) => setNote(e.target.value)}
           />
         </div>
+
+        {isEdit && employerId && (
+          <div className="danger-zone">
+            <p className="field-label">{t("dangerZoneLabel")}</p>
+            <p className="danger-zone-hint">{t("deleteEmployerHint")}</p>
+            <button
+              type="button"
+              className="delete-employer-btn"
+              disabled={deleting}
+              onClick={handleDeleteClick}
+            >
+              {deleting ? t("deletingEllipsis") : confirmDelete ? t("deleteEmployerConfirmBtn") : t("deleteEmployerBtn")}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
