@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { EXPORT_COLUMNS, exportEntriesCsv, exportEntriesImage, type ExportColumn } from "../lib/exportCsv";
 import { useT } from "../lib/i18n";
 import type { Employer, TimeEntry } from "../lib/types";
@@ -30,6 +30,15 @@ export function ExportPanel({
   const t = useT();
   const [selected, setSelected] = useState<Set<ExportColumn>>(new Set(loadColumns()));
   const [generatingImage, setGeneratingImage] = useState(false);
+  const [rangeStart, setRangeStart] = useState("");
+  const [rangeEnd, setRangeEnd] = useState("");
+
+  const rangedEntries = useMemo(() => {
+    if (!rangeStart && !rangeEnd) return entries;
+    const startMs = rangeStart ? new Date(`${rangeStart}T00:00:00`).getTime() : -Infinity;
+    const endMs = rangeEnd ? new Date(`${rangeEnd}T23:59:59`).getTime() : Infinity;
+    return entries.filter((e) => e.startTime >= startMs && e.startTime <= endMs);
+  }, [entries, rangeStart, rangeEnd]);
 
   function toggle(col: ExportColumn) {
     setSelected((prev) => {
@@ -45,14 +54,16 @@ export function ExportPanel({
   const labels = activeColumns.map((c) => t(c.labelKey));
 
   function handleCsv() {
-    exportEntriesCsv(entries, employerById, `${filenameBase}.csv`, columns, labels);
+    if (rangedEntries.length === 0) return;
+    exportEntriesCsv(rangedEntries, employerById, `${filenameBase}.csv`, columns, labels);
     onClose();
   }
 
   async function handleImage() {
+    if (rangedEntries.length === 0) return;
     setGeneratingImage(true);
     try {
-      await exportEntriesImage(entries, employerById, `${filenameBase}.png`, columns, labels);
+      await exportEntriesImage(rangedEntries, employerById, `${filenameBase}.png`, columns, labels);
     } finally {
       setGeneratingImage(false);
       onClose();
@@ -63,6 +74,33 @@ export function ExportPanel({
     <div className="export-panel-backdrop" onClick={onClose}>
       <div className="export-panel-sheet" onClick={(e) => e.stopPropagation()}>
         <div className="punch-modal-handle" />
+        <p className="export-panel-title">{t("exportDateRangeLabel")}</p>
+        <div className="export-range-row">
+          <input
+            type="date"
+            className="export-range-input"
+            value={rangeStart}
+            max={rangeEnd || undefined}
+            onChange={(e) => setRangeStart(e.target.value)}
+            aria-label={t("exportDateRangeUnboundedStart")}
+          />
+          <span className="export-range-sep">-</span>
+          <input
+            type="date"
+            className="export-range-input"
+            value={rangeEnd}
+            min={rangeStart || undefined}
+            onChange={(e) => setRangeEnd(e.target.value)}
+            aria-label={t("exportDateRangeUnboundedEnd")}
+          />
+          {(rangeStart || rangeEnd) && (
+            <button type="button" className="export-range-clear" onClick={() => { setRangeStart(""); setRangeEnd(""); }}>
+              {t("exportDateRangeClear")}
+            </button>
+          )}
+        </div>
+        <p className="export-range-count">{t("exportDateRangeCount", { n: rangedEntries.length })}</p>
+
         <p className="export-panel-title">{t("exportPanelTitle")}</p>
         <div className="export-col-grid">
           {EXPORT_COLUMNS.map((c) => (
@@ -78,10 +116,10 @@ export function ExportPanel({
         </div>
         <p className="export-panel-hint">{t("exportImageHint")}</p>
         <div className="export-panel-actions">
-          <button className="export-action-btn" onClick={handleCsv} disabled={columns.length === 0}>
+          <button className="export-action-btn" onClick={handleCsv} disabled={columns.length === 0 || rangedEntries.length === 0}>
             {t("exportAsCsv")}
           </button>
-          <button className="export-action-btn primary" onClick={handleImage} disabled={columns.length === 0 || generatingImage}>
+          <button className="export-action-btn primary" onClick={handleImage} disabled={columns.length === 0 || rangedEntries.length === 0 || generatingImage}>
             {generatingImage ? t("exportingImage") : t("exportAsImage")}
           </button>
         </div>

@@ -28,6 +28,46 @@
   margin: 0;
 }
 
+.export-range-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.export-range-input {
+  flex: 1;
+  min-width: 0;
+  padding: 8px 10px;
+  border: 1.8px solid var(--border-bold);
+  border-radius: 10px;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.export-range-sep {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.export-range-clear {
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-coral);
+  white-space: nowrap;
+}
+
+.export-range-count {
+  margin: -4px 0 0;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
 .export-col-grid {
   display: flex;
   flex-wrap: wrap;

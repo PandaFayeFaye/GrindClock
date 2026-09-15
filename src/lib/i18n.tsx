@@ -142,6 +142,11 @@ const dict = {
   exportAsImage: { zh: "导出图片", en: "Export image" },
   exportImageHint: { zh: "生成的图片会下载到本地，长按/在相册里就能保存和分享", en: "The image downloads to your device -- save it from there to share" },
   exportingImage: { zh: "生成图片中...", en: "Generating image..." },
+  exportDateRangeLabel: { zh: "日期范围", en: "Date range" },
+  exportDateRangeUnboundedStart: { zh: "不限开始日期", en: "No start date" },
+  exportDateRangeUnboundedEnd: { zh: "不限结束日期", en: "No end date" },
+  exportDateRangeClear: { zh: "清除", en: "Clear" },
+  exportDateRangeCount: { zh: "共 {n} 条记录符合范围", en: "{n} record(s) match this range" },
 
   // ---- Avatar picker ----
   pickAvatarTitle: { zh: "选一个专属形象", en: "Pick your character" },
