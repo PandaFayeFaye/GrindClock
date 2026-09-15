@@ -1,6 +1,8 @@
-# GigTime — 产品需求文档（PRD）
+# GigTime（牛马打卡机 / GrindClock）— 产品需求文档（PRD）
 
-版本：v0.5 · 更新日期：2026-09-12
+版本：v1.0 · 更新日期：2026-09-16
+
+**本版本重大更新**：P0/P1功能清单里规划的绝大部分功能（含团队代记工时、AI拍照/语音记工、月度战绩总结、成就徽章墙、心情记录、净收益对比、统计页多样化可视化、导出）**均已在App端和微信小程序端完成开发并上线/进入体验版测试**。本次更新把功能清单的"状态"列和数据模型同步成实际实现的样子（部分字段在开发中做了调整，与最初规格有出入，以此文档为准）。App端已部署至 https://grindclock.web.app（Firebase Hosting）；小程序端代码仓库独立维护，正在微信体验版测试、准备提交审核。
 
 ## 1. 产品定位
 
@@ -33,49 +35,73 @@ React + TypeScript + Vite + Capacitor（三端一套代码）+ Firebase（Auth +
 
 **保持不变的部分**：DESIGN_SYSTEM.md的视觉规范、FEATURE_SPEC.md的文案语气和交互原则，小程序端应尽量复用，只是实现层的技术栈不同。
 
-**范围决策**：小程序端**全量对齐App端功能**，不做阉割/轻量版——FEATURE_SPEC.md 3.0-3.14规划的全部屏幕（含团队代记工时、AI拍照识别/语音记工、月度战绩总结、成就徽章墙等）都要在小程序端实现，工作量按"完整重新实现一遍App端功能"估算，不是"做个简化Demo"。
+**范围决策**：小程序端**全量对齐App端功能**，不做阉割/轻量版——FEATURE_SPEC.md 3.0-3.14规划的全部屏幕（含团队代记工时、AI拍照识别/语音记工、月度战绩总结、成就徽章墙等）都要在小程序端实现，工作量按"完整重新实现一遍App端功能"估算，不是"做个简化Demo"。**（截至v1.0此项已完成——技术栈用的是Taro 4 + React + TypeScript编译到原生小程序，而非纯原生小程序语法，但对上述"全量对齐、独立代码库、微信云开发做后端"的决策没有影响。）**
+
+**小程序端已确认的技术实现细节（踩坑记录，供后续维护参考）**：
+- 微信云开发数据库**客户端**单次查询硬性上限是20条（不是100条，100条上限只适用于云函数里的服务端SDK），必须用`skip`/`limit(20)`循环分页才能取全数据，否则数据量超过20条后旧记录会被静默截断且没有任何报错
+- 自定义顶部导航字体（艺术字）不能用`wx.loadFontFace`加载包内相对路径（会报`invalid url`失败，静默回退系统字体），也不建议运行时读取包内文件转base64（不可靠），正确做法是构建时把字体转成base64直接内联成代码常量
+- 自定义TabBar（`tabBar.custom: true`）场景下`wx.hideTabBar()`不生效，全屏弹窗需要小程序自己控制TabBar组件的显隐（通过事件通知）
+- 头像等图片的自定义裁剪位置不能用CSS `background-image`（真机不可靠，仅模拟器正常），要用原生`<image mode="aspectFill">`
+- `wx.switchTab`跳转tab页面不能带参数，需要通过本地缓存做"一次性传参"
+
+**AI功能的实际实现**：拍照/录音走小程序原生API（`wx.chooseImage`/`wx.getRecorderManager`），OCR/语音转文字通过微信云函数中转调用腾讯云的通用文字识别（OCR）与语音识别（ASR）服务（`cloudfunctions/ocrRecognize`、`cloudfunctions/asrRecognize`），而非App端使用的Gemini——两端AI能力对等（拍照识别排班表/语音记工），但底层调用的AI服务商不同，这是两套独立后端各自选型的结果，不影响用户体验一致性。
 
 **AI功能的额外注意**：拍照/录音本身小程序有对应原生API（`wx.chooseImage`/`wx.getRecorderManager`），可以正常做；但OCR识别、语音转结构化这类需要调用Gemini等境外AI服务的部分，会撞上和Firebase一样的域名白名单问题（Google的API域名同样无法ICP备案）。小程序端的AI功能必须通过微信云开发的云函数中转调用，不能像App端一样直接从客户端调用境外API——这是开发时需要提前规划的技术细节，不是新的阻塞项，但会增加云函数这一层的开发工作量。
 
 ## 3. 数据模型
 
+**实际实现**（App端Firestore路径 `users/{uid}/...`；小程序端是微信云开发的独立集合 `employers`/`timeEntries`/`workers`/`userProfile`，字段结构与下方一致，仅去掉uid路径前缀、加一个`_openid`做用户隔离，两边数据不互通）：
+
 ```
-users/{uid}/employers/{employerId}
+employers/{employerId}
   - name: string
-  - hourlyRate: number
-  - payType: "hourly" | "daily" | "base+overtime" | "comprehensive" | "monthly" | "per-order"
-      // comprehensive（综合工时）MVP阶段按"hourly"同等计算，仅作展示标签，
-      // 不实现法定加班周期判定（见FEATURE_SPEC 3.2简化说明）
-      // per-order（按单计费，如外卖/网约车骑手）：不按时长算钱，按订单数×单价，
-      // 打卡仍记录工时用于统计"在线时长"，但收入计算走 pricePerOrder × 当次订单数
-  - monthlySalary?: number      // monthly模式必填
-  - pricePerOrder?: number      // per-order模式必填
   - color: string
-  - overtimeMultiplier?: number
+  - payType: "hourly" | "daily" | "base+overtime" | "comprehensive" | "monthly" | "per-order"
+      // comprehensive（综合工时）按"hourly"同等计算，仅作展示标签区分统计口径，
+      // 不实现法定加班周期判定（维持MVP阶段的简化决策）
+      // per-order（按单计费，如外卖/网约车骑手）：不按时长算钱，按订单数×单价，
+      // 打卡仍记录工时用于统计"在线时长"，收入计算走 pricePerOrder × 当次订单数
+  - currency?: string           // 币种代码（CNY/USD/EUR等），默认CNY；多币种雇主汇总时分别显示，不做汇率换算
+  - industryTag?: string        // 副本类型标签（餐饮/外卖配送/网约车等预设或自定义），仅展示/筛选用，不影响算钱
+  - scheduleMode?: "flexible" | "fixed"   // flexible=手动上下班打卡（默认）；fixed=有固定排班，见fixedSchedule
+  - fixedSchedule?: { "0"|"1"|...|"6": { start: string; end: string } }  // key为星期几（0=周日），没有这天的key表示当天不上班；下班打卡时若实际工时超出排班时长，自动判定为加班
+  - hourlyRate? / dailyRate? / baseSalary? / monthlySalary? / pricePerOrder?: number   // 按payType对应必填一个
+  - overtimeMultiplier?: number         // 加班倍率（如1.5/2/3）
+  - overtimeRateMode?: "multiplier" | "fixed"   // multiplier=基础时薪×倍率（默认）；fixed=固定加班时薪，不管基础时薪多少
+  - overtimeHourlyRate?: number         // overtimeRateMode为fixed时使用
   - holidayMultiplier?: number
   - breakMinutes?: number
   - settlementCycle?: "daily" | "weekly" | "monthly"
-  - commuteMinutes?: number     // 净收益对比用，一次性设置
-  - commuteCost?: number        // 净收益对比用，一次性设置
+  - commuteMinutes? / commuteCost? / idleTimePct?: number   // 净收益对比页用，一次性设置：预估通勤时长/交通费/摸鱼时间占比
+  - defaultAdjustments?: Adjustment[]   // 规律性补贴/扣款规则，自动套用到该雇主每条新记录（区别于timeEntries.adjustment的单次调整）
   - note?: string
+  - archived?: boolean          // 停用（而非删除）：从首页/打卡流程隐藏，历史记录保留，可随时重新启用
 
-users/{uid}/timeEntries/{entryId}
+timeEntries/{entryId}
   - employerId: string
-  - workerId?: string          // 非空表示这是"团队代记"的记录，指向下面的 workers 文档
+  - workerId?: string           // 非空表示这是"团队代记"的记录，指向 workers 文档；个人统计（首页/称号/心情曲线等）严格排除带workerId的记录
   - startTime: number (epoch ms)
-  - endTime: number | null
-  - status: "confirmed" | "draft"   // OCR/语音识别生成的记录先落 draft，用户确认后转 confirmed
+  - endTime: number | null      // 打卡进行中为null
+  - status: "confirmed" | "draft"   // OCR/语音识别生成的记录先落draft，用户确认后转confirmed
   - source: "manual" | "ocr" | "voice"
-  - mood?: "crash" | "normal" | "great" | "heartbeat"   // 崩溃/普通/爽/心动，可选，用于统计页心情曲线+月度总结的"最累的一天"
-  - moodNote?: string           // 心情标签追加的可选短文本，上限20字
-  - adjustment?: { type: "bonus" | "deduction"; amount: number; note?: string }[]  // 单次的补贴/扣款
-  - orderCount?: number         // 仅per-order模式使用，本次记录完成的订单数
+  - mood?: Mood   // 8档心情标签（见下方Mood类型），可选
+  - moodNote?: string            // 心情追加的可选短文本，上限20字
+  - adjustment?: Adjustment[]    // 本次单独的补贴/扣款（一次性，区别于雇主的defaultAdjustments）
+  - orderCount?: number          // 仅per-order模式使用，本次完成的订单数
+  - isOvertime?: boolean         // 手动"整段按加班计算"开关，独立于自动检测的overtimeHours
+  - isHoliday?: boolean          // 手动"整段按节假日倍率计算"开关；与isOvertime同时为true时节假日倍率优先生效，不叠加
+  - overtimeHours?: number       // 固定排班场景下，超出排班时长的自动检测加班时长
   - note?: string
+  - clockInLocation?: { lat: number; lng: number; accuracy: number }   // 打卡定位开关开启时记录
 
-users/{uid}/workers/{workerId}      // 团队代记工时功能专用（对应FEATURE_SPEC 3.8）
+workers/{workerId}      // 团队代记工时功能专用
   - name: string
   - note?: string
   - defaultHourlyRate?: number
+
+Adjustment = { type: "bonus" | "deduction"; amount: number; note?: string }
+Mood = "crash"(崩溃) | "ox"(社畜) | "flat"(躺平) | "normal"(普通) | "slack"(摸鱼) | "great"(爽) | "grind"(爆肝) | "heartbeat"(心动)
+  // 实际做了8档而不是最初规划的4档（崩溃/普通/爽/心动），详见FEATURE_SPEC 3.14与DESIGN_SYSTEM 9节的更新
 ```
 
 ## 4. 功能清单（含优先级、验收标准、需求来源）
@@ -86,26 +112,26 @@ users/{uid}/workers/{workerId}      // 团队代记工时功能专用（对应FE
 |---|---|---|---|---|
 | 1 | 一键打卡计时（手动+自动） | 点击"上班打卡"记录开始时间；"下班打卡"记录结束时间并计算时长 | 中外产品标配 | ✅ 已实现 |
 | 2 | 多雇主/多岗位并行记录与合并统计 | 可添加多个雇主；每条工时记录归属一个雇主；有一个视图能看到跨雇主的总工时/总收入 | 中国用户（包工头）App Store原话提出；海外Reddit零工社区诉求 | ✅ 已实现 |
-| 3 | 内置多种薪资模式 | 支持时薪自动折算；预留日结、底薪+加班模式的数据结构 | 「小时工记账」「工时与薪资计算器」核心卖点 | 🟡 部分实现（仅时薪，其他模式待做UI） |
+| 3 | 内置多种薪资模式 | 时薪/日结/底薪+加班/综合工时/月结/按单计费6种模式，各配图标卡片选择 | 「小时工记账」「工时与薪资计算器」核心卖点 | ✅ 已实现（6种全部完成，超出原计划的"仅时薪"） |
 | 4 | 免费云同步，数据不丢失 | 登录后数据自动存入Firestore，换设备登录同账号可看到全部历史数据 | 闭坑点：「小时工记账」"拉好友才能同步"被吐槽 | ✅ 已实现 |
-| 5 | 免费报表导出（Excel/PDF） | 可按时间范围导出工时+收入明细为Excel或PDF文件 | 闭坑点：报表导出不该锁付费墙 | ⬜ 待开发 |
+| 5 | 免费报表导出（Excel/PDF） | 可按时间范围导出工时+收入明细为Excel或PDF文件 | 闭坑点：报表导出不该锁付费墙 | ✅ 已实现（导出CSV+图片两种格式，含自定义日期范围筛选+累计天数/工时/金额汇总行；PDF未做，图片可替代其分享场景） |
 | 6 | 项目/雇主数量不设上限 | 雇主列表无数量限制 | 「极简记工时」"项目限5个"被骂"强制充会员" | ✅ 已实现（无限制） |
-| 7 | 离线优先+联网自动同步 | 断网时仍可打卡，联网后自动同步到云端 | Toggl Track口碑验证的刚需 | ⬜ 待开发（当前依赖Firestore在线写入，需加offline persistence） |
+| 7 | 离线优先+联网自动同步 | 断网时仍可打卡，联网后自动同步到云端 | Toggl Track口碑验证的刚需 | ⬜ 待开发（当前依赖Firestore/云开发在线写入，需加offline persistence；两端均未做） |
 
 ### P1 — 第一版本一并完成（建立差异化壁垒）
 
 | # | 功能 | 验收标准 | 需求来源 | 状态 |
 |---|---|---|---|---|
-| 8 | 跨平台收入聚合看板 | 一个仪表盘视图汇总所有雇主本周/本月收入趋势图 | Gridwise验证有效的功能，但需避免"先免费后收费"降级 | ⬜ 待开发 |
-| 9 | 限时段、可关闭的GPS/地理围栏打卡 | 打卡仅在设定的工作时段内触发定位校验；用户可在设置里完全关闭定位功能 | 闭坑点：国内耗电投诉、Hubstaff式监控引发反感 | ⬜ 待开发 |
-| 10 | 团队代记工时（组长/包工头批量记录） | 一个账号下可以创建"代记录人员"，为多人分别记工时并汇总 | 中国用户App Store原话明确提出，现有产品全部空白 | ⬜ 待开发 |
-| 11 | 简单清晰的单档订阅定价 | 定价页只有一个订阅档位（月/年二选一即可），不做多档叠加 | 闭坑点：极简记工时月/季/年/终身叠加混乱；Homebase按门店跳涨 | ⬜ 待开发（暂无付费墙，MVP阶段全免费） |
-| 12 | 多雇主净收益横向比较 | 扣除预估通勤/等待时间成本后，计算并展示各雇主的实际到手时薪排名 | 海外Reddit零工社区反复提到的未满足诉求 | ⬜ 待开发 |
-| 13 | 拍照识别排班表/收入截图（OCR） | 拍照或上传截图后，自动识别出时间段/金额并生成待确认的工时记录草稿 | AI/多模态拓展：降低多雇主场景录入摩擦 | ⬜ 待开发（技术方案：Tesseract.js + Gemini API结构化） |
-| 14 | 语音记工 | 说一句"今天在奶茶店干了6小时"，自动解析生成工时记录草稿 | AI/多模态拓展：适配碎片化记录习惯 | ⬜ 待开发（技术方案：Web Speech API + Gemini API解析） |
-| 23 | 统计页多样化数据可视化 | 除柱状图外，至少再实现热力日历（月度活跃度）、环形进度（目标达成）、雇主横向排行榜三种图表类型 | 调研发现现有工时App统计可视化普遍薄弱（仅列表+柱状图），这是差异化机会点；详见FEATURE_SPEC 3.4 | ⬜ 待开发 |
-| 24 | 每日轻量小结推送 | 检测到当天最后一次下班打卡后30-60分钟内推送，内容仅"今日工时+今日收入+本周累计"三项；仅当天有打卡记录才发；设置里可一键关闭 | 调研Duolingo/Oura/WHOOP/Toggl后的结论：值得做但要走"轻量确认"而非"损失厌恶"路线，见FEATURE_SPEC 3.13 | ⬜ 待开发 |
-| 25 | 心情标签（升级版） | 打卡确认卡片的心情选择从3个emoji升级为带文字标签（崩溃/普通/爽/心动），可选追加≤20字短文本；周/月总结页展示心情曲线小结 | 调研Daylio/格志日记后的结论：纯标签点选留存率最好，强制长文写作留存最差；见FEATURE_SPEC 3.3/3.14 | ⬜ 待开发（升级已有的3.3心情emoji字段） |
+| 8 | 跨平台收入聚合看板 | 一个仪表盘视图汇总所有雇主本周/本月收入趋势图 | Gridwise验证有效的功能，但需避免"先免费后收费"降级 | ✅ 已实现（首页今日/本周/本月卡片+统计页趋势图，均可点击跳转/翻页查看历史周期） |
+| 9 | 限时段、可关闭的GPS/地理围栏打卡 | 打卡仅在设定的工作时段内触发定位校验；用户可在设置里完全关闭定位功能 | 闭坑点：国内耗电投诉、Hubstaff式监控引发反感 | ✅ 已实现（默认关闭，设置页"打卡时记录位置"开关；实现为记录打卡时的一次性定位快照`clockInLocation`，非持续追踪/非地理围栏） |
+| 10 | 团队代记工时（组长/包工头批量记录） | 一个账号下可以创建"代记录人员"，为多人分别记工时并汇总 | 中国用户App Store原话明确提出，现有产品全部空白 | ✅ 已实现 |
+| 11 | 简单清晰的单档订阅定价 | 定价页只有一个订阅档位（月/年二选一即可），不做多档叠加 | 闭坑点：极简记工时月/季/年/终身叠加混乱；Homebase按门店跳涨 | ⬜ 待开发（暂无付费墙，全部功能免费，尚无定价页） |
+| 12 | 多雇主净收益横向比较 | 扣除预估通勤/等待时间成本后，计算并展示各雇主的实际到手时薪排名 | 海外Reddit零工社区反复提到的未满足诉求 | ✅ 已实现（净收益对比页） |
+| 13 | 拍照识别排班表/收入截图（OCR） | 拍照或上传截图后，自动识别出时间段/金额并生成待确认的工时记录草稿 | AI/多模态拓展：降低多雇主场景录入摩擦 | ✅ 已实现（App端：浏览器拍照+Gemini解析；小程序端：`wx.chooseImage`+云函数中转腾讯云OCR，识别结果先落草稿供确认，支持整周排班表自动拆成多条记录） |
+| 14 | 语音记工 | 说一句"今天在奶茶店干了6小时"，自动解析生成工时记录草稿 | AI/多模态拓展：适配碎片化记录习惯 | ✅ 已实现（App端：Web Speech API实时转写+Gemini解析；小程序端：`wx.getRecorderManager`录音+云函数中转腾讯云语音识别） |
+| 23 | 统计页多样化数据可视化 | 除柱状图外，至少再实现热力日历（月度活跃度）、环形进度（目标达成）、雇主横向排行榜三种图表类型 | 调研发现现有工时App统计可视化普遍薄弱（仅列表+柱状图），这是差异化机会点；详见FEATURE_SPEC 3.4 | ✅ 已实现（近7天柱状图、收入热力日历、打卡streak日历、目标环形进度、雇主排行榜全部完成，柱状图/日历均支持翻页查看历史周期/月份） |
+| 24 | 每日轻量小结推送 | 检测到当天最后一次下班打卡后30-60分钟内推送，内容仅"今日工时+今日收入+本周累计"三项；仅当天有打卡记录才发；设置里可一键关闭 | 调研Duolingo/Oura/WHOOP/Toggl后的结论：值得做但要走"轻量确认"而非"损失厌恶"路线，见FEATURE_SPEC 3.13 | 🟡 部分实现——设置页开关（"每日小结推送"）已做，但触发推送的后端定时逻辑（Cloud Functions/云函数定时任务）尚未接入，开关目前不产生实际推送 |
+| 25 | 心情标签（升级版） | 打卡确认卡片的心情选择带图标+文字标签，可选追加≤20字短文本；周/月总结页展示心情曲线小结 | 调研Daylio/格志日记后的结论：纯标签点选留存率最好，强制长文写作留存最差；见FEATURE_SPEC 3.3/3.14 | ✅ 已实现，且规模超出原计划——最终做了**8档**心情标签（崩溃/社畜/躺平/普通/摸鱼/爽/爆肝/心动），每档配专属手绘表情图标+专属色值，而非最初规划的4档；打卡确认卡片、补录表单、AI记工确认页均已接入；统计页/我的页有心情曲线卡片（含连接折线、参考网格线），月度总结沿用"心情最多次的一天"逻辑 |
 
 ### P2 — 后续版本（视资源投入）
 
@@ -135,12 +161,14 @@ users/{uid}/workers/{workerId}      // 团队代记工时功能专用（对应FE
 | 情绪日记做成独立Tab/社交广场（点赞、公开可见、好友互动） | 调研发现工具型App硬加社交属性容易造成定位分裂、两头不专精，是有共识的行业教训；情绪记录必须轻量嵌入现有流程，不单独立项 |
 | 高频/强制性推送（每日总结做成Duolingo式连续打卡惩罚机制） | 调研发现零工是自由选择上下班，"没打卡=失败"式推送易被视为道德绑架；且周推送≥5条会导致64%用户卸载App |
 
-## 6. 里程碑建议
+## 6. 里程碑建议（v1.0更新：已全部完成到M4，进入上线阶段）
 
-- **M1（当前）**：P0核心闭环跑通 — 打卡、多雇主统计、云同步 ✅ 已完成
-- **M2**：补齐P0剩余项（报表导出、离线优先）+ P1的GPS限时打卡、团队代记
-- **M3**：AI/多模态能力（OCR拍照识别、语音记工）+ 收入聚合看板
-- **M4**：净收益横向比较 + 视用户反馈决定P2优先级
+- **M1**：P0核心闭环跑通 — 打卡、多雇主统计、云同步 ✅ 已完成
+- **M2**：报表导出、GPS限时打卡、团队代记 ✅ 已完成（离线优先仍未做，见P0#7）
+- **M3**：AI/多模态能力（OCR拍照识别、语音记工）+ 收入聚合看板 ✅ 已完成
+- **M4**：净收益横向比较 + 心情标签/统计可视化升级 ✅ 已完成
+- **M5（当前，新增）**：微信小程序端全量对齐App端功能开发完成，多轮视觉/逻辑/安全审计与真机测试，进入体验版测试→提交微信审核阶段
+- **M6（下一步）**：离线优先支持、每日小结推送的后端定时触发、定价策略决策（P1#11）
 
 ## 7. 开放问题（待你决定）
 
