@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { addManualEntry, clockIn, clockOut, watchEmployers, watchTimeEntries, watchUserProfile } from "../lib/firestore";
 import { entryHours, entryOvertimePay, entryPay, mergedHoursToday } from "../lib/pay";
 import { latestMoodOrFallback, startOfMonth, startOfWeek } from "../lib/stats";
@@ -40,6 +40,7 @@ const COACH_STEPS: CoachStep[] = [
 
 export function HomePage({ uid }: { uid: string }) {
   const t = useT();
+  const navigate = useNavigate();
   const [employers, setEmployers] = useState<Employer[]>([]);
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [animal, setAnimal] = useState<AnimalKey | undefined>(undefined);
@@ -294,13 +295,19 @@ export function HomePage({ uid }: { uid: string }) {
           )}
 
           <div className="income-cards-row">
-            <div className="income-card" data-tour="income">
+            <div
+              className="income-card"
+              data-tour="income"
+              role="button"
+              tabIndex={0}
+              onClick={() => navigate(`/stats?range=${leftRange}`)}
+            >
               <div className="income-range-tabs">
                 {(["today", "week"] as const).map((r) => (
                   <button
                     key={r}
                     className={`income-range-tab${leftRange === r ? " active" : ""}`}
-                    onClick={() => setLeftRange(r)}
+                    onClick={(e) => { e.stopPropagation(); setLeftRange(r); }}
                   >
                     {t(r === "today" ? "incomeRangeToday" : "incomeRangeWeek")}
                   </button>
@@ -316,7 +323,13 @@ export function HomePage({ uid }: { uid: string }) {
               )}
             </div>
 
-            <div className="income-card income-card-month" data-tour="income-month">
+            <div
+              className="income-card income-card-month"
+              data-tour="income-month"
+              role="button"
+              tabIndex={0}
+              onClick={() => navigate("/stats?range=month")}
+            >
               <div className="income-range-tabs">
                 <span className="income-range-tab active">{t("incomeRangeMonth")}</span>
               </div>

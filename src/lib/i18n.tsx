@@ -559,6 +559,7 @@ const dict = {
   vizCalendar: { zh: "日历", en: "Calendar" },
   vizRank: { zh: "排行", en: "Rank" },
   trendTitle: { zh: "近7天收入趋势", en: "Last 7 days" },
+  trendRangeFmt: { zh: "{startM}月{startD}日 - {endM}月{endD}日", en: "{startM}/{startD} - {endM}/{endD}" },
   payCalendarTitle: { zh: "{month} 活跃度日历（颜色越深赚得越多）", en: "{month} activity (darker = more earned)" },
   streakCalendarTitle: { zh: "{month} 连续打卡日历（有没有打卡，不看赚多少）", en: "{month} streak calendar (punched or not, not how much)" },
   heatLegendLess: { zh: "少", en: "Less" },

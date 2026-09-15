@@ -123,6 +123,12 @@
   padding: 14px 16px;
   box-shadow: var(--shadow-bold);
   animation: card-rise 0.4s ease 0.05s both;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.income-card:active {
+  transform: scale(0.97);
 }
 
 .income-card-month {

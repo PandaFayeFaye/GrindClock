@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { watchEmployers, watchTimeEntries } from "../lib/firestore";
 import { entryHours, entryOvertimePay, entryPay, lumpSumAllTime, lumpSumForPeriod } from "../lib/pay";
 import { DEFAULT_CURRENCY, currencySymbol, formatGroupedPay } from "../lib/currency";
@@ -30,20 +30,41 @@ function startOfToday() {
 export function StatsPage({ uid }: { uid: string }) {
   const t = useT();
   const { lang } = useLang();
-  const monthLabel = useMemo(() => {
-    const now = new Date();
-    return lang === "en"
-      ? now.toLocaleDateString("en-US", { month: "long" })
-      : `${now.getFullYear()}年${now.getMonth() + 1}月`;
-  }, [lang]);
   const navigate = useNavigate();
   const [employers, setEmployers] = useState<Employer[]>([]);
   const [entries, setEntries] = useState<TimeEntry[]>([]);
   const [viz, setViz] = useState<Viz>("trend");
   const [weeklyGoal, setWeeklyGoal] = useWeeklyGoal();
   const [editingGoal, setEditingGoal] = useState(false);
-  const [range, setRange] = useState<RangeKey>("month");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [range, setRange] = useState<RangeKey>(() => {
+    const fromUrl = searchParams.get("range");
+    return fromUrl === "today" || fromUrl === "week" || fromUrl === "month" || fromUrl === "all" ? fromUrl : "month";
+  });
   const [filterEmployerIds, setFilterEmployerIds] = useState<Set<string>>(new Set());
+  const [weekOffset, setWeekOffset] = useState(0); // 0 = current 7 days, 1 = the 7 days before that, ...
+  const [monthOffset, setMonthOffset] = useState(0); // 0 = this month, 1 = last month, ...
+
+  // The home page's income cards link here with a ?range= to preselect --
+  // consume it once so it doesn't linger in the URL / override the user's
+  // own later choice of range on this page.
+  useEffect(() => {
+    if (searchParams.has("range")) setSearchParams({}, { replace: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const viewedMonth = useMemo(() => {
+    const d = new Date();
+    d.setDate(1);
+    d.setMonth(d.getMonth() - monthOffset);
+    return d;
+  }, [monthOffset]);
+  const isCurrentMonth = monthOffset === 0;
+  const monthLabel = useMemo(() => {
+    return lang === "en"
+      ? viewedMonth.toLocaleDateString("en-US", { month: "long", year: monthOffset > 0 ? "numeric" : undefined })
+      : `${viewedMonth.getFullYear()}年${viewedMonth.getMonth() + 1}月`;
+  }, [lang, viewedMonth, monthOffset]);
 
   useEffect(() => {
     const unsubEmployers = watchEmployers(uid, setEmployers);
@@ -115,31 +136,38 @@ export function StatsPage({ uid }: { uid: string }) {
 
   const [exportOpen, setExportOpen] = useState(false);
 
-  // ---- Trend: last 7 days bars ----
+  // ---- Trend: 7-day bars, navigable to any previous week ----
   const last7Days = useMemo(() => {
     const days: { key: string; label: string }[] = [];
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
-      d.setDate(d.getDate() - i);
+      d.setDate(d.getDate() - i - weekOffset * 7);
       days.push({ key: dateKey(d.getTime()), label: t(WEEKDAY_KEYS[d.getDay()]) });
     }
     return days;
-  }, [t]);
+  }, [t, weekOffset]);
+  const weekRangeLabel = useMemo(() => {
+    const first = new Date(last7Days[0].key);
+    const last = new Date(last7Days[last7Days.length - 1].key);
+    return t("trendRangeFmt", {
+      startM: first.getMonth() + 1, startD: first.getDate(),
+      endM: last.getMonth() + 1, endD: last.getDate(),
+    });
+  }, [last7Days, t]);
   const dailyPay = useMemo(() => payByDay(personalConfirmed, employerById), [personalConfirmed, employerById]);
   const dailyHours = useMemo(() => hoursByDay(personalConfirmed), [personalConfirmed]);
   const maxDailyPay = Math.max(1, ...last7Days.map((d) => dailyPay.get(d.key) ?? 0));
 
-  // ---- Calendar: current month heatmap ----
+  // ---- Calendar: navigable month heatmap ----
   // Leading blanks align day 1 under its actual weekday column (grid starts on Sunday).
-  const calendarLeadingBlanks = useMemo(() => {
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth(), 1).getDay();
-  }, []);
+  const calendarLeadingBlanks = useMemo(
+    () => new Date(viewedMonth.getFullYear(), viewedMonth.getMonth(), 1).getDay(),
+    [viewedMonth],
+  );
 
   const heatCells = useMemo(() => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
+    const year = viewedMonth.getFullYear();
+    const month = viewedMonth.getMonth();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const values = Array.from({ length: daysInMonth }, (_, i) => {
       const key = dateKey(new Date(year, month, i + 1).getTime());
@@ -152,7 +180,7 @@ export function StatsPage({ uid }: { uid: string }) {
       pay: v.pay,
       hours: v.hours,
     }));
-  }, [dailyPay, dailyHours]);
+  }, [dailyPay, dailyHours, viewedMonth]);
 
   const [selectedCalDay, setSelectedCalDay] = useState<number | null>(() => new Date().getDate());
   const selectedCalDayInfo = useMemo(
@@ -164,16 +192,20 @@ export function StatsPage({ uid }: { uid: string }) {
 
   // ---- Streak calendar: same month grid as the pay heatmap, but binary punched/not ----
   const streakCells = useMemo(() => {
-    const now = new Date();
-    const year = now.getFullYear();
-    const month = now.getMonth();
+    const year = viewedMonth.getFullYear();
+    const month = viewedMonth.getMonth();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const daysWithEntry = new Set(personalConfirmed.map((e) => dateKey(e.startTime)));
     return Array.from({ length: daysInMonth }, (_, i) => {
       const key = dateKey(new Date(year, month, i + 1).getTime());
       return { day: i + 1, punched: daysWithEntry.has(key) };
     });
-  }, [personalConfirmed]);
+  }, [personalConfirmed, viewedMonth]);
+
+  function goToMonth(offset: number) {
+    setMonthOffset(offset);
+    setSelectedCalDay(null);
+  }
 
   // ---- Rank: this week's leaderboard + goal ring ----
   const weekStart = startOfWeek();
@@ -276,7 +308,18 @@ export function StatsPage({ uid }: { uid: string }) {
 
       {viz === "trend" && (
         <div className="chart-card">
-          <p className="title">{t("trendTitle")}</p>
+          <div className="chart-nav-row">
+            <button type="button" className="chart-nav-btn" onClick={() => setWeekOffset((o) => o + 1)}>‹</button>
+            <p className="title">{weekOffset === 0 ? t("trendTitle") : weekRangeLabel}</p>
+            <button
+              type="button"
+              className={`chart-nav-btn${weekOffset === 0 ? " disabled" : ""}`}
+              disabled={weekOffset === 0}
+              onClick={() => setWeekOffset((o) => Math.max(0, o - 1))}
+            >
+              ›
+            </button>
+          </div>
           <div className="bars">
             {last7Days.map((d) => {
               const pay = dailyPay.get(d.key) ?? 0;
@@ -304,7 +347,18 @@ export function StatsPage({ uid }: { uid: string }) {
             </svg>
             {t("streakDays", { n: streak })}
           </span>
-          <p className="title">{t("payCalendarTitle", { month: monthLabel })}</p>
+          <div className="chart-nav-row">
+            <button type="button" className="chart-nav-btn" onClick={() => goToMonth(monthOffset + 1)}>‹</button>
+            <p className="title">{t("payCalendarTitle", { month: monthLabel })}</p>
+            <button
+              type="button"
+              className={`chart-nav-btn${isCurrentMonth ? " disabled" : ""}`}
+              disabled={isCurrentMonth}
+              onClick={() => goToMonth(Math.max(0, monthOffset - 1))}
+            >
+              ›
+            </button>
+          </div>
           <div className="weekday-header">
             {WEEKDAY_KEYS.map((k) => <span key={k}>{t(k)}</span>)}
           </div>
@@ -332,7 +386,7 @@ export function StatsPage({ uid }: { uid: string }) {
           {selectedCalDayInfo && (
             <p className="cal-day-detail">
               {t("dayDetailFmt", {
-                month: new Date().getMonth() + 1,
+                month: viewedMonth.getMonth() + 1,
                 day: selectedCalDay!,
                 h: selectedCalDayInfo.hours.toFixed(1),
                 pay: `${currencySymbol(DEFAULT_CURRENCY)}${selectedCalDayInfo.pay.toFixed(0)}`,
