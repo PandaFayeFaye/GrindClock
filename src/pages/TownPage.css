@@ -121,6 +121,10 @@
   flex-direction: column;
   align-items: center;
   z-index: 3;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
 }
 
 .town-sprite-bubble {

@@ -12,7 +12,7 @@ import {
   isSameLocalDay,
   type TownItemType,
 } from "../lib/town";
-import { fetchWorld, skimFrom, stealFrom, type WorldEntry } from "../lib/townFirestore";
+import { consumeNotices, criticizeForNotCheckingIn, fetchWorld, skimFrom, stealFrom, type WorldEntry } from "../lib/townFirestore";
 import "./TownWorldPage.css";
 
 // Deterministic pseudo-random 0..1 from a string -- same player always
@@ -53,7 +53,20 @@ export function TownWorldPage({ uid }: { uid: string }) {
       .finally(() => setLoading(false));
   }
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    consumeNotices(uid)
+      .then((notices) => {
+        notices.forEach((notice, i) => {
+          const key =
+            notice.type === "stolen" ? "townNoticeStolen" :
+            notice.type === "skimmed" ? "townNoticeSkimmed" : "townNoticeCriticized";
+          window.setTimeout(() => flash(t(key, { name: notice.fromNickname })), i * 3000);
+        });
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uid]);
 
   const me = list.find((e) => e.uid === uid);
   const others = list.filter((e) => e.uid !== uid);
@@ -84,6 +97,19 @@ export function TownWorldPage({ uid }: { uid: string }) {
       const key =
         msg === "skim_cooldown" ? "townSkimFailCooldown" :
         msg === "no_job_available" ? "townSkimFailNoJob" : "townSkimFailGeneric";
+      flash(t(key));
+    }
+  }
+
+  async function handleCriticize(entry: WorldEntry) {
+    try {
+      await criticizeForNotCheckingIn(uid, entry.uid);
+      flash(t("townCriticizeSuccess"));
+    } catch (err) {
+      const msg = (err as Error).message;
+      const key =
+        msg === "already_checked_in" ? "townCriticizeFailCheckedIn" :
+        msg === "criticize_cooldown" ? "townCriticizeFailCooldown" : "townCriticizeFailGeneric";
       flash(t(key));
     }
   }
@@ -136,6 +162,24 @@ export function TownWorldPage({ uid }: { uid: string }) {
                   <span className={`world-roamer-badge${isSameLocalDay(entry.lastDailyRationAt || 0, Date.now()) ? " ok" : " warn"}`} />
                   {working && <span className="world-roamer-badge working" />}
                 </span>
+                {entry.decorations.length > 0 && (
+                  <span className="world-roamer-deco">
+                    {entry.decorations.map((key, di) => {
+                      const angle = (di / entry.decorations.length) * Math.PI * 2;
+                      const cx = 50 + Math.cos(angle) * 46;
+                      const cy = 50 + Math.sin(angle) * 46;
+                      return (
+                        <img
+                          key={key}
+                          className="world-roamer-deco-icon"
+                          src={decorationIconSrc(key)}
+                          alt=""
+                          style={{ left: `${cx}%`, top: `${cy}%` }}
+                        />
+                      );
+                    })}
+                  </span>
+                )}
                 {entry.animal && (
                   <img className="world-roamer-img" src={characterImageSrc(entry.animal as AnimalKey, entry.mbti)} alt="" />
                 )}
@@ -213,6 +257,9 @@ export function TownWorldPage({ uid }: { uid: string }) {
                   {canSkim && (
                     <button className="world-btn skim" onClick={() => handleSkim(entry)}>{t("townWorldSkim")}</button>
                   )}
+                  {!checkedIn && (
+                    <button className="world-btn criticize" onClick={() => handleCriticize(entry)}>{t("townCriticizeBtn")}</button>
+                  )}
                 </div>
               )}
             </div>
@@ -242,6 +289,11 @@ export function TownWorldPage({ uid }: { uid: string }) {
                 {myTitleIndex > activeEntry.titleIndex && (
                   <button className="world-btn skim" onClick={() => { handleSkim(activeEntry); setActiveEntry(null); }}>
                     {t("townWorldSkim")}
+                  </button>
+                )}
+                {!(activeEntry.lastDailyRationAt != null && isSameLocalDay(activeEntry.lastDailyRationAt, Date.now())) && (
+                  <button className="world-btn criticize" onClick={() => { handleCriticize(activeEntry); setActiveEntry(null); }}>
+                    {t("townCriticizeBtn")}
                   </button>
                 )}
               </div>

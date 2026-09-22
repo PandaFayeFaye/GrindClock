@@ -5,6 +5,7 @@ import { useT } from "../lib/i18n";
 import { watchUserProfile } from "../lib/firestore";
 import {
   DAILY_RATION,
+  FEED_COST,
   HUD_ICON_CHEST,
   HUD_ICON_COIN,
   HUD_ICON_FLAG,
@@ -27,8 +28,11 @@ import {
 } from "../lib/town";
 import {
   buyDecoration,
+  cancelJob,
   claimDailyRation,
   collectJob,
+  consumeNotices,
+  feedCompanionInTown,
   promote,
   sendToWork,
   syncTownDisplayFields,
@@ -46,6 +50,8 @@ export function TownPage({ uid }: { uid: string }) {
   const [pendingJob, setPendingJob] = useState<TownJob | null>(null);
   const [showInventory, setShowInventory] = useState(false);
   const [showPromote, setShowPromote] = useState(false);
+  const [showActions, setShowActions] = useState(false);
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
 
   useEffect(() => {
     const unsub = watchTownProfile(uid, setProfile);
@@ -56,6 +62,16 @@ export function TownPage({ uid }: { uid: string }) {
     });
     claimDailyRation(uid)
       .then(({ claimed }) => { if (claimed) flash(t("townRationClaimed", { n: DAILY_RATION })); })
+      .catch(() => {});
+    consumeNotices(uid)
+      .then((notices) => {
+        notices.forEach((notice, i) => {
+          const key =
+            notice.type === "stolen" ? "townNoticeStolen" :
+            notice.type === "skimmed" ? "townNoticeSkimmed" : "townNoticeCriticized";
+          window.setTimeout(() => flash(t(key, { name: notice.fromNickname })), i * 3000);
+        });
+      })
       .catch(() => {});
     return () => { unsub(); unsubDisplay(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -130,6 +146,27 @@ export function TownPage({ uid }: { uid: string }) {
     if (claimed) flash(t("townRationClaimed", { n: DAILY_RATION }));
   }
 
+  async function handleFeed() {
+    setShowActions(false);
+    try {
+      await feedCompanionInTown(uid);
+      flash(t("townFeedSuccess"));
+    } catch (err) {
+      flash(t((err as Error).message === "insufficient_oxfeed" ? "townFeedFailInsufficient" : "townFeedFailGeneric"));
+    }
+  }
+
+  async function handleCancelJob() {
+    setShowActions(false);
+    setConfirmingCancel(false);
+    try {
+      await cancelJob(uid);
+      flash(t("townCancelSuccess"));
+    } catch {
+      flash(t("townCancelFailGeneric"));
+    }
+  }
+
   async function handlePromote() {
     try {
       const res = await promote(uid);
@@ -183,17 +220,22 @@ export function TownPage({ uid }: { uid: string }) {
         })}
 
         {animal && (
-          <div className="town-sprite" style={{ left: `${spriteSpot.x}%`, top: `${spriteSpot.y}%` }}>
+          <button
+            type="button"
+            className="town-sprite"
+            style={{ left: `${spriteSpot.x}%`, top: `${spriteSpot.y}%` }}
+            onClick={() => setShowActions(true)}
+          >
             <div className="town-sprite-bubble">
               <span>
                 {profile.currentJob
                   ? jobReady ? t("townJobReady") : t("townJobRemaining", { m: remainingMin })
-                  : t("townJobsTitle")}
+                  : t("townSpriteHint")}
               </span>
             </div>
             <img className="town-sprite-img" src={characterImageSrc(animal, mbti)} alt="" />
             <div className="town-sprite-shadow" />
-          </div>
+          </button>
         )}
 
         <div className="town-hud-top">
@@ -253,6 +295,36 @@ export function TownPage({ uid }: { uid: string }) {
               {t("townJobDuration", { h: pendingJob.durationMs / 3_600_000 })} · {t("townJobCost", { n: pendingJob.feedCost })}
             </p>
             <button className="town-collect-btn" onClick={handleConfirmStart}>{t("townJobStart")}</button>
+          </div>
+        </div>
+      )}
+
+      {showActions && (
+        <div className="town-mask" onClick={() => { setShowActions(false); setConfirmingCancel(false); }}>
+          <div className="town-sheet town-confirm-sheet" onClick={(e) => e.stopPropagation()}>
+            {confirmingCancel ? (
+              <>
+                <p className="town-sheet-title">{t("townCancelConfirmTitle")}</p>
+                <p className="town-meta">{t("townCancelConfirmBody")}</p>
+                <div className="town-actions-row" style={{ marginTop: 12 }}>
+                  <button className="town-action-btn" onClick={() => setConfirmingCancel(false)}>{t("townUnlockCancel")}</button>
+                  <button className="town-action-btn" onClick={handleCancelJob}>{t("townCancelConfirmBtn")}</button>
+                </div>
+              </>
+            ) : (
+              <>
+                <img className="town-confirm-img" src={characterImageSrc(animal || "cat", mbti)} alt="" />
+                <p className="town-sheet-title">{t("townSpriteHint")}</p>
+                <button className="town-collect-btn" onClick={handleFeed}>
+                  {t("townFeedButton", { n: FEED_COST })}
+                </button>
+                {profile.currentJob && (
+                  <button className="town-promote-btn" style={{ marginTop: 8 }} onClick={() => setConfirmingCancel(true)}>
+                    {t("townCancelButton")}
+                  </button>
+                )}
+              </>
+            )}
           </div>
         </div>
       )}

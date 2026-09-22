@@ -18,6 +18,7 @@ import { getCurrentLocation } from "../lib/geolocation";
 import { useT } from "../lib/i18n";
 import { DEFAULT_CURRENCY, currencySymbol, formatGroupedPay } from "../lib/currency";
 import { combineDateAndTime, scheduleDurationHours, todaysSchedule } from "../lib/schedule";
+import { TOWN_LEVELS } from "../lib/town";
 import { watchTownProfile, unlockTown } from "../lib/townFirestore";
 import "./HomePage.css";
 
@@ -34,6 +35,7 @@ const COACH_STEPS: CoachStep[] = [
   { target: "punch", titleKey: "coachPunchTitle", bodyKey: "coachPunchBody" },
   { target: "row-detail", titleKey: "coachRowDetailTitle", bodyKey: "coachRowDetailBody" },
   { target: "companion", titleKey: "coachCompanionTitle", bodyKey: "coachCompanionBody" },
+  { target: "companion", titleKey: "coachCompanionSecretTitle", bodyKey: "coachCompanionSecretBody" },
   { target: "fab", titleKey: "coachFabTitle", bodyKey: "coachFabBody" },
   { target: "nav-stats", titleKey: "coachStatsTitle", bodyKey: "coachStatsBody" },
   { target: "nav-settings", titleKey: "coachSettingsTitle", bodyKey: "coachSettingsBody" },
@@ -62,6 +64,8 @@ export function HomePage({ uid }: { uid: string }) {
   // get offered Slackerville ("Mole-Fish Town" in Chinese). Once unlocked, a small badge next to the
   // companion is the permanent entry point -- no more counting taps.
   const [townUnlocked, setTownUnlocked] = useState(false);
+  const [townLastFedAt, setTownLastFedAt] = useState<number | null>(null);
+  const [townTitleIndex, setTownTitleIndex] = useState(0);
   const [showTownUnlockConfirm, setShowTownUnlockConfirm] = useState(false);
   const tapCountRef = useRef(0);
   const tapTimerRef = useRef<number | null>(null);
@@ -74,7 +78,11 @@ export function HomePage({ uid }: { uid: string }) {
       setMbti(profile.mbti || undefined);
       setNickname(profile.nickname ?? "");
     });
-    const unsubTown = watchTownProfile(uid, (p) => setTownUnlocked(p.unlocked));
+    const unsubTown = watchTownProfile(uid, (p) => {
+      setTownUnlocked(p.unlocked);
+      setTownLastFedAt(p.lastFedAt);
+      setTownTitleIndex(p.titleIndex);
+    });
     return () => { unsubEmployers(); unsubEntries(); unsubProfile(); unsubTown(); };
   }, [uid]);
 
@@ -197,15 +205,25 @@ export function HomePage({ uid }: { uid: string }) {
     : 100;
   const workingCount = activeByEmployer.size;
 
+  // Real punch-outs are the primary way to feed the companion, but a
+  // Slackerville feeding (spending Grind Fuel there) resets this same
+  // clock too -- whichever happened more recently wins.
   const lastFedAt = useMemo(() => {
     const fedTimes = personalEntries
       .filter((e) => e.status === "confirmed" && e.endTime)
       .map((e) => e.endTime as number);
+    if (townLastFedAt != null) fedTimes.push(townLastFedAt);
     return fedTimes.length > 0 ? Math.max(...fedTimes) : null;
-  }, [personalEntries]);
+  }, [personalEntries, townLastFedAt]);
   const petStageIdx = currentPetStageIndex(totalHours);
   const petStage = PET_STAGES[petStageIdx];
   const nextPetStage = PET_STAGES[petStageIdx + 1];
+  // Two deliberately separate growth lines: the user's OWN real tier (TIERS
+  // above, driven only by real clocked hours) never changes. But once
+  // Slackerville is unlocked, the companion is treated as its resident, so
+  // the name shown for IT switches to its Slackerville title instead of the
+  // real-hours pet stage -- mirrors the Mini Program's same call.
+  const companionStageNameKey = townUnlocked ? TOWN_LEVELS[townTitleIndex].titleKey : petStage.nameKey;
   const petHungry = isPetHungry(lastFedAt);
   const hungryHours = Math.floor(hoursSinceFed(lastFedAt));
   const companionMood = useMemo(() => latestMoodOrFallback(personalEntries), [personalEntries]);
@@ -469,7 +487,7 @@ export function HomePage({ uid }: { uid: string }) {
           dataTour="companion"
           animal={animal}
           mbti={mbti}
-          stageNameKey={petStage.nameKey}
+          stageNameKey={companionStageNameKey}
           stageAccessory={petStage.accessory}
           hungry={petHungry}
           progressPct={

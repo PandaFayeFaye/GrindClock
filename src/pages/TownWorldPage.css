@@ -144,6 +144,29 @@
   filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.35));
 }
 
+/* A ring of owned decorations circling the sprite -- absolute against
+   .world-roamer itself so they overlay the portrait instead of pushing
+   into the flex flow (see TownPage.css's near-identical comment for the
+   companion widget's own decoration ring on the Town page). */
+.world-roamer-deco {
+  position: absolute;
+  top: 10px;
+  left: 0;
+  width: 100%;
+  height: 32px;
+  pointer-events: none;
+}
+
+.world-roamer-deco-icon {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid #1A1A1A;
+}
+
 .world-roamer-name {
   font-size: 10px;
   font-weight: 700;
@@ -321,6 +344,11 @@
 
 .world-btn.skim {
   background: #FF6B6B;
+  color: #fff;
+}
+
+.world-btn.criticize {
+  background: #8B3A2A;
   color: #fff;
 }
 

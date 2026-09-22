@@ -7,7 +7,8 @@
 //      never meant to be as hard-guarded as real money math.
 //   2. firestore.rules still locks non-owners out of every field except
 //      `inventory`, `currentJob`, `companionExp`, `lastActiveAt`,
-//      `stealCooldowns`, `stealCounts`, `lastStealAt` and `skimCooldowns` --
+//      `stealCooldowns`, `stealCounts`, `lastStealAt`, `skimCooldowns`,
+//      `criticizeCooldowns` and `notices` --
 //      exactly the fields steal/skim need to touch on someone else's doc.
 //      `unlocked`, `oxFeed`, `titleIndex`, `decorations` and the
 //      nickname/animal/mbti mirror stay owner-only no matter what, so a
@@ -18,6 +19,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  updateDoc,
   onSnapshot,
   query,
   runTransaction,
@@ -26,7 +28,10 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 import {
+  CRITICIZE_COOLDOWN_MS,
   DAILY_RATION,
+  FEED_COST,
+  MAX_NOTICES,
   STEAL_COOLDOWN_MS,
   STEAL_MAX_PER_WINDOW,
   SKIM_COOLDOWN_MS,
@@ -39,8 +44,13 @@ import {
   isSameLocalDay,
   type TownInventory,
   type TownItemType,
+  type TownNotice,
   type TownProfile,
 } from "./town";
+
+function pushNotice(existing: TownNotice[] | undefined, notice: TownNotice): TownNotice[] {
+  return [...(existing || []), notice].slice(-MAX_NOTICES);
+}
 
 const GLOBAL_STEAL_COOLDOWN_MS = 3_600_000;
 
@@ -127,6 +137,90 @@ export async function sendToWork(uid: string, jobKey: string): Promise<TownProfi
     tx.set(ref, next, { merge: true });
     return next;
   });
+}
+
+/** Recalls the companion from an in-progress shift early. The Ox Feed
+ * already spent is NOT refunded (otherwise cancelling would make starting
+ * a shift free too), and no item/exp is granted since it never finished --
+ * this just clears currentJob. */
+export async function cancelJob(uid: string): Promise<TownProfile> {
+  const ref = townDoc(uid);
+  return runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    const p = normalize(snap.data());
+    if (!p.unlocked) throw new Error("not_unlocked");
+    if (!p.currentJob) throw new Error("not_working");
+    const next: TownProfile = { ...p, currentJob: null, lastActiveAt: Date.now() };
+    tx.set(ref, next, { merge: true });
+    return next;
+  });
+}
+
+/** Spends Ox Feed on a purely cosmetic feeding animation -- but also resets
+ * the same real hunger clock a real punch-out would (the caller takes
+ * max(realLastFedAt, this) when deciding if the companion looks hungry on
+ * Home), mirroring the Mini Program's townFeed cloud function exactly. */
+export async function feedCompanionInTown(uid: string): Promise<TownProfile> {
+  const ref = townDoc(uid);
+  return runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    const p = normalize(snap.data());
+    if (!p.unlocked) throw new Error("not_unlocked");
+    if (p.oxFeed < FEED_COST) throw new Error("insufficient_oxfeed");
+    const now = Date.now();
+    const next: TownProfile = { ...p, oxFeed: p.oxFeed - FEED_COST, lastFedAt: now, lastActiveAt: now };
+    tx.set(ref, next, { merge: true });
+    return next;
+  });
+}
+
+/** "批评" a friend who hasn't checked in today. There's no push infra on
+ * web (see this file's header comment), so the only visible effect is a
+ * notice waiting in the target's own inbox next time they open Town/World
+ * -- a lesser stand-in for the Mini Program's WeChat subscribe-message
+ * push, but still gives the callout SOME chance of being seen. */
+export async function criticizeForNotCheckingIn(uid: string, targetUid: string): Promise<{ pushed: boolean }> {
+  if (uid === targetUid) throw new Error("invalid_target");
+  const selfRef = townDoc(uid);
+  const targetRef = townDoc(targetUid);
+  return runTransaction(db, async (tx) => {
+    const [selfSnap, targetSnap] = await Promise.all([tx.get(selfRef), tx.get(targetRef)]);
+    const self = normalize(selfSnap.data());
+    const target = targetSnap.exists() ? normalize(targetSnap.data()) : null;
+    if (!self.unlocked) throw new Error("not_unlocked");
+    if (!target || !target.unlocked) throw new Error("target_not_found");
+
+    const now = Date.now();
+    if (target.lastDailyRationAt && isSameLocalDay(target.lastDailyRationAt, now)) {
+      throw new Error("already_checked_in");
+    }
+    const cooldowns = self.criticizeCooldowns || {};
+    if (cooldowns[targetUid] && now - cooldowns[targetUid] < CRITICIZE_COOLDOWN_MS) throw new Error("criticize_cooldown");
+
+    const notices = pushNotice(target.notices, { type: "criticized", fromNickname: self.nickname || "someone", createdAt: now });
+    tx.set(targetRef, { notices }, { merge: true });
+    tx.set(selfRef, { criticizeCooldowns: { ...cooldowns, [targetUid]: now } }, { merge: true });
+
+    return { pushed: true };
+  }).then(async (result) => {
+    await setDoc(doc(jobLogCol()), {
+      openid: uid,
+      targetOpenid: targetUid,
+      type: "criticize",
+      createdAt: Date.now(),
+    }).catch(() => {});
+    return result;
+  });
+}
+
+/** Reads and clears the caller's own notice inbox in one go -- call once on
+ * Town/World mount and toast whatever comes back. */
+export async function consumeNotices(uid: string): Promise<TownNotice[]> {
+  const ref = townDoc(uid);
+  const snap = await getDoc(ref);
+  const notices = normalize(snap.data()).notices || [];
+  if (notices.length > 0) await updateDoc(ref, { notices: [] }).catch(() => {});
+  return notices;
 }
 
 export type CollectResult = { profile: TownProfile; jobKey: string; itemGained: TownItemType; amountGained: number; expGained: number };
@@ -255,7 +349,8 @@ export async function stealFrom(uid: string, targetUid: string): Promise<StealRe
     const selfInventory: TownInventory = { ...self.inventory };
     selfInventory[item] = (selfInventory[item] || 0) + amount;
 
-    tx.set(targetRef, { inventory: targetInventory }, { merge: true });
+    const notices = pushNotice(target.notices, { type: "stolen", fromNickname: self.nickname || "someone", createdAt: now });
+    tx.set(targetRef, { inventory: targetInventory, notices }, { merge: true });
     tx.set(
       selfRef,
       {
@@ -311,7 +406,8 @@ export async function skimFrom(uid: string, targetUid: string): Promise<SkimResu
     const job = eligible[Math.floor(Math.random() * eligible.length)];
 
     const currentJob = { jobKey: job.key, startedAt: now, endsAt: now + job.durationMs, assignedBy: uid };
-    tx.set(targetRef, { currentJob, lastActiveAt: now }, { merge: true });
+    const notices = pushNotice(target.notices, { type: "skimmed", fromNickname: self.nickname || "someone", createdAt: now });
+    tx.set(targetRef, { currentJob, lastActiveAt: now, notices }, { merge: true });
     tx.set(selfRef, { skimCooldowns: { ...cooldowns, [targetUid]: now } }, { merge: true });
 
     return { jobKey: job.key, endsAt: currentJob.endsAt };

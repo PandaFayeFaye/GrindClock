@@ -150,16 +150,31 @@ export const FEED_COST = 10;
 export const STEAL_COOLDOWN_MS = 24 * 3_600_000;
 export const STEAL_MAX_PER_WINDOW = 3;
 export const SKIM_COOLDOWN_MS = 6 * 3_600_000;
+export const CRITICIZE_COOLDOWN_MS = 12 * 3_600_000;
+// Room kept for both a real-time push (there is none on web -- see
+// townFirestore.ts) and an in-app inbox: capped so a doc can't grow forever.
+export const MAX_NOTICES = 8;
 
 export type TownInventory = Partial<Record<TownItemType, number>>;
 
 export type TownCurrentJob = { jobKey: string; startedAt: number; endsAt: number; assignedBy?: string } | null;
+
+// A lightweight in-app inbox standing in for the Mini Program's WeChat push
+// (steal/skim/criticize) -- there's no push infra on the web build, so this
+// is what tells a victim anything happened at all: shown as a toast next
+// time they open Town/World, then cleared.
+export type TownNotice = {
+  type: "stolen" | "skimmed" | "criticized";
+  fromNickname: string;
+  createdAt: number;
+};
 
 export type TownProfile = {
   unlocked: boolean;
   unlockedAt: number | null;
   oxFeed: number;
   lastDailyRationAt: number | null;
+  lastFedAt: number | null;
   companionExp: number;
   titleIndex: number;
   currentJob: TownCurrentJob;
@@ -172,13 +187,15 @@ export type TownProfile = {
   nickname?: string;
   animal?: string;
   mbti?: string;
-  // Cooldown bookkeeping for steal/skim, kept on the ACTOR's own doc (not the
-  // target's) specifically so enforcing them never needs a townJobLog query
-  // -- and therefore never needs a Firestore composite index. See
-  // townFirestore.ts's header comment for the fuller rationale.
+  // Cooldown bookkeeping for steal/skim/criticize, kept on the ACTOR's own
+  // doc (not the target's) specifically so enforcing them never needs a
+  // townJobLog query -- and therefore never needs a Firestore composite
+  // index. See townFirestore.ts's header comment for the fuller rationale.
   lastStealAt?: number;
   stealCounts?: Record<string, { count: number; windowStart: number }>;
   skimCooldowns?: Record<string, number>;
+  criticizeCooldowns?: Record<string, number>;
+  notices?: TownNotice[];
 };
 
 export function emptyTownProfile(): TownProfile {
@@ -187,6 +204,7 @@ export function emptyTownProfile(): TownProfile {
     unlockedAt: null,
     oxFeed: 0,
     lastDailyRationAt: null,
+    lastFedAt: null,
     companionExp: 0,
     titleIndex: 0,
     currentJob: null,
