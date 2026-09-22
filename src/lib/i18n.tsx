@@ -628,6 +628,7 @@ const dict = {
 
   townJobsTitle: { zh: "选个班上", en: "Pick a shift" },
   townJobLocked: { zh: "需要「{title}」职级解锁", en: "Unlocks at \"{title}\"" },
+  townLockedTag: { zh: "未解锁", en: "Locked" },
   townJobNightOnly: { zh: "仅 22:00–6:00 开放", en: "Only open 22:00–6:00" },
   townJobCost: { zh: "班车费 {n}", en: "Costs {n} feed" },
   townJobDuration: { zh: "{h}h", en: "{h}h" },

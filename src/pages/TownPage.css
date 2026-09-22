@@ -1,9 +1,11 @@
 .town-page {
+  position: fixed;
+  inset: 0;
   max-width: 480px;
   margin: 0 auto;
   padding: 0;
   background: #79b866;
-  min-height: 100vh;
+  overflow: hidden;
   box-sizing: border-box;
 }
 
@@ -24,9 +26,10 @@
 
 /* ---- Illustrated scene (ported look-and-feel from the Mini Program) ---- */
 .town-scene {
-  position: relative;
+  position: absolute;
+  inset: 0;
   width: 100%;
-  aspect-ratio: 1 / 1;
+  height: 100%;
   overflow: hidden;
 }
 
@@ -79,10 +82,12 @@
 }
 
 .town-building-lock {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  font-size: 10px;
+  font-size: 8px;
+  font-weight: 800;
+  color: #fff;
+  background: #8A8272;
+  border-radius: 4px;
+  padding: 0 4px;
 }
 
 .town-building-label {
@@ -432,4 +437,16 @@
   font-size: 12px;
   font-weight: 700;
   width: 100%;
+}
+
+.town-deco-title {
+  margin-top: 16px;
+}
+
+.town-deco-card.owned {
+  opacity: 0.7;
+}
+
+.town-deco-buy-btn:disabled {
+  opacity: 0.5;
 }

@@ -46,7 +46,6 @@ export function TownPage({ uid }: { uid: string }) {
   const [pendingJob, setPendingJob] = useState<TownJob | null>(null);
   const [showInventory, setShowInventory] = useState(false);
   const [showPromote, setShowPromote] = useState(false);
-  const [showDecorate, setShowDecorate] = useState(false);
 
   useEffect(() => {
     const unsub = watchTownProfile(uid, setProfile);
@@ -172,7 +171,7 @@ export function TownPage({ uid }: { uid: string }) {
               onClick={() => handleBuildingTap(job)}
             >
               <img className="town-building-img" src={buildingImageSrc(job.key)} alt={t(job.nameKey)} />
-              {locked && <span className="town-building-lock">🔒</span>}
+              {locked && <span className="town-building-lock">{t("townLockedTag")}</span>}
               <span className="town-building-label">{t(job.nameKey)}</span>
               {isWorkingHere && (
                 <span className={`town-building-badge${jobReady ? " ready" : ""}`}>
@@ -233,13 +232,6 @@ export function TownPage({ uid }: { uid: string }) {
               {t("townPromoteNav")}
             </span>
           </button>
-          <button type="button" className="town-hud-btn" onClick={() => setShowDecorate(true)}>
-            <img className="town-hud-btn-wood" src={HUD_WOOD_STRIP} alt="" />
-            <span className="town-hud-btn-content">
-              <span className="town-hud-btn-emoji">🎁</span>
-              {t("townDecorateNav")}
-            </span>
-          </button>
           <Link to="/town/world" className="town-hud-btn">
             <img className="town-hud-btn-wood" src={HUD_WOOD_STRIP} alt="" />
             <span className="town-hud-btn-content">
@@ -281,6 +273,29 @@ export function TownPage({ uid }: { uid: string }) {
                 ))}
               </div>
             )}
+
+            <p className="town-sheet-title town-deco-title">{t("townDecorateTitle")}</p>
+            <div className="town-deco-grid">
+              {TOWN_DECORATIONS.map((deco) => {
+                const owned = profile.decorations.includes(deco.key);
+                return (
+                  <div className={`town-deco-card${owned ? " owned" : ""}`} key={deco.key}>
+                    <img className="town-deco-icon-img" src={decorationIconSrc(deco.key)} alt="" />
+                    <p className="town-deco-name">{t(deco.nameKey)}</p>
+                    <p className="town-deco-cost">
+                      {t(ITEM_LABEL_KEY[deco.costItem])} {profile.inventory[deco.costItem] || 0}/{deco.costAmount}
+                    </p>
+                    <button
+                      className="town-deco-buy-btn"
+                      disabled={owned || (profile.inventory[deco.costItem] || 0) < deco.costAmount}
+                      onClick={() => handleBuyDecoration(deco.key)}
+                    >
+                      {owned ? t("townDecorateOwned") : t("townDecorateBuy")}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       )}
@@ -317,33 +332,6 @@ export function TownPage({ uid }: { uid: string }) {
                 </button>
               </>
             )}
-          </div>
-        </div>
-      )}
-
-      {showDecorate && (
-        <div className="town-mask" onClick={() => setShowDecorate(false)}>
-          <div className="town-sheet" onClick={(e) => e.stopPropagation()}>
-            <p className="town-sheet-title">{t("townDecorateTitle")}</p>
-            <div className="town-deco-grid">
-              {TOWN_DECORATIONS.map((deco) => {
-                const owned = profile.decorations.includes(deco.key);
-                return (
-                  <div className="town-deco-card" key={deco.key}>
-                    <img className="town-deco-icon-img" src={decorationIconSrc(deco.key)} alt="" />
-                    <p className="town-deco-name">{t(deco.nameKey)}</p>
-                    <p className="town-deco-cost">{t(ITEM_LABEL_KEY[deco.costItem])} x{deco.costAmount}</p>
-                    {owned ? (
-                      <span className="town-deco-owned">{t("townDecorateOwned")}</span>
-                    ) : (
-                      <button className="town-deco-buy-btn" onClick={() => handleBuyDecoration(deco.key)}>
-                        {t("townDecorateBuy")}
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
           </div>
         </div>
       )}

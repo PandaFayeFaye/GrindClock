@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { characterImageSrc, type AnimalKey } from "../lib/avatar";
 import { useT } from "../lib/i18n";
-import { ITEM_LABEL_KEY, TOWN_JOBS, TOWN_LEVELS, isSameLocalDay, type TownItemType } from "../lib/town";
+import { ITEM_LABEL_KEY, TOWN_JOBS, TOWN_LEVELS, decorationIconSrc, isSameLocalDay, type TownItemType } from "../lib/town";
 import { fetchWorld, skimFrom, stealFrom, type WorldEntry } from "../lib/townFirestore";
 import "./TownWorldPage.css";
 
@@ -70,10 +70,18 @@ export function TownWorldPage({ uid }: { uid: string }) {
         <div className="world-card me-card">
           <div className="world-card-head">
             <span className="world-rank">#{list.indexOf(me) + 1}</span>
+            {me.animal && <img className="world-avatar" src={characterImageSrc(me.animal as AnimalKey, me.mbti)} alt="" />}
             <span className="world-nickname">{t("townWorldMe")}</span>
             <span className="world-title-badge">{t(TOWN_LEVELS[me.titleIndex].titleKey)}</span>
           </div>
           <p className="world-exp-line">{t("townExp", { n: me.companionExp })}</p>
+          {me.decorations.length > 0 && (
+            <div className="world-deco-row">
+              {me.decorations.map((key) => (
+                <img key={key} className="world-deco-icon" src={decorationIconSrc(key)} alt="" />
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -99,6 +107,13 @@ export function TownWorldPage({ uid }: { uid: string }) {
                 <span className="world-title-badge">{t(TOWN_LEVELS[entry.titleIndex].titleKey)}</span>
               </div>
               <p className="world-exp-line">{t("townExp", { n: entry.companionExp })}</p>
+              {entry.decorations.length > 0 && (
+                <div className="world-deco-row">
+                  {entry.decorations.map((key) => (
+                    <img key={key} className="world-deco-icon" src={decorationIconSrc(key)} alt="" />
+                  ))}
+                </div>
+              )}
               <div className="world-badge-row">
                 <span className={`world-badge${checkedIn ? " ok" : " warn"}`}>
                   {checkedIn ? t("townWorldCheckedIn") : t("townWorldNotCheckedIn")}

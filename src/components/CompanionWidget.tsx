@@ -119,7 +119,8 @@ export function CompanionWidget({
       <div className="companion-shadow" />
       {townUnlocked && (
         <Link to="/town" className="town-entry-badge" aria-label={t("townEntryLabel")} onClick={(e) => e.stopPropagation()}>
-          🏮
+          <img className="town-entry-badge-sign" src="/town/hud/sign.png" alt="" />
+          <span className="town-entry-badge-label">{t("townEntryLabel")}</span>
         </Link>
       )}
     </div>

@@ -325,24 +325,32 @@
    must live here rather than in a wrapper div). */
 .town-entry-badge {
   position: absolute;
-  right: -6px;
-  bottom: -6px;
-  width: 36px;
-  height: 36px;
-  border-radius: 999px;
-  background: #FFD93D;
-  border: 2px solid #1A1A1A;
+  right: -18px;
+  bottom: 6px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  font-size: 18px;
   text-decoration: none;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
   animation: town-badge-breathe 2.4s ease-in-out infinite;
   z-index: 2;
 }
 
+.town-entry-badge-sign {
+  width: 30px;
+  height: 30px;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3));
+}
+
+.town-entry-badge-label {
+  margin-top: -3px;
+  font-size: 9px;
+  font-weight: 800;
+  color: #1A1A1A;
+  white-space: nowrap;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
 @keyframes town-badge-breathe {
   0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.08); }
+  50% { transform: scale(1.06); }
 }

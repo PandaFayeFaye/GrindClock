@@ -161,3 +161,19 @@
   text-decoration: none;
   margin-bottom: 10px;
 }
+
+.world-deco-row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.world-deco-icon {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  background: #fff;
+  border: 1.5px solid #1A1A1A;
+  border-radius: 6px;
+  padding: 1px;
+}
