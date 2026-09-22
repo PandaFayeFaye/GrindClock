@@ -7,6 +7,7 @@ import {
   TOWN_JOBS,
   TOWN_LEVELS,
   TOWN_SCENE_BG,
+  buildingImageSrc,
   decorationIconSrc,
   isSameLocalDay,
   type TownItemType,
@@ -30,6 +31,8 @@ function weylFraction(i: number, offset: number): number {
   const v = i * GOLDEN_FRACTION + offset;
   return v - Math.floor(v);
 }
+
+const WANDER_VARIANTS = 4;
 
 export function TownWorldPage({ uid }: { uid: string }) {
   const t = useT();
@@ -101,17 +104,38 @@ export function TownWorldPage({ uid }: { uid: string }) {
           {list.map((entry, i) => {
             const isMe = entry.uid === uid;
             const seed = seededFraction(entry.uid);
-            const x = 12 + weylFraction(i, 0.13) * 76;
-            const y = 16 + weylFraction(i, 0.71) * 60;
-            const bobDelay = seed * -3;
+            const working = !!entry.currentJob && Date.now() < entry.currentJob.endsAt;
+            // Working roamers stand still at a Weyl-spread "work spot";
+            // everyone else wanders one of a few long translate paths
+            // (never rotate() -- unreliable to animate in this codebase's
+            // other runtime, kept consistent here too), each starting near
+            // the box's center so the path has room to swing every way.
+            const workX = 15 + weylFraction(i, 0.13) * 70;
+            const workY = 20 + weylFraction(i, 0.71) * 55;
+            const startX = 30 + seed * 40;
+            const startY = 30 + seededFraction(entry.uid + "y") * 40;
+            const variant = Math.floor(weylFraction(i, seed) * WANDER_VARIANTS);
+            const duration = 14 + (i % 4) * 3;
+            const delay = seededFraction(entry.uid + "d") * -duration;
             return (
               <button
                 key={entry.uid}
                 type="button"
-                className={`world-roamer${isMe ? " is-me" : ""}`}
-                style={{ left: `${x}%`, top: `${y}%`, animationDelay: `${bobDelay}s` }}
+                className={`world-roamer${working ? " working" : ` wander-${variant}`}${isMe ? " is-me" : ""}`}
+                style={
+                  working
+                    ? { left: `${workX}%`, top: `${workY}%` }
+                    : { left: `${startX}%`, top: `${startY}%`, animationDuration: `${duration}s`, animationDelay: `${delay}s` }
+                }
                 onClick={() => (isMe ? null : setActiveEntry(entry))}
               >
+                {working && entry.currentJob && (
+                  <img className="world-roamer-activity" src={buildingImageSrc(entry.currentJob.jobKey)} alt="" />
+                )}
+                <span className="world-roamer-status">
+                  <span className={`world-roamer-badge${isSameLocalDay(entry.lastDailyRationAt || 0, Date.now()) ? " ok" : " warn"}`} />
+                  {working && <span className="world-roamer-badge working" />}
+                </span>
                 {entry.animal && (
                   <img className="world-roamer-img" src={characterImageSrc(entry.animal as AnimalKey, entry.mbti)} alt="" />
                 )}

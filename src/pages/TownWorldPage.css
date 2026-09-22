@@ -43,22 +43,97 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 15%;
+  width: 9%;
   background: none;
   border: none;
   padding: 0;
   cursor: pointer;
-  animation: world-roamer-bob 2.6s ease-in-out infinite;
+  z-index: 1;
 }
 
 .world-roamer.is-me {
   cursor: default;
+  z-index: 2;
 }
 
-@keyframes world-roamer-bob {
-  0%, 100% { transform: translate(-50%, -100%) scale(1); }
-  50% { transform: translate(-50%, -100%) scale(1.05) translateY(-2px); }
+.world-roamer.working {
+  animation: world-roamer-busy 0.9s ease-in-out infinite;
 }
+
+@keyframes world-roamer-busy {
+  0%, 100% { transform: translate(-50%, -100%) scale(1); }
+  50% { transform: translate(-50%, -100%) scale(1.08) translateY(-2px); }
+}
+
+/* Long multi-waypoint translate paths (never rotate() -- see the comment
+   in TownWorldPage.tsx) so a roamer actually crosses the whole plaza box
+   instead of just jittering in place. Amplitudes are tuned to the box's
+   own ~260px height / ~440px width. */
+@keyframes world-wander-0 {
+  0% { transform: translate(-50%, -100%) translate(0, 0); }
+  25% { transform: translate(-50%, -100%) translate(90px, -60px); }
+  50% { transform: translate(-50%, -100%) translate(-100px, -40px); }
+  75% { transform: translate(-50%, -100%) translate(-70px, 60px); }
+  100% { transform: translate(-50%, -100%) translate(0, 0); }
+}
+
+@keyframes world-wander-1 {
+  0% { transform: translate(-50%, -100%) translate(0, 0); }
+  25% { transform: translate(-50%, -100%) translate(-90px, 50px); }
+  50% { transform: translate(-50%, -100%) translate(80px, 55px); }
+  75% { transform: translate(-50%, -100%) translate(95px, -55px); }
+  100% { transform: translate(-50%, -100%) translate(0, 0); }
+}
+
+@keyframes world-wander-2 {
+  0% { transform: translate(-50%, -100%) translate(0, 0); }
+  30% { transform: translate(-50%, -100%) translate(70px, 60px); }
+  60% { transform: translate(-50%, -100%) translate(90px, -55px); }
+  100% { transform: translate(-50%, -100%) translate(0, 0); }
+}
+
+@keyframes world-wander-3 {
+  0% { transform: translate(-50%, -100%) translate(0, 0); }
+  30% { transform: translate(-50%, -100%) translate(-95px, -55px); }
+  60% { transform: translate(-50%, -100%) translate(-75px, 55px); }
+  100% { transform: translate(-50%, -100%) translate(0, 0); }
+}
+
+.wander-0 { animation-name: world-wander-0; animation-timing-function: ease-in-out; animation-iteration-count: infinite; }
+.wander-1 { animation-name: world-wander-1; animation-timing-function: ease-in-out; animation-iteration-count: infinite; }
+.wander-2 { animation-name: world-wander-2; animation-timing-function: ease-in-out; animation-iteration-count: infinite; }
+.wander-3 { animation-name: world-wander-3; animation-timing-function: ease-in-out; animation-iteration-count: infinite; }
+
+.world-roamer-activity {
+  position: absolute;
+  top: -22px;
+  width: 18px;
+  height: 18px;
+  animation: world-activity-float 1.4s ease-in-out infinite;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.3));
+}
+
+@keyframes world-activity-float {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-4px) scale(1.08); }
+}
+
+.world-roamer-status {
+  display: flex;
+  gap: 2px;
+  margin-bottom: 1px;
+}
+
+.world-roamer-badge {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  border: 1px solid #1A1A1A;
+}
+
+.world-roamer-badge.ok { background: #39C97A; }
+.world-roamer-badge.warn { background: #8B3A2A; }
+.world-roamer-badge.working { background: #5AC8FA; }
 
 .world-roamer-img {
   width: 100%;
