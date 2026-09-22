@@ -444,7 +444,57 @@
 }
 
 .town-deco-title {
-  margin-top: 16px;
+  margin-top: 24px;
+}
+
+.town-security-card {
+  background: #fff;
+  border: 2px solid #1A1A1A;
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.town-security-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.town-security-icon {
+  font-size: 20px;
+}
+
+.town-security-badges {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1A1A1A;
+}
+
+.town-trap-btn {
+  width: 100%;
+  box-sizing: border-box;
+  background: #5AC8FA;
+  color: #1A1A1A;
+  border: 2px solid #1A1A1A;
+  border-radius: 10px;
+  padding: 12px 10px;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.town-trap-btn.armed {
+  background: #E8F7EE;
+  color: #2A7A52;
+  border-color: #39C97A;
+}
+
+.town-trap-btn:disabled:not(.armed) {
+  background: #DCD5C4;
+  color: #8A8272;
+  border-color: #8A8272;
 }
 
 .town-deco-card.owned {

@@ -399,10 +399,15 @@ export function TownPage({ uid }: { uid: string }) {
             )}
 
             <p className="town-sheet-title town-deco-title">{t("townSecurityTitle")}</p>
-            <p className="town-meta">{t("townBadgeCount", { n: badgesToday })}</p>
-            <button className="town-promote-btn" disabled={trapSetToday || jailed} onClick={handleSetTrap}>
-              {trapSetToday ? t("townTrapAlreadySetLabel") : t("townTrapSetButton")}
-            </button>
+            <div className="town-security-card">
+              <div className="town-security-row">
+                <span className="town-security-icon">🛡️</span>
+                <span className="town-security-badges">{t("townBadgeCount", { n: badgesToday })}</span>
+              </div>
+              <button className={`town-trap-btn${trapSetToday ? " armed" : ""}`} disabled={trapSetToday || jailed} onClick={handleSetTrap}>
+                {trapSetToday ? t("townTrapAlreadySetLabel") : t("townTrapSetButton")}
+              </button>
+            </div>
 
             <p className="town-sheet-title town-deco-title">{t("townDecorateTitle")}</p>
             <div className="town-deco-grid">
