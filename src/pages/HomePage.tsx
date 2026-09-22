@@ -465,32 +465,26 @@ export function HomePage({ uid }: { uid: string }) {
       )}
 
       {!simpleMode && animal && (
-        <div className="companion-widget-wrap">
-          <CompanionWidget
-            dataTour="companion"
-            animal={animal}
-            mbti={mbti}
-            stageNameKey={petStage.nameKey}
-            stageAccessory={petStage.accessory}
-            hungry={petHungry}
-            progressPct={
-              nextPetStage
-                ? Math.min(100, Math.round(((totalHours - petStage.threshold) / (nextPetStage.threshold - petStage.threshold)) * 100))
-                : 100
-            }
-            progressCaptionKey={nextPetStage ? "petFeedProgress" : "petMaxStage"}
-            progressCaptionVars={nextPetStage ? { h: (nextPetStage.threshold - totalHours).toFixed(0) } : undefined}
-            moodCaptionKey={lastFedAt == null ? "petNeverFedCaption" : petHungry ? "petHungryCaption" : "petFedCaption"}
-            moodCaptionVars={petHungry && lastFedAt != null ? { h: hungryHours } : undefined}
-            userMood={companionMood}
-            onSecretTap={handleCompanionSecretTap}
-          />
-          {townUnlocked && (
-            <Link to="/town" className="town-entry-badge" aria-label={t("townEntryLabel")}>
-              🏮
-            </Link>
-          )}
-        </div>
+        <CompanionWidget
+          dataTour="companion"
+          animal={animal}
+          mbti={mbti}
+          stageNameKey={petStage.nameKey}
+          stageAccessory={petStage.accessory}
+          hungry={petHungry}
+          progressPct={
+            nextPetStage
+              ? Math.min(100, Math.round(((totalHours - petStage.threshold) / (nextPetStage.threshold - petStage.threshold)) * 100))
+              : 100
+          }
+          progressCaptionKey={nextPetStage ? "petFeedProgress" : "petMaxStage"}
+          progressCaptionVars={nextPetStage ? { h: (nextPetStage.threshold - totalHours).toFixed(0) } : undefined}
+          moodCaptionKey={lastFedAt == null ? "petNeverFedCaption" : petHungry ? "petHungryCaption" : "petFedCaption"}
+          moodCaptionVars={petHungry && lastFedAt != null ? { h: hungryHours } : undefined}
+          userMood={companionMood}
+          onSecretTap={handleCompanionSecretTap}
+          townUnlocked={townUnlocked}
+        />
       )}
 
       {showTownUnlockConfirm && (

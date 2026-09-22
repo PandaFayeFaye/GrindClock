@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { characterImageSrc, type AnimalKey, type PetAccessory } from "../lib/avatar";
 import { SETTINGS_KEYS, useLocalToggle } from "../lib/settings";
 import { useT, type DictKey } from "../lib/i18n";
@@ -20,6 +21,7 @@ export function CompanionWidget({
   userMood,
   dataTour,
   onSecretTap,
+  townUnlocked,
 }: {
   animal: AnimalKey;
   mbti?: string;
@@ -36,6 +38,13 @@ export function CompanionWidget({
   /** Called on every tap of the avatar -- HomePage uses this to count rapid
    * taps and offer to unlock the hidden Mole-Fish Town easter egg. */
   onSecretTap?: () => void;
+  /** Shows a small permanent badge linking to /town once unlocked. Rendered
+   * INSIDE .companion-widget (itself position:absolute against the page) so
+   * it inherits that same positioning context -- a separate wrapper div
+   * around this whole component would instead become the containing block
+   * for .companion-widget's own absolute position, and the widget would
+   * jump to wherever that wrapper naturally sits in the page flow. */
+  townUnlocked?: boolean;
 }) {
   const t = useT();
   const [open, setOpen] = useState(false);
@@ -108,6 +117,11 @@ export function CompanionWidget({
         )}
       </button>
       <div className="companion-shadow" />
+      {townUnlocked && (
+        <Link to="/town" className="town-entry-badge" aria-label={t("townEntryLabel")} onClick={(e) => e.stopPropagation()}>
+          🏮
+        </Link>
+      )}
     </div>
   );
 }
