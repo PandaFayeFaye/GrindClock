@@ -13,13 +13,31 @@
   border-radius: 28px 28px 0 0;
   border: 3px solid var(--border-bold);
   border-bottom: none;
-  padding: 24px 22px 32px;
+  padding: 24px 0 0;
   display: flex;
   flex-direction: column;
-  gap: 18px;
   box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.25);
   max-width: 480px;
   margin: 0 auto;
+  max-height: 88vh;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* Real browsers handle flex-shrink correctly (unlike the WeChat Mini
+   Program port's WXSS engine, which needed a hard max-height instead --
+   see that codebase's own note on this same bug), so plain flex:1 +
+   min-height:0 + overflow-y:auto here reliably keeps the confirm button
+   as a fixed, always-reachable footer regardless of how much content is
+   showing above it. */
+.punch-modal-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 0 22px 24px;
 }
 
 .punch-modal-handle {
@@ -205,19 +223,21 @@
 }
 
 .confirm-btn {
+  flex-shrink: 0;
   width: 100%;
-  padding: 15px 0;
-  border-radius: 14px;
-  border: 2.5px solid var(--border-bold);
+  box-sizing: border-box;
+  margin: 0;
+  padding: 15px 22px;
+  border-radius: 0;
+  border: none;
+  border-top: 2.5px solid var(--border-bold);
   background: var(--accent-coral);
   color: var(--border-bold);
   font-weight: 900;
   font-size: 15px;
-  box-shadow: var(--shadow-bold);
-  transition: transform 0.08s ease, box-shadow 0.08s ease;
+  transition: opacity 0.08s ease;
 }
 
 .confirm-btn:active {
-  box-shadow: none;
-  transform: translate(5px, 5px);
+  opacity: 0.75;
 }

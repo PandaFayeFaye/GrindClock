@@ -93,6 +93,7 @@ export function PunchConfirmModal({
   return (
     <div className="punch-modal-backdrop" onClick={onCancel}>
       <div className="punch-modal-sheet" onClick={(e) => e.stopPropagation()}>
+        <div className="punch-modal-scroll">
         <div className="punch-modal-handle" />
 
         <div className="punch-modal-summary">
@@ -218,6 +219,7 @@ export function PunchConfirmModal({
             value={note}
             onChange={(e) => setNote(e.target.value)}
           />
+        </div>
         </div>
 
         <button
