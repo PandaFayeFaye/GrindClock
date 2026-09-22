@@ -229,7 +229,7 @@
 .town-hud-btn {
   flex: 1;
   position: relative;
-  height: 40px;
+  height: 56px;
   border: none;
   padding: 0;
   text-decoration: none;
@@ -249,19 +249,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 4px;
-  font-size: 11px;
+  gap: 6px;
+  font-size: 14px;
   font-weight: 800;
   color: #fff;
 }
 
 .town-hud-btn-icon {
-  width: 16px;
-  height: 16px;
+  width: 22px;
+  height: 22px;
 }
 
 .town-hud-btn-emoji {
-  font-size: 14px;
+  font-size: 18px;
 }
 
 /* ---- Drawers / sheets ---- */
