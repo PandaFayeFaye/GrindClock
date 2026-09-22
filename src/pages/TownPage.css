@@ -1,0 +1,362 @@
+.town-page {
+  padding: 16px;
+  padding-bottom: 80px;
+  max-width: 480px;
+  margin: 0 auto;
+  background: #FFF8E7;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.town-toast {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1A1A1A;
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 13px;
+  z-index: 80;
+  max-width: 90vw;
+  text-align: center;
+}
+
+.town-header {
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.town-title {
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0 0 4px;
+}
+
+.town-title-badge {
+  display: inline-block;
+  background: #FFD93D;
+  border: 2px solid #1A1A1A;
+  border-radius: 999px;
+  padding: 3px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
+.town-stats-row {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #5b5348;
+}
+
+.town-ration-note {
+  font-size: 12px;
+  color: #8A8272;
+  margin: 6px 0 0;
+}
+
+.town-actions-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.town-action-btn {
+  flex: 1;
+  text-align: center;
+  padding: 10px 4px;
+  border: 2px solid #1A1A1A;
+  border-radius: 12px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  color: #1A1A1A;
+}
+
+.town-section-title {
+  font-size: 15px;
+  font-weight: 800;
+  margin: 0 0 10px;
+}
+
+.town-current-job {
+  background: #fff;
+  border: 2px solid #1A1A1A;
+  border-radius: 14px;
+  padding: 16px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.town-current-job-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin: 0 0 6px;
+}
+
+.town-assigned-tag {
+  display: block;
+  font-size: 12px;
+  color: #8B3A2A;
+  font-weight: 600;
+}
+
+.town-job-remaining {
+  font-size: 14px;
+  color: #5b5348;
+  margin: 0;
+}
+
+.town-job-ready {
+  font-size: 14px;
+  color: #39C97A;
+  font-weight: 700;
+  margin: 0 0 10px;
+}
+
+.town-collect-btn {
+  background: #FFD93D;
+  border: 2px solid #1A1A1A;
+  border-radius: 10px;
+  padding: 10px 24px;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+.town-jobs-board {
+  margin-bottom: 16px;
+}
+
+.town-jobs-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.town-job-card {
+  background: #fff;
+  border: 2px solid #1A1A1A;
+  border-radius: 12px;
+  padding: 10px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.town-job-card.locked {
+  opacity: 0.55;
+}
+
+.town-job-emoji {
+  font-size: 28px;
+}
+
+.town-job-name {
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.town-job-meta {
+  font-size: 11px;
+  color: #8A8272;
+  margin: 0;
+}
+
+.town-job-night {
+  font-size: 11px;
+  color: #8B3A2A;
+  margin: 0;
+}
+
+.town-job-locked-label {
+  font-size: 11px;
+  color: #8A8272;
+  margin: 4px 0 0;
+}
+
+.town-job-start-btn {
+  margin-top: 4px;
+  background: #5AC8FA;
+  border: 2px solid #1A1A1A;
+  border-radius: 8px;
+  padding: 6px 0;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.town-job-start-btn:disabled {
+  opacity: 0.5;
+}
+
+.town-inventory {
+  margin-bottom: 16px;
+}
+
+.town-meta {
+  font-size: 13px;
+  color: #8A8272;
+}
+
+.town-inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.town-inventory-item {
+  display: flex;
+  justify-content: space-between;
+  background: #fff;
+  border: 1.5px solid #1A1A1A;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 13px;
+}
+
+.town-inventory-qty {
+  font-weight: 700;
+}
+
+.town-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 70;
+}
+
+.town-sheet {
+  background: #FFF8E7;
+  border: 3px solid #1A1A1A;
+  border-radius: 18px;
+  padding: 20px;
+  max-width: 400px;
+  width: 100%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.town-sheet-title {
+  font-size: 17px;
+  font-weight: 800;
+  margin: 0 0 12px;
+  text-align: center;
+}
+
+.town-ladder {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.town-ladder-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 6px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  border: 1.5px solid #1A1A1A;
+}
+
+.town-ladder-row.done {
+  background: #E8F7EE;
+}
+
+.town-ladder-row.current {
+  background: #FFD93D;
+  font-weight: 800;
+}
+
+.town-ladder-row.locked {
+  opacity: 0.5;
+}
+
+.town-promote-ready {
+  color: #39C97A;
+  font-weight: 700;
+  font-size: 13px;
+  text-align: center;
+}
+
+.town-promote-btn {
+  width: 100%;
+  background: #FFD93D;
+  border: 2px solid #1A1A1A;
+  border-radius: 10px;
+  padding: 10px 0;
+  font-weight: 800;
+}
+
+.town-promote-btn:disabled {
+  opacity: 0.5;
+}
+
+.town-deco-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.town-deco-card {
+  background: #fff;
+  border: 2px solid #1A1A1A;
+  border-radius: 12px;
+  padding: 10px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.town-deco-emoji {
+  font-size: 26px;
+}
+
+.town-deco-name {
+  font-size: 12px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.town-deco-cost {
+  font-size: 11px;
+  color: #8A8272;
+  margin: 0;
+}
+
+.town-deco-owned {
+  font-size: 11px;
+  font-weight: 700;
+  color: #39C97A;
+}
+
+.town-deco-buy-btn {
+  background: #5AC8FA;
+  border: 2px solid #1A1A1A;
+  border-radius: 8px;
+  padding: 6px 0;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.town-back-link {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #5b5348;
+  text-decoration: none;
+  margin-bottom: 10px;
+}

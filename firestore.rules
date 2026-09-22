@@ -7,5 +7,39 @@ service cloud.firestore {
     match /users/{uid}/{document=**} {
       allow read, write: if request.auth != null && request.auth.uid == uid;
     }
+
+    // Mole-Fish Town (hidden easter-egg feature, see MOYU_TOWN_SPEC.md).
+    // Unlike the private users/{uid} subtree above, this is a top-level,
+    // cross-readable collection on purpose: the World leaderboard/steal/skim
+    // features need to see and touch OTHER players' town data, and there is
+    // no Cloud Functions backend here to broker that server-side. The write
+    // rule below is the actual security boundary:
+    //  - the owner may write anything on their own doc
+    //  - anyone else may only touch `inventory`, `currentJob`,
+    //    `companionExp`, `lastActiveAt`, `stealCooldowns`... fields --
+    //    exactly what steal/skim need. `unlocked`, `oxFeed`, `titleIndex`,
+    //    `decorations`, and the nickname/animal/mbti display mirror stay
+    //    owner-only no matter what, so a griefer can at most inflate
+    //    someone's play-money inventory/exp, never unlock, promote, rename,
+    //    or otherwise impersonate another account.
+    match /townProfiles/{uid} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.auth.uid == uid;
+      allow update: if request.auth != null && (
+        request.auth.uid == uid ||
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(["inventory", "currentJob", "companionExp", "lastActiveAt", "lastStealAt", "stealCounts", "skimCooldowns"])
+      );
+      allow delete: if false;
+    }
+
+    // Append-only audit trail -- never read back for gameplay logic
+    // (deliberately, so no query here ever needs a composite index), just
+    // written for a paper trail. No one may edit or delete past entries.
+    match /townJobLog/{logId} {
+      allow read: if false;
+      allow create: if request.auth != null && request.resource.data.openid == request.auth.uid;
+      allow update, delete: if false;
+    }
   }
 }

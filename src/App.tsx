@@ -17,6 +17,8 @@ import { MonthlyRecapPage } from "./pages/MonthlyRecapPage";
 import { BadgeWallPage } from "./pages/BadgeWallPage";
 import { AICapturePage } from "./pages/AICapturePage";
 import { BatchBackfillPage } from "./pages/BatchBackfillPage";
+import { TownPage } from "./pages/TownPage";
+import { TownWorldPage } from "./pages/TownWorldPage";
 import { LanguageProvider, useT } from "./lib/i18n";
 import { OnboardingScreen, hasOnboarded, markOnboarded } from "./components/OnboardingScreen";
 import "./App.css";
@@ -77,6 +79,8 @@ function App() {
               <Route path="/recap" element={<MonthlyRecapPage uid={user.uid} />} />
               <Route path="/badges" element={<BadgeWallPage uid={user.uid} />} />
               <Route path="/ai-capture" element={<AICapturePage uid={user.uid} />} />
+              <Route path="/town" element={<TownPage uid={user.uid} />} />
+              <Route path="/town/world" element={<TownWorldPage uid={user.uid} />} />
             </Route>
           </Routes>
         </HashRouter>

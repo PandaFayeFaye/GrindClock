@@ -1,0 +1,163 @@
+.town-world-page {
+  padding: 16px;
+  padding-bottom: 80px;
+  max-width: 480px;
+  margin: 0 auto;
+  background: #FFF8E7;
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.town-toast {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1A1A1A;
+  color: #fff;
+  padding: 10px 18px;
+  border-radius: 999px;
+  font-size: 13px;
+  z-index: 80;
+  max-width: 90vw;
+  text-align: center;
+}
+
+.town-world-title {
+  font-size: 20px;
+  font-weight: 800;
+  margin: 0 0 4px;
+  text-align: center;
+}
+
+.town-world-hint {
+  font-size: 12px;
+  color: #8A8272;
+  text-align: center;
+  margin: 0 0 16px;
+}
+
+.town-meta {
+  font-size: 13px;
+  color: #8A8272;
+  text-align: center;
+}
+
+.world-card {
+  background: #fff;
+  border: 2px solid #1A1A1A;
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.world-card.me-card {
+  border-color: #5AC8FA;
+  box-shadow: 0 0 0 2px rgba(90, 200, 250, 0.35);
+}
+
+.world-card-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.world-rank {
+  font-size: 12px;
+  font-weight: 800;
+  background: #e8e0cc;
+  border: 1.5px solid #1A1A1A;
+  border-radius: 8px;
+  padding: 2px 6px;
+  min-width: 28px;
+  text-align: center;
+}
+
+.world-avatar {
+  width: 28px;
+  height: 28px;
+}
+
+.world-nickname {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.world-title-badge {
+  background: #FFD93D;
+  border: 1.5px solid #1A1A1A;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.world-exp-line {
+  font-size: 12px;
+  color: #5b5348;
+  margin: 0;
+}
+
+.world-badge-row {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.world-badge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.world-badge.ok { background: #39C97A; }
+.world-badge.warn { background: #8B3A2A; }
+.world-badge.working { background: #5AC8FA; }
+.world-badge.empty { background: #8A8272; }
+.world-badge.steal { background: #FF6B6B; }
+
+.world-blocked {
+  font-size: 12px;
+  color: #8A8272;
+  font-style: italic;
+  margin: 4px 0 0;
+}
+
+.world-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.world-btn {
+  flex: 1;
+  background: #5AC8FA;
+  border: 2px solid #1A1A1A;
+  border-radius: 8px;
+  padding: 8px 0;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.world-btn.skim {
+  background: #FF6B6B;
+  color: #fff;
+}
+
+.town-back-link {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 700;
+  color: #5b5348;
+  text-decoration: none;
+  margin-bottom: 10px;
+}

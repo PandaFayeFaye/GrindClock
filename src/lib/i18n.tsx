@@ -603,21 +603,161 @@ const dict = {
   petHungryCaption: { zh: "TA已经 {h} 小时没吃饭了，打卡喂养TA吧～", en: "TA hasn't eaten in {h}h — clock in to feed TA!" },
   petFedCaption: { zh: "TA刚吃饱，很满足地趴着～", en: "TA just ate and is happily resting~" },
   petNeverFedCaption: { zh: "TA还饿着肚子，打第一次卡喂养TA吧！", en: "TA's still hungry — punch in for the first time to feed TA!" },
+
+  // ---- Mole-Fish Town (hidden easter egg) ----
+  townUnlockPrompt: { zh: "开启摸鱼小镇？", en: "Unlock Mole-Fish Town?" },
+  townUnlockBody: {
+    zh: "这是一个隐藏的小玩法：送搭子去打工、攒特产、升职、还能去世界里跟朋友互相偷菜～不会影响你的真实等级。",
+    en: "A hidden side game: send your buddy to work, collect specialties, get promoted, and steal from friends in the World -- none of it touches your real tier.",
+  },
+  townUnlockConfirm: { zh: "开启", en: "Unlock it" },
+  townUnlockCancel: { zh: "还是算了", en: "Not now" },
+  townEntryLabel: { zh: "摸鱼小镇", en: "Mole-Fish Town" },
+
+  townTitle: { zh: "摸鱼小镇", en: "Mole-Fish Town" },
+  townOxFeed: { zh: "牛马粮 {n}", en: "Ox Feed: {n}" },
+  townExp: { zh: "摸鱼资历 {n}", en: "Grind Cred: {n}" },
+  townRation: { zh: "今日已领取配给", en: "Today's ration claimed" },
+  townRationClaimed: { zh: "领到 {n} 牛马粮！", en: "Claimed {n} Ox Feed!" },
+  townWorldNav: { zh: "去世界看看", en: "Go to the World" },
+  townInventoryTitle: { zh: "仓库", en: "Warehouse" },
+  townInventoryEmpty: { zh: "仓库空空如也，快去打工吧", en: "Nothing in here yet -- go work a shift" },
+  townDecorateNav: { zh: "装饰商店", en: "Decor shop" },
+  townPromoteNav: { zh: "晋升", en: "Promotion" },
+
+  townJobsTitle: { zh: "选个班上", en: "Pick a shift" },
+  townJobLocked: { zh: "需要「{title}」职级解锁", en: "Unlocks at \"{title}\"" },
+  townJobNightOnly: { zh: "仅 22:00–6:00 开放", en: "Only open 22:00–6:00" },
+  townJobCost: { zh: "班车费 {n}", en: "Costs {n} feed" },
+  townJobDuration: { zh: "{h}h", en: "{h}h" },
+  townJobStart: { zh: "开始上班", en: "Start shift" },
+  townJobStartOk: { zh: "已出发打工啦", en: "Off to work!" },
+  townJobStartFailInsufficient: { zh: "牛马粮不够了", en: "Not enough Ox Feed" },
+  townJobStartFailLevel: { zh: "职级还不够，再攒攒", en: "Your title isn't high enough yet" },
+  townJobStartFailNight: { zh: "这份工作只在夜里开", en: "This shift only runs at night" },
+  townJobStartFailBusy: { zh: "手上已经有一份工作了", en: "Already working a shift" },
+  townJobStartFailGeneric: { zh: "出发失败", en: "Couldn't start the shift" },
+
+  townCurrentJob: { zh: "正在「{job}」", en: "Working: {job}" },
+  townCurrentJobAssignedByBoss: { zh: "（被上司安排的活）", en: " (assigned by your boss)" },
+  townJobRemaining: { zh: "还剩 {m} 分钟", en: "{m}m left" },
+  townJobReady: { zh: "干完了，回来收工吧！", en: "Shift's done -- come collect it!" },
+  townCollect: { zh: "收工", en: "Collect" },
+  townCollectResult: { zh: "拿到 {item} x{n}，+{exp} 摸鱼资历", en: "Got {item} x{n}, +{exp} Grind Cred" },
+  townCollectFailNotFinished: { zh: "还没干完呢", en: "Not finished yet" },
+  townCollectFailGeneric: { zh: "收工失败", en: "Couldn't collect" },
+
+  townPromoteTitle: { zh: "职场晋升之路", en: "Career ladder" },
+  townPromoteMaterialsNeed: { zh: "还需要：{list}", en: "Still need: {list}" },
+  townPromoteReady: { zh: "条件已满足，可以晋升！", en: "You qualify -- go get promoted!" },
+  townPromoteButton: { zh: "申请晋升", en: "Request promotion" },
+  townPromoteSuccess: { zh: "恭喜晋升为「{title}」！", en: "Promoted to {title}!" },
+  townPromoteFail: { zh: "还不够格，再攒攒资历和材料", en: "Not eligible yet -- keep grinding cred and materials" },
+
+  townDecorateTitle: { zh: "装饰商店", en: "Decor shop" },
+  townDecorateOwned: { zh: "已拥有", en: "Owned" },
+  townDecorateBuy: { zh: "兑换", en: "Trade in" },
+  townDecorateBuySuccess: { zh: "兑换成功！", en: "Traded in!" },
+  townDecorateBuyFailItem: { zh: "特产不够", en: "Not enough of that item" },
+  townDecorateBuyFailOwned: { zh: "已经有这个装饰了", en: "You already own this" },
+
+  townWorldTitle: { zh: "摸鱼小镇 · 世界", en: "Mole-Fish Town · World" },
+  townWorldHint: { zh: "所有开启了摸鱼小镇的搭子都在这里，互相可见互相可逛～", en: "Everyone who's unlocked the town shows up here." },
+  townWorldMe: { zh: "我", en: "Me" },
+  townWorldRank: { zh: "第 {n} 名", en: "#{n}" },
+  townWorldCheckedIn: { zh: "已签到", en: "Checked in" },
+  townWorldNotCheckedIn: { zh: "未签到", en: "Not checked in" },
+  townWorldWorking: { zh: "打工中", en: "Working" },
+  townWorldStealable: { zh: "可偷 x{n}", en: "Stealable x{n}" },
+  townWorldEmpty: { zh: "仓库空空", en: "Nothing to take" },
+  townWorldSteal: { zh: "偷一点", en: "Steal" },
+  townWorldSkim: { zh: "画饼摊派", en: "Assign work" },
+  townWorldBlocked: { zh: "老板的地盘，先憋着", en: "Boss's turf -- stand down" },
+  townWorldNone: { zh: "还没有别人开启摸鱼小镇，快去拉朋友一起玩吧", en: "No one else has unlocked the town yet -- go pull a friend in" },
+
+  townStealSuccess: { zh: "偷到 {item} x{n}！", en: "Stole {item} x{n}!" },
+  townStealFailCooldown: { zh: "今天已经偷TA够多了，明天再来", en: "You've stolen from them enough today -- try tomorrow" },
+  townStealFailGlobalCooldown: { zh: "手速太快啦，每小时只能出手一次", en: "Slow down -- only once an hour" },
+  townStealFailEmpty: { zh: "TA的仓库空空如也", en: "Their warehouse is empty" },
+  townStealFailGeneric: { zh: "偷菜失败", en: "Couldn't steal" },
+
+  townSkimSuccess: { zh: "已经把TA派去干「{job}」了，收工后你会分到一份", en: "Assigned them to \"{job}\" -- you'll get a cut when they collect it" },
+  townSkimFailCooldown: { zh: "这个饼刚画过，过会儿再来", en: "You just did this -- come back later" },
+  townSkimFailNoJob: { zh: "TA暂时没有能派的工作", en: "They have no shift to assign right now" },
+  townSkimFailGeneric: { zh: "摊派失败", en: "Couldn't assign work" },
+
+  jobMilkTeaShop: { zh: "奶茶店学徒", en: "Bubble tea trainee" },
+  jobConvenienceStore: { zh: "便利店收银", en: "Convenience store clerk" },
+  jobBarista: { zh: "咖啡师", en: "Barista" },
+  jobRider: { zh: "外卖骑手", en: "Delivery rider" },
+  jobCallCenter: { zh: "客服接线员", en: "Call center rep" },
+  jobDriver: { zh: "网约车代驾", en: "Rideshare driver" },
+  jobFarmer: { zh: "菜地打工", en: "Farm hand" },
+  jobBbqStall: { zh: "深夜烧烤摊", en: "Late-night BBQ stall" },
+  jobLiveStream: { zh: "直播带货", en: "Livestream sales" },
+  jobTutor: { zh: "家教老师", en: "Tutor" },
+  jobBoardroom: { zh: "董事会摸鱼", en: "Boardroom loafing" },
+
+  titleIntern: { zh: "实习生", en: "Intern" },
+  titleAssociate: { zh: "新人专员", en: "Associate" },
+  titleSenior: { zh: "资深员工", en: "Senior Associate" },
+  titleLead: { zh: "组长", en: "Team Lead" },
+  titleSupervisor: { zh: "主管", en: "Supervisor" },
+  titleManager: { zh: "经理", en: "Manager" },
+  titleSeniorManager: { zh: "高级经理", en: "Senior Manager" },
+  titleDirector: { zh: "总监", en: "Director" },
+  titleVp: { zh: "VP副总裁", en: "VP" },
+  titleGm: { zh: "总经理", en: "General Manager" },
+  titleCeo: { zh: "CEO", en: "CEO" },
+  titleChairman: { zh: "董事长", en: "Chairman" },
+
+  itemMilkTea: { zh: "奶茶", en: "bubble tea" },
+  itemSnackPack: { zh: "零食礼包", en: "snack pack" },
+  itemCoffeeBean: { zh: "咖啡豆", en: "coffee beans" },
+  itemRiderSubsidy: { zh: "骑手补贴", en: "rider subsidy" },
+  itemPhoneCard: { zh: "话费卡", en: "phone card" },
+  itemGasCard: { zh: "加油卡", en: "gas card" },
+  itemVeggie: { zh: "蔬菜", en: "veggies" },
+  itemBbqCoupon: { zh: "烧烤券", en: "BBQ coupon" },
+  itemLiveCommission: { zh: "带货佣金", en: "sales commission" },
+  itemTutorFee: { zh: "补习费", en: "tutoring fee" },
+  itemDividend: { zh: "分红", en: "dividend" },
+
+  decoMilkTeaLantern: { zh: "奶茶灯笼", en: "Bubble tea lantern" },
+  decoSnackBox: { zh: "零食礼盒堆", en: "Snack box pile" },
+  decoCoffeeSign: { zh: "咖啡招牌", en: "Coffee sign" },
+  decoHelmet: { zh: "骑手头盔摆件", en: "Rider helmet display" },
+  decoPhoneBooth: { zh: "复古电话亭", en: "Retro phone booth" },
+  decoGasPump: { zh: "迷你加油站", en: "Mini gas pump" },
+  decoScarecrow: { zh: "丰收稻草人", en: "Harvest scarecrow" },
+  decoBbqLights: { zh: "烧烤灯串", en: "BBQ string lights" },
+  decoNeonLive: { zh: "直播霓虹灯牌", en: "Livestream neon sign" },
+  decoLightbulb: { zh: "补习灯泡", en: "Tutoring lightbulb" },
+  decoGoldTrophy: { zh: "金色奖杯", en: "Gold trophy" },
+  decoLuckyCat: { zh: "幸运招财猫", en: "Lucky cat" },
+  decoLoungeChair: { zh: "摸鱼躺椅", en: "Slacker lounge chair" },
+  decoBossSofa: { zh: "老板专属沙发", en: "Boss's private sofa" },
 } as const;
 
 export type DictKey = keyof typeof dict;
 
+// English is the default for anyone who has never picked a language.
+// Existing users already have "zh" written to storage from their very
+// first load (the effect below persists whatever the initial state was),
+// so this only changes what NEW users see -- it never flips an existing
+// Chinese-reading user over.
 function readLang(): Lang {
   try {
     const raw = window.localStorage.getItem(LANG_KEY);
-    return raw === "en" ? "en" : "zh";
+    if (raw === "en" || raw === "zh") return raw;
+    return "en";
   } catch {
-    return "zh";
+    return "en";
   }
 }
 
 const LangContext = createContext<{ lang: Lang; setLang: (l: Lang) => void }>({
-  lang: "zh",
+  lang: "en",
   setLang: () => {},
 });
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { addManualEntry, clockIn, clockOut, watchEmployers, watchTimeEntries, watchUserProfile } from "../lib/firestore";
 import { entryHours, entryOvertimePay, entryPay, mergedHoursToday } from "../lib/pay";
@@ -18,6 +18,7 @@ import { getCurrentLocation } from "../lib/geolocation";
 import { useT } from "../lib/i18n";
 import { DEFAULT_CURRENCY, currencySymbol, formatGroupedPay } from "../lib/currency";
 import { combineDateAndTime, scheduleDurationHours, todaysSchedule } from "../lib/schedule";
+import { watchTownProfile, unlockTown } from "../lib/townFirestore";
 import "./HomePage.css";
 
 function startOfToday() {
@@ -57,6 +58,14 @@ export function HomePage({ uid }: { uid: string }) {
   const [aiVoiceOn] = useLocalToggle(SETTINGS_KEYS.aiVoice, true);
   const [leftRange, setLeftRange] = useState<"today" | "week">("today");
 
+  // Hidden easter egg: tap the companion 10 times within a few seconds to
+  // get offered Mole-Fish Town. Once unlocked, a small badge next to the
+  // companion is the permanent entry point -- no more counting taps.
+  const [townUnlocked, setTownUnlocked] = useState(false);
+  const [showTownUnlockConfirm, setShowTownUnlockConfirm] = useState(false);
+  const tapCountRef = useRef(0);
+  const tapTimerRef = useRef<number | null>(null);
+
   useEffect(() => {
     const unsubEmployers = watchEmployers(uid, setEmployers);
     const unsubEntries = watchTimeEntries(uid, setEntries);
@@ -65,8 +74,27 @@ export function HomePage({ uid }: { uid: string }) {
       setMbti(profile.mbti || undefined);
       setNickname(profile.nickname ?? "");
     });
-    return () => { unsubEmployers(); unsubEntries(); unsubProfile(); };
+    const unsubTown = watchTownProfile(uid, (p) => setTownUnlocked(p.unlocked));
+    return () => { unsubEmployers(); unsubEntries(); unsubProfile(); unsubTown(); };
   }, [uid]);
+
+  function handleCompanionSecretTap() {
+    if (townUnlocked) return;
+    tapCountRef.current += 1;
+    if (tapTimerRef.current) window.clearTimeout(tapTimerRef.current);
+    if (tapCountRef.current >= 10) {
+      tapCountRef.current = 0;
+      setShowTownUnlockConfirm(true);
+      return;
+    }
+    tapTimerRef.current = window.setTimeout(() => { tapCountRef.current = 0; }, 4000);
+  }
+
+  async function confirmUnlockTown() {
+    setShowTownUnlockConfirm(false);
+    await unlockTown(uid, { nickname, animal, mbti });
+    navigate("/town");
+  }
 
   // Runs once per device/browser -- covers both a brand-new sign-up (right
   // after onboarding) and an already-registered user who just never happened
@@ -437,24 +465,49 @@ export function HomePage({ uid }: { uid: string }) {
       )}
 
       {!simpleMode && animal && (
-        <CompanionWidget
-          dataTour="companion"
-          animal={animal}
-          mbti={mbti}
-          stageNameKey={petStage.nameKey}
-          stageAccessory={petStage.accessory}
-          hungry={petHungry}
-          progressPct={
-            nextPetStage
-              ? Math.min(100, Math.round(((totalHours - petStage.threshold) / (nextPetStage.threshold - petStage.threshold)) * 100))
-              : 100
-          }
-          progressCaptionKey={nextPetStage ? "petFeedProgress" : "petMaxStage"}
-          progressCaptionVars={nextPetStage ? { h: (nextPetStage.threshold - totalHours).toFixed(0) } : undefined}
-          moodCaptionKey={lastFedAt == null ? "petNeverFedCaption" : petHungry ? "petHungryCaption" : "petFedCaption"}
-          moodCaptionVars={petHungry && lastFedAt != null ? { h: hungryHours } : undefined}
-          userMood={companionMood}
-        />
+        <div className="companion-widget-wrap">
+          <CompanionWidget
+            dataTour="companion"
+            animal={animal}
+            mbti={mbti}
+            stageNameKey={petStage.nameKey}
+            stageAccessory={petStage.accessory}
+            hungry={petHungry}
+            progressPct={
+              nextPetStage
+                ? Math.min(100, Math.round(((totalHours - petStage.threshold) / (nextPetStage.threshold - petStage.threshold)) * 100))
+                : 100
+            }
+            progressCaptionKey={nextPetStage ? "petFeedProgress" : "petMaxStage"}
+            progressCaptionVars={nextPetStage ? { h: (nextPetStage.threshold - totalHours).toFixed(0) } : undefined}
+            moodCaptionKey={lastFedAt == null ? "petNeverFedCaption" : petHungry ? "petHungryCaption" : "petFedCaption"}
+            moodCaptionVars={petHungry && lastFedAt != null ? { h: hungryHours } : undefined}
+            userMood={companionMood}
+            onSecretTap={handleCompanionSecretTap}
+          />
+          {townUnlocked && (
+            <Link to="/town" className="town-entry-badge" aria-label={t("townEntryLabel")}>
+              🏮
+            </Link>
+          )}
+        </div>
+      )}
+
+      {showTownUnlockConfirm && (
+        <div className="town-unlock-mask" onClick={() => setShowTownUnlockConfirm(false)}>
+          <div className="town-unlock-sheet" onClick={(e) => e.stopPropagation()}>
+            <p className="town-unlock-title">{t("townUnlockPrompt")}</p>
+            <p className="town-unlock-body">{t("townUnlockBody")}</p>
+            <div className="town-unlock-actions">
+              <button className="town-unlock-cancel" onClick={() => setShowTownUnlockConfirm(false)}>
+                {t("townUnlockCancel")}
+              </button>
+              <button className="town-unlock-confirm" onClick={confirmUnlockTown}>
+                {t("townUnlockConfirm")}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {activeEmployers.length > 0 && (

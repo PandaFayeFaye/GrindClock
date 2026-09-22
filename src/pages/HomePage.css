@@ -435,3 +435,87 @@
 .home-page .fab.open {
   transform: rotate(45deg);
 }
+
+/* ---- Mole-Fish Town entry point ---- */
+.companion-widget-wrap {
+  position: relative;
+}
+
+.town-entry-badge {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: #FFD93D;
+  border: 2px solid #1A1A1A;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  text-decoration: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+  animation: town-badge-breathe 2.4s ease-in-out infinite;
+}
+
+@keyframes town-badge-breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+
+.town-unlock-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 60;
+}
+
+.town-unlock-sheet {
+  background: #FFF8E7;
+  border: 3px solid #1A1A1A;
+  border-radius: 18px;
+  padding: 20px;
+  max-width: 340px;
+  width: 100%;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.town-unlock-title {
+  font-size: 18px;
+  font-weight: 800;
+  margin: 0 0 8px;
+}
+
+.town-unlock-body {
+  font-size: 14px;
+  color: #5b5348;
+  line-height: 1.5;
+  margin: 0 0 16px;
+}
+
+.town-unlock-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.town-unlock-actions button {
+  flex: 1;
+  padding: 10px 0;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 700;
+  border: 2px solid #1A1A1A;
+}
+
+.town-unlock-cancel {
+  background: #fff;
+}
+
+.town-unlock-confirm {
+  background: #FFD93D;
+}

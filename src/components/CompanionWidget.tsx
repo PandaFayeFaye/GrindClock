@@ -19,6 +19,7 @@ export function CompanionWidget({
   moodCaptionVars,
   userMood,
   dataTour,
+  onSecretTap,
 }: {
   animal: AnimalKey;
   mbti?: string;
@@ -32,6 +33,9 @@ export function CompanionWidget({
   moodCaptionVars?: Record<string, string | number>;
   userMood?: Mood;
   dataTour?: string;
+  /** Called on every tap of the avatar -- HomePage uses this to count rapid
+   * taps and offer to unlock the hidden Mole-Fish Town easter egg. */
+  onSecretTap?: () => void;
 }) {
   const t = useT();
   const [open, setOpen] = useState(false);
@@ -40,6 +44,7 @@ export function CompanionWidget({
   function handleTap() {
     setOpen((o) => !o);
     if (!hintSeen) setHintSeen(true);
+    onSecretTap?.();
   }
 
   return (
