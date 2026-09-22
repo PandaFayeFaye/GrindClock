@@ -36,7 +36,7 @@ export function CompanionWidget({
   userMood?: Mood;
   dataTour?: string;
   /** Called on every tap of the avatar -- HomePage uses this to count rapid
-   * taps and offer to unlock the hidden Mole-Fish Town easter egg. */
+   * taps and offer to unlock the hidden Slackerville ("Mole-Fish Town" in Chinese) easter egg. */
   onSecretTap?: () => void;
   /** Shows a small permanent badge linking to /town once unlocked. Rendered
    * INSIDE .companion-widget (itself position:absolute against the page) so

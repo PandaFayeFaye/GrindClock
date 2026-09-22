@@ -202,7 +202,7 @@ export function TownPage({ uid }: { uid: string }) {
             <span className="town-title-badge">{t(TOWN_LEVELS[profile.titleIndex].titleKey)}</span>
             <span className="town-exp">{t("townExp", { n: profile.companionExp })}</span>
             <div className="town-hud-spacer" />
-            <span className="town-resource">
+            <span className="town-resource" aria-label={t("townOxFeed", { n: profile.oxFeed })}>
               <img className="town-resource-icon" src={HUD_ICON_COIN} alt="" />
               {profile.oxFeed}
             </span>

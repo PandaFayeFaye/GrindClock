@@ -1,4 +1,4 @@
-// Client-side config for "Mole-Fish Town" -- a hidden social easter egg
+// Client-side config for "Slackerville ("Mole-Fish Town" in Chinese)" -- a hidden social easter egg
 // (ported from the WeChat Mini Program build; see MOYU_TOWN_SPEC.md). Two
 // growth lines are kept deliberately separate: the user's own real tier
 // (TIERS in lib/tiers.tsx, driven only by real clocked hours) is never

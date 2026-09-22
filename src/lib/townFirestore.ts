@@ -1,4 +1,4 @@
-// Firestore access for Mole-Fish Town. There is no Cloud Functions backend
+// Firestore access for Slackerville ("Mole-Fish Town" in Chinese). There is no Cloud Functions backend
 // on the web build, so every settlement here runs as a client-side
 // Firestore transaction instead of the Mini Program's server-authoritative
 // cloud functions. Two things make that an acceptable trade-off instead of

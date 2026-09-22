@@ -59,7 +59,7 @@ export function HomePage({ uid }: { uid: string }) {
   const [leftRange, setLeftRange] = useState<"today" | "week">("today");
 
   // Hidden easter egg: tap the companion 10 times within a few seconds to
-  // get offered Mole-Fish Town. Once unlocked, a small badge next to the
+  // get offered Slackerville ("Mole-Fish Town" in Chinese). Once unlocked, a small badge next to the
   // companion is the permanent entry point -- no more counting taps.
   const [townUnlocked, setTownUnlocked] = useState(false);
   const [showTownUnlockConfirm, setShowTownUnlockConfirm] = useState(false);
