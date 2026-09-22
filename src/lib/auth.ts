@@ -39,6 +39,30 @@ function getRecaptchaVerifier(containerId: string): RecaptchaVerifier {
   return verifier;
 }
 
+function resetRecaptcha(containerId: string, verifier: RecaptchaVerifier) {
+  // Drop our reference FIRST -- verifier.clear() can itself throw (e.g. the
+  // invisible widget never finished rendering before the failure), and if
+  // that happens before the map entry is removed, the next click reuses this
+  // same broken verifier and fails immediately with "reCAPTCHA has already
+  // been rendered in this element" instead of ever reaching Firebase's real
+  // phone-number validation.
+  recaptchaVerifiers.delete(containerId);
+  try {
+    verifier.clear();
+  } catch {
+    // Already dropped from our map; grecaptcha's own internal render marker
+    // on the DOM node is the thing that actually causes the "already
+    // rendered" error, so rebuild the node too -- a fresh element has no
+    // marker for grecaptcha to trip over.
+    const old = document.getElementById(containerId);
+    if (old?.parentElement) {
+      const fresh = document.createElement("div");
+      fresh.id = containerId;
+      old.parentElement.replaceChild(fresh, old);
+    }
+  }
+}
+
 export function sendPhoneOtp(
   phoneNumber: string,
   recaptchaContainerId: string,
@@ -47,8 +71,7 @@ export function sendPhoneOtp(
   return signInWithPhoneNumber(auth, phoneNumber, verifier).catch((err) => {
     // A failed attempt can leave the widget in a bad state -- drop it so the
     // next click builds a fresh one instead of erroring on "already rendered".
-    verifier.clear();
-    recaptchaVerifiers.delete(recaptchaContainerId);
+    resetRecaptcha(recaptchaContainerId, verifier);
     throw err;
   });
 }
