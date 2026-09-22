@@ -31,17 +31,24 @@ import {
   CRITICIZE_COOLDOWN_MS,
   DAILY_RATION,
   FEED_COST,
+  JAIL_DURATION_MS,
   MAX_NOTICES,
+  MAX_RECENT_THEFTS,
   STEAL_COOLDOWN_MS,
   STEAL_MAX_PER_WINDOW,
   SKIM_COOLDOWN_MS,
+  STEAL_CATCH_WINDOW_MS,
   TOWN_DECORATIONS,
   TOWN_JOBS,
   TOWN_LEVELS,
   canPromote,
   emptyTownProfile,
+  isJailed,
   isNightNow,
   isSameLocalDay,
+  isTrapActive,
+  todayBadgeCount,
+  trapAlreadySetToday,
   type TownInventory,
   type TownItemType,
   type TownNotice,
@@ -106,6 +113,7 @@ export async function claimDailyRation(uid: string): Promise<{ profile: TownProf
   const profile = await runTransaction(db, async (tx) => {
     const snap = await tx.get(ref);
     const p = normalize(snap.data());
+    if (isJailed(p)) throw new Error("jailed");
     const now = Date.now();
     if (p.lastDailyRationAt && isSameLocalDay(p.lastDailyRationAt, now)) return p;
     const next: TownProfile = { ...p, oxFeed: p.oxFeed + DAILY_RATION, lastDailyRationAt: now, lastActiveAt: now };
@@ -123,6 +131,7 @@ export async function sendToWork(uid: string, jobKey: string): Promise<TownProfi
     const snap = await tx.get(ref);
     const p = normalize(snap.data());
     if (!p.unlocked) throw new Error("not_unlocked");
+    if (isJailed(p)) throw new Error("jailed");
     if (p.currentJob) throw new Error("already_working");
     if (p.titleIndex < job.unlockLevel) throw new Error("level_too_low");
     if (p.oxFeed < job.feedCost) throw new Error("insufficient_oxfeed");
@@ -166,6 +175,7 @@ export async function feedCompanionInTown(uid: string): Promise<TownProfile> {
     const snap = await tx.get(ref);
     const p = normalize(snap.data());
     if (!p.unlocked) throw new Error("not_unlocked");
+    if (isJailed(p)) throw new Error("jailed");
     if (p.oxFeed < FEED_COST) throw new Error("insufficient_oxfeed");
     const now = Date.now();
     const next: TownProfile = { ...p, oxFeed: p.oxFeed - FEED_COST, lastFedAt: now, lastActiveAt: now };
@@ -188,6 +198,7 @@ export async function criticizeForNotCheckingIn(uid: string, targetUid: string):
     const self = normalize(selfSnap.data());
     const target = targetSnap.exists() ? normalize(targetSnap.data()) : null;
     if (!self.unlocked) throw new Error("not_unlocked");
+    if (isJailed(self)) throw new Error("jailed");
     if (!target || !target.unlocked) throw new Error("target_not_found");
 
     const now = Date.now();
@@ -283,6 +294,7 @@ export async function promote(uid: string): Promise<{ profile: TownProfile; newT
     const snap = await tx.get(ref);
     const p = normalize(snap.data());
     if (!p.unlocked) throw new Error("not_unlocked");
+    if (isJailed(p)) throw new Error("jailed");
     if (!canPromote(p)) throw new Error("not_eligible");
     const next = TOWN_LEVELS[p.titleIndex + 1];
     const inventory: TownInventory = { ...p.inventory };
@@ -303,6 +315,7 @@ export async function buyDecoration(uid: string, key: string): Promise<TownProfi
     const snap = await tx.get(ref);
     const p = normalize(snap.data());
     if (!p.unlocked) throw new Error("not_unlocked");
+    if (isJailed(p)) throw new Error("jailed");
     if (p.decorations.includes(key)) throw new Error("already_owned");
     if ((p.inventory[deco.costItem] || 0) < deco.costAmount) throw new Error("insufficient_item");
     const inventory: TownInventory = { ...p.inventory };
@@ -313,18 +326,21 @@ export async function buyDecoration(uid: string, key: string): Promise<TownProfi
   });
 }
 
-export type StealResult = { item: TownItemType; amount: number };
+export type StealResult =
+  | { trapped: false; item: TownItemType; amount: number }
+  | { trapped: true; item: TownItemType | null; amount: number; jailedUntil: number };
 
 export async function stealFrom(uid: string, targetUid: string): Promise<StealResult> {
   if (uid === targetUid) throw new Error("invalid_target");
   const selfRef = townDoc(uid);
   const targetRef = townDoc(targetUid);
-  return runTransaction(db, async (tx) => {
+  return runTransaction(db, async (tx): Promise<StealResult> => {
     const [selfSnap, targetSnap] = await Promise.all([tx.get(selfRef), tx.get(targetRef)]);
     const self = normalize(selfSnap.data());
     const target = targetSnap.exists() ? normalize(targetSnap.data()) : null;
     if (!self.unlocked) throw new Error("not_unlocked");
     if (!target || !target.unlocked) throw new Error("target_not_found");
+    if (isJailed(self)) throw new Error("jailed");
 
     const now = Date.now();
     const lastStealAt = self.lastStealAt || 0;
@@ -339,8 +355,47 @@ export async function stealFrom(uid: string, targetUid: string): Promise<StealRe
       nextCount = rec.count + 1;
       windowStart = rec.windowStart;
     }
+    // Consumed by BOTH outcomes below -- a trap catch still counts as an
+    // attempt, so it can't be used to dodge the normal per-target/global
+    // steal cooldowns and retry instantly.
+    const nextStealBookkeeping = {
+      lastActiveAt: now,
+      lastStealAt: now,
+      stealCounts: { ...counts, [targetUid]: { count: nextCount, windowStart } },
+    };
 
     const stealable = Object.entries(target.inventory).filter(([, qty]) => (qty || 0) > 0);
+
+    if (isTrapActive(target, now)) {
+      // Caught in the target's invisible trap: no item changes hands to the
+      // thief. If there's anything to reference, the thief pays a fine of
+      // that same item/amount straight to the target (capped at what the
+      // thief actually has -- see the comment at the fine transfer below),
+      // and the thief is jailed regardless of whether a fine was possible.
+      let fineItem: TownItemType | null = null;
+      let fineAmount = 0;
+      if (stealable.length > 0) {
+        const [item, available] = stealable[Math.floor(Math.random() * stealable.length)] as [TownItemType, number];
+        const intended = Math.min(available, 1 + Math.floor(Math.random() * 3));
+        // The thief never received this item, so the fine can only come out
+        // of whatever they already happen to have of the same type -- may
+        // be less than `intended`, or zero.
+        const thiefHas = self.inventory[item] || 0;
+        fineAmount = Math.min(intended, thiefHas);
+        fineItem = item;
+        if (fineAmount > 0) {
+          const selfInventory: TownInventory = { ...self.inventory, [item]: thiefHas - fineAmount };
+          const targetInventory: TownInventory = { ...target.inventory, [item]: available + fineAmount };
+          tx.set(targetRef, { inventory: targetInventory }, { merge: true });
+          tx.set(selfRef, { ...nextStealBookkeeping, inventory: selfInventory, jailedUntil: now + JAIL_DURATION_MS }, { merge: true });
+        }
+      }
+      if (fineAmount === 0) {
+        tx.set(selfRef, { ...nextStealBookkeeping, jailedUntil: now + JAIL_DURATION_MS }, { merge: true });
+      }
+      return { trapped: true, item: fineItem, amount: fineAmount, jailedUntil: now + JAIL_DURATION_MS };
+    }
+
     if (stealable.length === 0) throw new Error("nothing_to_steal");
     const [item, available] = stealable[Math.floor(Math.random() * stealable.length)] as [TownItemType, number];
     const amount = Math.min(available, 1 + Math.floor(Math.random() * 3));
@@ -350,30 +405,100 @@ export async function stealFrom(uid: string, targetUid: string): Promise<StealRe
     selfInventory[item] = (selfInventory[item] || 0) + amount;
 
     const notices = pushNotice(target.notices, { type: "stolen", fromNickname: self.nickname || "someone", createdAt: now });
-    tx.set(targetRef, { inventory: targetInventory, notices }, { merge: true });
+    const badgesToday = todayBadgeCount(target, now);
+    const recentThefts = [
+      ...(target.recentThefts || []),
+      { thiefUid: uid, thiefNickname: self.nickname || "someone", item, amount, stolenAt: now },
+    ].slice(-MAX_RECENT_THEFTS);
     tx.set(
-      selfRef,
+      targetRef,
       {
-        inventory: selfInventory,
-        companionExp: self.companionExp + 3,
-        lastActiveAt: now,
-        lastStealAt: now,
-        stealCounts: { ...counts, [targetUid]: { count: nextCount, windowStart } },
+        inventory: targetInventory,
+        notices,
+        recentThefts,
+        policeBadges: badgesToday + 1,
+        policeBadgesResetAt: now,
       },
       { merge: true },
     );
+    tx.set(selfRef, { ...nextStealBookkeeping, inventory: selfInventory, companionExp: self.companionExp + 3 }, { merge: true });
 
-    return { item, amount };
+    return { trapped: false, item, amount };
   }).then(async (result) => {
     await setDoc(doc(jobLogCol()), {
       openid: uid,
       targetOpenid: targetUid,
-      type: "steal",
-      itemsGained: { [result.item]: result.amount },
-      expGained: 3,
+      type: result.trapped ? "steal_trapped" : "steal",
+      itemsGained: result.item ? { [result.item]: result.amount } : {},
+      expGained: result.trapped ? 0 : 3,
       createdAt: Date.now(),
     }).catch(() => {});
     return result;
+  });
+}
+
+/** Sets today's 2h trap window starting right now -- once per local day.
+ * Nobody else's UI ever renders this field (see isTrapActive's comment for
+ * the caveat on what "invisible" actually means without a backend). */
+export async function setDailyTrap(uid: string): Promise<TownProfile> {
+  const ref = townDoc(uid);
+  return runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    const p = normalize(snap.data());
+    if (!p.unlocked) throw new Error("not_unlocked");
+    if (isJailed(p)) throw new Error("jailed");
+    if (trapAlreadySetToday(p)) throw new Error("trap_already_set");
+    const now = Date.now();
+    const next: TownProfile = { ...p, trapSetAt: now, lastActiveAt: now };
+    tx.set(ref, next, { merge: true });
+    return next;
+  });
+}
+
+export type CatchResult = { item: TownItemType; amount: number };
+
+/** Spends one of today's police badges to catch a specific thief who hit
+ * you within the last STEAL_CATCH_WINDOW_MS -- they give back double what
+ * they took, capped at whatever they still actually have (they may have
+ * already spent or traded it away). */
+export async function catchThief(uid: string, thiefUid: string): Promise<CatchResult> {
+  const selfRef = townDoc(uid);
+  const thiefRef = townDoc(thiefUid);
+  return runTransaction(db, async (tx) => {
+    const [selfSnap, thiefSnap] = await Promise.all([tx.get(selfRef), tx.get(thiefRef)]);
+    const self = normalize(selfSnap.data());
+    const thief = thiefSnap.exists() ? normalize(thiefSnap.data()) : null;
+    if (!self.unlocked) throw new Error("not_unlocked");
+    if (!thief) throw new Error("target_not_found");
+
+    const now = Date.now();
+    if (todayBadgeCount(self, now) <= 0) throw new Error("no_badges");
+
+    const recent = self.recentThefts || [];
+    const theft = recent.find((t) => t.thiefUid === thiefUid && now - t.stolenAt <= STEAL_CATCH_WINDOW_MS);
+    if (!theft) throw new Error("no_recent_theft");
+
+    const wantBack = theft.amount * 2;
+    const thiefHas = thief.inventory[theft.item] || 0;
+    const giveBack = Math.min(wantBack, thiefHas);
+
+    const thiefInventory: TownInventory = { ...thief.inventory, [theft.item]: thiefHas - giveBack };
+    const selfInventory: TownInventory = { ...self.inventory };
+    selfInventory[theft.item] = (selfInventory[theft.item] || 0) + giveBack;
+
+    tx.set(thiefRef, { inventory: thiefInventory }, { merge: true });
+    tx.set(
+      selfRef,
+      {
+        inventory: selfInventory,
+        policeBadges: todayBadgeCount(self, now) - 1,
+        policeBadgesResetAt: now,
+        recentThefts: recent.filter((t) => t !== theft),
+      },
+      { merge: true },
+    );
+
+    return { item: theft.item, amount: giveBack };
   });
 }
 
@@ -393,6 +518,7 @@ export async function skimFrom(uid: string, targetUid: string): Promise<SkimResu
     const self = normalize(selfSnap.data());
     const target = targetSnap.exists() ? normalize(targetSnap.data()) : null;
     if (!self.unlocked) throw new Error("not_unlocked");
+    if (isJailed(self)) throw new Error("jailed");
     if (!target || !target.unlocked) throw new Error("target_not_found");
     if (self.titleIndex <= target.titleIndex) throw new Error("not_higher_rank");
 

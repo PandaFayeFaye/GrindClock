@@ -709,6 +709,27 @@ const dict = {
   townStealFailGlobalCooldown: { zh: "手速太快啦，每小时只能出手一次", en: "Slow down -- only once an hour" },
   townStealFailEmpty: { zh: "TA的仓库空空如也", en: "Their warehouse is empty" },
   townStealFailGeneric: { zh: "偷菜失败", en: "Couldn't steal" },
+  townStealTrapped: { zh: "你被卧底警察抓包了！被罚了 {item} x{n}，还要坐牢3小时", en: "Caught in a trap! Fined {item} x{n} and jailed for 3h" },
+  townStealTrappedNoFine: { zh: "你被卧底警察抓包了！要坐牢3小时", en: "Caught in a trap! Jailed for 3h" },
+
+  townJailedToast: { zh: "还在坐牢呢，剩 {m} 分钟", en: "Still in jail -- {m}m left" },
+  townJailedBanner: { zh: "🚔 正在坐牢，还剩 {m} 分钟，什么都干不了", en: "🚔 In jail for {m}m more -- can't do anything until then" },
+  townJailedGeneric: { zh: "正在坐牢，什么都干不了", en: "You're in jail -- can't do that right now" },
+
+  townSecurityTitle: { zh: "防盗设置", en: "Security" },
+  townBadgeCount: { zh: "今日临时警察证：{n} 张", en: "Today's police badges: {n}" },
+  townTrapSetButton: { zh: "布置今日陷阱（2小时）", en: "Set today's trap (2h)" },
+  townTrapAlreadySetLabel: { zh: "今日陷阱已布置", en: "Today's trap is set" },
+  townTrapSetSuccess: { zh: "陷阱已布置，接下来2小时内偷你的人会被抓", en: "Trap armed -- anyone who steals from you in the next 2h gets caught" },
+  townTrapAlreadySet: { zh: "今天已经布置过陷阱了", en: "You've already set a trap today" },
+  townTrapFailGeneric: { zh: "布置失败", en: "Couldn't set the trap" },
+
+  townCatchBanner: { zh: "{name} 刚偷了你！要不要抓他？", en: "{name} just stole from you! Catch them?" },
+  townCatchButton: { zh: "抓小偷（花1张警察证）", en: "Catch them (uses 1 badge)" },
+  townCatchSuccess: { zh: "抓到了！要回 {item} x{n}", en: "Caught them! Got back {item} x{n}" },
+  townCatchFailNoBadges: { zh: "今天的警察证用完了", en: "Out of police badges for today" },
+  townCatchFailExpired: { zh: "已经错过抓捕时间了", en: "Too late -- the catch window closed" },
+  townCatchFailGeneric: { zh: "抓捕失败", en: "Couldn't catch them" },
 
   townSkimSuccess: { zh: "已经把TA派去干「{job}」了，收工后你会分到一份", en: "Assigned them to \"{job}\" -- you'll get a cut when they collect it" },
   townSkimFailCooldown: { zh: "这个饼刚画过，过会儿再来", en: "You just did this -- come back later" },

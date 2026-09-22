@@ -74,11 +74,20 @@ export function TownWorldPage({ uid }: { uid: string }) {
   async function handleSteal(entry: WorldEntry) {
     try {
       const res = await stealFrom(uid, entry.uid);
-      flash(t("townStealSuccess", { item: t(ITEM_LABEL_KEY[res.item as TownItemType]), n: res.amount }));
+      if (res.trapped) {
+        flash(
+          res.item
+            ? t("townStealTrapped", { item: t(ITEM_LABEL_KEY[res.item as TownItemType]), n: res.amount })
+            : t("townStealTrappedNoFine"),
+        );
+      } else {
+        flash(t("townStealSuccess", { item: t(ITEM_LABEL_KEY[res.item as TownItemType]), n: res.amount }));
+      }
       load();
     } catch (err) {
       const msg = (err as Error).message;
       const key =
+        msg === "jailed" ? "townJailedGeneric" :
         msg === "steal_cooldown" ? "townStealFailCooldown" :
         msg === "steal_global_cooldown" ? "townStealFailGlobalCooldown" :
         msg === "nothing_to_steal" ? "townStealFailEmpty" : "townStealFailGeneric";
@@ -95,6 +104,7 @@ export function TownWorldPage({ uid }: { uid: string }) {
     } catch (err) {
       const msg = (err as Error).message;
       const key =
+        msg === "jailed" ? "townJailedGeneric" :
         msg === "skim_cooldown" ? "townSkimFailCooldown" :
         msg === "no_job_available" ? "townSkimFailNoJob" : "townSkimFailGeneric";
       flash(t(key));
@@ -108,6 +118,7 @@ export function TownWorldPage({ uid }: { uid: string }) {
     } catch (err) {
       const msg = (err as Error).message;
       const key =
+        msg === "jailed" ? "townJailedGeneric" :
         msg === "already_checked_in" ? "townCriticizeFailCheckedIn" :
         msg === "criticize_cooldown" ? "townCriticizeFailCooldown" : "townCriticizeFailGeneric";
       flash(t(key));

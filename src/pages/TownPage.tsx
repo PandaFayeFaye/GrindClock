@@ -12,6 +12,7 @@ import {
   HUD_ICON_TROPHY,
   HUD_WOOD_STRIP,
   ITEM_LABEL_KEY,
+  STEAL_CATCH_WINDOW_MS,
   TOWN_DECORATIONS,
   TOWN_IDLE_SPOT,
   TOWN_JOBS,
@@ -21,20 +22,25 @@ import {
   canPromote,
   decorationIconSrc,
   emptyTownProfile,
+  isJailed,
   isNightNow,
   isSameLocalDay,
+  todayBadgeCount,
+  trapAlreadySetToday,
   type TownJob,
   type TownProfile,
 } from "../lib/town";
 import {
   buyDecoration,
   cancelJob,
+  catchThief,
   claimDailyRation,
   collectJob,
   consumeNotices,
   feedCompanionInTown,
   promote,
   sendToWork,
+  setDailyTrap,
   syncTownDisplayFields,
   watchTownProfile,
 } from "../lib/townFirestore";
@@ -94,11 +100,21 @@ export function TownPage({ uid }: { uid: string }) {
 
   const nextLevel = TOWN_LEVELS[profile.titleIndex + 1];
   const eligibleToPromote = useMemo(() => canPromote(profile), [profile]);
+
+  const jailed = isJailed(profile, now);
+  const jailRemainingMin = jailed ? Math.ceil((profile.jailedUntil! - now) / 60_000) : 0;
+  const badgesToday = todayBadgeCount(profile, now);
+  const trapSetToday = trapAlreadySetToday(profile, now);
+  const catchableThefts = (profile.recentThefts || []).filter((th) => now - th.stolenAt <= STEAL_CATCH_WINDOW_MS);
   const night = isNightNow();
 
   function handleBuildingTap(job: TownJob) {
     if (profile.currentJob) {
       if (currentJobDef?.key === job.key && jobReady) handleCollect();
+      return;
+    }
+    if (jailed) {
+      flash(t("townJailedToast", { m: jailRemainingMin }));
       return;
     }
     if (profile.titleIndex < job.unlockLevel) {
@@ -122,6 +138,7 @@ export function TownPage({ uid }: { uid: string }) {
     } catch (err) {
       const msg = (err as Error).message;
       const key =
+        msg === "jailed" ? "townJailedGeneric" :
         msg === "insufficient_oxfeed" ? "townJobStartFailInsufficient" :
         msg === "level_too_low" ? "townJobStartFailLevel" :
         msg === "night_only" ? "townJobStartFailNight" :
@@ -152,7 +169,8 @@ export function TownPage({ uid }: { uid: string }) {
       await feedCompanionInTown(uid);
       flash(t("townFeedSuccess"));
     } catch (err) {
-      flash(t((err as Error).message === "insufficient_oxfeed" ? "townFeedFailInsufficient" : "townFeedFailGeneric"));
+      const msg = (err as Error).message;
+      flash(t(msg === "jailed" ? "townJailedGeneric" : msg === "insufficient_oxfeed" ? "townFeedFailInsufficient" : "townFeedFailGeneric"));
     }
   }
 
@@ -164,6 +182,29 @@ export function TownPage({ uid }: { uid: string }) {
       flash(t("townCancelSuccess"));
     } catch {
       flash(t("townCancelFailGeneric"));
+    }
+  }
+
+  async function handleSetTrap() {
+    try {
+      await setDailyTrap(uid);
+      flash(t("townTrapSetSuccess"));
+    } catch (err) {
+      const msg = (err as Error).message;
+      flash(t(msg === "jailed" ? "townJailedGeneric" : msg === "trap_already_set" ? "townTrapAlreadySet" : "townTrapFailGeneric"));
+    }
+  }
+
+  async function handleCatch(thiefUid: string) {
+    try {
+      const res = await catchThief(uid, thiefUid);
+      flash(t("townCatchSuccess", { item: t(ITEM_LABEL_KEY[res.item]), n: res.amount }));
+    } catch (err) {
+      const msg = (err as Error).message;
+      const key =
+        msg === "no_badges" ? "townCatchFailNoBadges" :
+        msg === "no_recent_theft" ? "townCatchFailExpired" : "townCatchFailGeneric";
+      flash(t(key));
     }
   }
 
@@ -195,6 +236,17 @@ export function TownPage({ uid }: { uid: string }) {
 
       <div className="town-scene">
         <img className="town-scene-bg" src={TOWN_SCENE_BG} alt="" />
+
+        {jailed && (
+          <div className="town-jail-banner">{t("townJailedBanner", { m: jailRemainingMin })}</div>
+        )}
+
+        {!jailed && badgesToday > 0 && catchableThefts.map((theft) => (
+          <div className="town-catch-banner" key={`${theft.thiefUid}-${theft.stolenAt}`}>
+            <span>{t("townCatchBanner", { name: theft.thiefNickname })}</span>
+            <button className="town-catch-btn" onClick={() => handleCatch(theft.thiefUid)}>{t("townCatchButton")}</button>
+          </div>
+        ))}
 
         {TOWN_JOBS.map((job) => {
           const locked = profile.titleIndex < job.unlockLevel;
@@ -345,6 +397,12 @@ export function TownPage({ uid }: { uid: string }) {
                 ))}
               </div>
             )}
+
+            <p className="town-sheet-title town-deco-title">{t("townSecurityTitle")}</p>
+            <p className="town-meta">{t("townBadgeCount", { n: badgesToday })}</p>
+            <button className="town-promote-btn" disabled={trapSetToday || jailed} onClick={handleSetTrap}>
+              {trapSetToday ? t("townTrapAlreadySetLabel") : t("townTrapSetButton")}
+            </button>
 
             <p className="town-sheet-title town-deco-title">{t("townDecorateTitle")}</p>
             <div className="town-deco-grid">

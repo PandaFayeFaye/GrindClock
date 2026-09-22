@@ -155,9 +155,31 @@ export const CRITICIZE_COOLDOWN_MS = 12 * 3_600_000;
 // townFirestore.ts) and an in-app inbox: capped so a doc can't grow forever.
 export const MAX_NOTICES = 8;
 
+// ---- Anti-theft: police badges (reactive) + daily trap (proactive) ----
+// A badge is earned once per successful steal AGAINST you and lets you
+// "catch" that specific thief if you open Town/World within this window
+// of the theft -- they have to give back double what they took. Badges
+// reset every local day; the count accumulates within the same day.
+export const STEAL_CATCH_WINDOW_MS = 5 * 60_000;
+export const MAX_RECENT_THEFTS = 10;
+// The trap is a single self-chosen 2h window, once per local day, that
+// nobody else can see. A steal attempt landing inside it never succeeds:
+// the thief is jailed and fined the item(s) they were trying to take,
+// paid straight to whoever set the trap.
+export const TRAP_DURATION_MS = 2 * 3_600_000;
+export const JAIL_DURATION_MS = 3 * 3_600_000;
+
 export type TownInventory = Partial<Record<TownItemType, number>>;
 
 export type TownCurrentJob = { jobKey: string; startedAt: number; endsAt: number; assignedBy?: string } | null;
+
+export type TownRecentTheft = {
+  thiefUid: string;
+  thiefNickname: string;
+  item: TownItemType;
+  amount: number;
+  stolenAt: number;
+};
 
 // A lightweight in-app inbox standing in for the Mini Program's WeChat push
 // (steal/skim/criticize) -- there's no push infra on the web build, so this
@@ -196,6 +218,14 @@ export type TownProfile = {
   skimCooldowns?: Record<string, number>;
   criticizeCooldowns?: Record<string, number>;
   notices?: TownNotice[];
+  // Anti-theft state. `policeBadges`/`policeBadgesResetAt` need the same
+  // "reset once per local day, accumulate within it" read pattern as the
+  // daily ration -- see townFirestore.ts's todayBadgeCount() helper.
+  policeBadges?: number;
+  policeBadgesResetAt?: number | null;
+  recentThefts?: TownRecentTheft[];
+  trapSetAt?: number | null;
+  jailedUntil?: number | null;
 };
 
 export function emptyTownProfile(): TownProfile {
@@ -233,4 +263,28 @@ export function isSameLocalDay(a: number, b: number): boolean {
   const da = new Date(a);
   const db = new Date(b);
   return da.getFullYear() === db.getFullYear() && da.getMonth() === db.getMonth() && da.getDate() === db.getDate();
+}
+
+/** Badges reset every local day -- this is the "what's the count actually
+ * worth right now" read, same shape as checking the daily ration. */
+export function todayBadgeCount(profile: Pick<TownProfile, "policeBadges" | "policeBadgesResetAt">, now = Date.now()): number {
+  if (!profile.policeBadgesResetAt || !isSameLocalDay(profile.policeBadgesResetAt, now)) return 0;
+  return profile.policeBadges || 0;
+}
+
+export function isJailed(profile: Pick<TownProfile, "jailedUntil">, now = Date.now()): boolean {
+  return !!profile.jailedUntil && profile.jailedUntil > now;
+}
+
+/** Whether the caller's own trap window is armed right now -- only ever
+ * read from the caller's OWN profile in the UI; a thief's steal transaction
+ * reads the TARGET's copy of this same field server-side-equivalent (see
+ * townFirestore.ts's header comment on the client-trust model this whole
+ * feature already runs on). */
+export function isTrapActive(profile: Pick<TownProfile, "trapSetAt">, now = Date.now()): boolean {
+  return !!profile.trapSetAt && now < profile.trapSetAt + TRAP_DURATION_MS;
+}
+
+export function trapAlreadySetToday(profile: Pick<TownProfile, "trapSetAt">, now = Date.now()): boolean {
+  return !!profile.trapSetAt && isSameLocalDay(profile.trapSetAt, now);
 }
