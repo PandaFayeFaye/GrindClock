@@ -2,15 +2,41 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { characterImageSrc, type AnimalKey } from "../lib/avatar";
 import { useT } from "../lib/i18n";
-import { ITEM_LABEL_KEY, TOWN_JOBS, TOWN_LEVELS, decorationIconSrc, isSameLocalDay, type TownItemType } from "../lib/town";
+import {
+  ITEM_LABEL_KEY,
+  TOWN_JOBS,
+  TOWN_LEVELS,
+  TOWN_SCENE_BG,
+  decorationIconSrc,
+  isSameLocalDay,
+  type TownItemType,
+} from "../lib/town";
 import { fetchWorld, skimFrom, stealFrom, type WorldEntry } from "../lib/townFirestore";
 import "./TownWorldPage.css";
+
+// Deterministic pseudo-random 0..1 from a string -- same player always
+// stands in the same plaza spot on every load instead of jumping around.
+function seededFraction(seed: string): number {
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  return (h % 1000) / 1000;
+}
+
+// Golden-ratio (Weyl sequence) spacing: frac(i * 0.618...) spreads N points
+// across 0..1 far more evenly than plain randomness, so the crowd doesn't
+// clump together regardless of headcount.
+const GOLDEN_FRACTION = 0.6180339887;
+function weylFraction(i: number, offset: number): number {
+  const v = i * GOLDEN_FRACTION + offset;
+  return v - Math.floor(v);
+}
 
 export function TownWorldPage({ uid }: { uid: string }) {
   const t = useT();
   const [list, setList] = useState<WorldEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState("");
+  const [activeEntry, setActiveEntry] = useState<WorldEntry | null>(null);
 
   function flash(msg: string) {
     setToast(msg);
@@ -59,12 +85,42 @@ export function TownWorldPage({ uid }: { uid: string }) {
     }
   }
 
+  const myTitleIndex = me?.titleIndex ?? -1;
+
   return (
     <div className="town-world-page">
+      <img className="town-world-bg" src={TOWN_SCENE_BG} alt="" />
+      <div className="town-world-content">
       {toast && <div className="town-toast">{toast}</div>}
       <Link to="/town" className="town-back-link">← {t("townTitle")}</Link>
       <h1 className="town-world-title">{t("townWorldTitle")}</h1>
       <p className="town-world-hint">{t("townWorldHint")}</p>
+
+      {list.length > 0 && (
+        <div className="world-plaza">
+          {list.map((entry, i) => {
+            const isMe = entry.uid === uid;
+            const seed = seededFraction(entry.uid);
+            const x = 12 + weylFraction(i, 0.13) * 76;
+            const y = 16 + weylFraction(i, 0.71) * 60;
+            const bobDelay = seed * -3;
+            return (
+              <button
+                key={entry.uid}
+                type="button"
+                className={`world-roamer${isMe ? " is-me" : ""}`}
+                style={{ left: `${x}%`, top: `${y}%`, animationDelay: `${bobDelay}s` }}
+                onClick={() => (isMe ? null : setActiveEntry(entry))}
+              >
+                {entry.animal && (
+                  <img className="world-roamer-img" src={characterImageSrc(entry.animal as AnimalKey, entry.mbti)} alt="" />
+                )}
+                <span className="world-roamer-name">{isMe ? t("townWorldMe") : entry.nickname || "?"}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {me && (
         <div className="world-card me-card">
@@ -138,6 +194,36 @@ export function TownWorldPage({ uid }: { uid: string }) {
             </div>
           );
         })
+      )}
+      </div>
+
+      {activeEntry && (
+        <div className="town-mask" onClick={() => setActiveEntry(null)}>
+          <div className="town-sheet world-picker-sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="world-card-head">
+              {activeEntry.animal && (
+                <img className="world-avatar" src={characterImageSrc(activeEntry.animal as AnimalKey, activeEntry.mbti)} alt="" />
+              )}
+              <span className="world-nickname">{activeEntry.nickname || "?"}</span>
+              <span className="world-title-badge">{t(TOWN_LEVELS[activeEntry.titleIndex].titleKey)}</span>
+            </div>
+            <p className="world-exp-line">{t("townExp", { n: activeEntry.companionExp })}</p>
+            {myTitleIndex < activeEntry.titleIndex ? (
+              <p className="world-blocked">{t("townWorldBlocked")}</p>
+            ) : (
+              <div className="world-actions">
+                <button className="world-btn" onClick={() => { handleSteal(activeEntry); setActiveEntry(null); }}>
+                  {t("townWorldSteal")}
+                </button>
+                {myTitleIndex > activeEntry.titleIndex && (
+                  <button className="world-btn skim" onClick={() => { handleSkim(activeEntry); setActiveEntry(null); }}>
+                    {t("townWorldSkim")}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
       )}
     </div>
   );
