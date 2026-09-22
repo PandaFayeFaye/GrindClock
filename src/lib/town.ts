@@ -53,21 +53,42 @@ export type TownJob = {
   unlockLevel: number; // index into TOWN_LEVELS
   nightOnly?: boolean; // 22:00-6:00 local time only
   doubleChance?: number;
+  // Ground anchor point (% of the scene box) for the building sprite in the
+  // illustrated town square -- mirrors the Mini Program's exact layout
+  // (src/lib/town.ts there) so the two versions read as the same place.
+  x: number;
+  y: number;
 };
 
 export const TOWN_JOBS: TownJob[] = [
-  { key: "milkTeaShop", nameKey: "jobMilkTeaShop", emoji: "🧋", feedCost: 5, durationMs: 1 * 3_600_000, expGain: 5, item: "milkTea", itemAmount: 1, unlockLevel: 0 },
-  { key: "convenienceStore", nameKey: "jobConvenienceStore", emoji: "🏪", feedCost: 5, durationMs: 1.5 * 3_600_000, expGain: 5, item: "snackPack", itemAmount: 1, unlockLevel: 0 },
-  { key: "barista", nameKey: "jobBarista", emoji: "☕", feedCost: 8, durationMs: 2 * 3_600_000, expGain: 8, item: "coffeeBean", itemAmount: 2, unlockLevel: 1 },
-  { key: "rider", nameKey: "jobRider", emoji: "🛵", feedCost: 8, durationMs: 0.5 * 3_600_000, expGain: 5, item: "riderSubsidy", itemAmount: 1, unlockLevel: 1 },
-  { key: "callCenter", nameKey: "jobCallCenter", emoji: "📞", feedCost: 10, durationMs: 4 * 3_600_000, expGain: 12, item: "phoneCard", itemAmount: 3, unlockLevel: 2 },
-  { key: "driver", nameKey: "jobDriver", emoji: "🚗", feedCost: 10, durationMs: 3 * 3_600_000, expGain: 10, item: "gasCard", itemAmount: 2, unlockLevel: 3 },
-  { key: "farmer", nameKey: "jobFarmer", emoji: "🥬", feedCost: 12, durationMs: 3 * 3_600_000, expGain: 12, item: "veggie", itemAmount: 4, unlockLevel: 4 },
-  { key: "bbqStall", nameKey: "jobBbqStall", emoji: "🍢", feedCost: 12, durationMs: 2 * 3_600_000, expGain: 15, item: "bbqCoupon", itemAmount: 3, unlockLevel: 5, nightOnly: true },
-  { key: "liveStream", nameKey: "jobLiveStream", emoji: "📱", feedCost: 15, durationMs: 2 * 3_600_000, expGain: 15, item: "liveCommission", itemAmount: 1, unlockLevel: 6, doubleChance: 0.1 },
-  { key: "tutor", nameKey: "jobTutor", emoji: "📚", feedCost: 15, durationMs: 3 * 3_600_000, expGain: 18, item: "tutorFee", itemAmount: 1, unlockLevel: 7 },
-  { key: "boardroom", nameKey: "jobBoardroom", emoji: "💼", feedCost: 20, durationMs: 4 * 3_600_000, expGain: 20, item: "dividend", itemAmount: 1, unlockLevel: 8 },
+  { key: "milkTeaShop", nameKey: "jobMilkTeaShop", emoji: "🧋", feedCost: 5, durationMs: 1 * 3_600_000, expGain: 5, item: "milkTea", itemAmount: 1, unlockLevel: 0, x: 13, y: 27 },
+  { key: "convenienceStore", nameKey: "jobConvenienceStore", emoji: "🏪", feedCost: 5, durationMs: 1.5 * 3_600_000, expGain: 5, item: "snackPack", itemAmount: 1, unlockLevel: 0, x: 89, y: 30 },
+  { key: "barista", nameKey: "jobBarista", emoji: "☕", feedCost: 8, durationMs: 2 * 3_600_000, expGain: 8, item: "coffeeBean", itemAmount: 2, unlockLevel: 1, x: 36, y: 28 },
+  { key: "rider", nameKey: "jobRider", emoji: "🛵", feedCost: 8, durationMs: 0.5 * 3_600_000, expGain: 5, item: "riderSubsidy", itemAmount: 1, unlockLevel: 1, x: 9, y: 50 },
+  { key: "callCenter", nameKey: "jobCallCenter", emoji: "📞", feedCost: 10, durationMs: 4 * 3_600_000, expGain: 12, item: "phoneCard", itemAmount: 3, unlockLevel: 2, x: 62, y: 27 },
+  { key: "driver", nameKey: "jobDriver", emoji: "🚗", feedCost: 10, durationMs: 3 * 3_600_000, expGain: 10, item: "gasCard", itemAmount: 2, unlockLevel: 3, x: 91, y: 53 },
+  { key: "farmer", nameKey: "jobFarmer", emoji: "🥬", feedCost: 12, durationMs: 3 * 3_600_000, expGain: 12, item: "veggie", itemAmount: 4, unlockLevel: 4, x: 18, y: 69 },
+  { key: "bbqStall", nameKey: "jobBbqStall", emoji: "🍢", feedCost: 12, durationMs: 2 * 3_600_000, expGain: 15, item: "bbqCoupon", itemAmount: 3, unlockLevel: 5, nightOnly: true, x: 40, y: 75 },
+  { key: "liveStream", nameKey: "jobLiveStream", emoji: "📱", feedCost: 15, durationMs: 2 * 3_600_000, expGain: 15, item: "liveCommission", itemAmount: 1, unlockLevel: 6, doubleChance: 0.1, x: 64, y: 70 },
+  { key: "tutor", nameKey: "jobTutor", emoji: "📚", feedCost: 15, durationMs: 3 * 3_600_000, expGain: 18, item: "tutorFee", itemAmount: 1, unlockLevel: 7, x: 87, y: 68 },
+  { key: "boardroom", nameKey: "jobBoardroom", emoji: "💼", feedCost: 20, durationMs: 4 * 3_600_000, expGain: 20, item: "dividend", itemAmount: 1, unlockLevel: 8, x: 50, y: 47 },
 ];
+
+export function buildingImageSrc(jobKey: string): string {
+  return `/town/${jobKey}.png`;
+}
+
+export function decorationIconSrc(key: string): string {
+  return `/town/deco-icons/${key}.png`;
+}
+
+export const TOWN_SCENE_BG = "/town/scene_bg.png";
+export const TOWN_IDLE_SPOT = { x: 30, y: 46 };
+export const HUD_WOOD_STRIP = "/town/hud/wood_strip.png";
+export const HUD_ICON_CHEST = "/town/hud/chest.png";
+export const HUD_ICON_TROPHY = "/town/hud/trophy.png";
+export const HUD_ICON_FLAG = "/town/hud/flag.png";
+export const HUD_ICON_COIN = "/town/hud/coin.png";
 
 export type TownLevel = {
   titleKey:

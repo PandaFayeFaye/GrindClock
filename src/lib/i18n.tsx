@@ -619,6 +619,7 @@ const dict = {
   townExp: { zh: "摸鱼资历 {n}", en: "Grind Cred: {n}" },
   townRation: { zh: "今日已领取配给", en: "Today's ration claimed" },
   townRationClaimed: { zh: "领到 {n} 牛马粮！", en: "Claimed {n} Ox Feed!" },
+  townClaimRationBtn: { zh: "领取每日配给", en: "Claim daily ration" },
   townWorldNav: { zh: "去世界看看", en: "Go to the World" },
   townInventoryTitle: { zh: "仓库", en: "Warehouse" },
   townInventoryEmpty: { zh: "仓库空空如也，快去打工吧", en: "Nothing in here yet -- go work a shift" },
